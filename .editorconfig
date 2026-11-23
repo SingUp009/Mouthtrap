@@ -1,0 +1,11 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+indent_style = space
+indent_size = 4
+
+[*.cs]
+dotnet_diagnostic.MEFF310.severity = error
+dotnet_diagnostic.MEFF307.severity = warning
