@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0-windows</TargetFramework><UseWPF>true</UseWPF></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Mouthtrap.Cli/Mouthtrap.Cli.csproj" />
+  </ItemGroup>
+</Project>

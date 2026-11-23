@@ -1,0 +1,27 @@
+using System.Collections.Immutable;
+using Moderato.Results;
+using Mouthtrap.Core;
+
+namespace Mouthtrap.Cli;
+
+// JSON Lines contract of a "frame" record. Expressions lists only the provided
+// Unified Expressions keys, by their VRChat names.
+public sealed record FrameReport(int Width, int Height, long Processed, long Received, long Replaced,
+    float? RawJawOpen, float? JawOpen, double? InferenceMilliseconds, double FrameAgeMilliseconds,
+    CalibrationSnapshot? Calibration = null, ImmutableArray<MouthExpression>? AdditionalExpressions = null,
+    IReadOnlyDictionary<string, float>? Expressions = null)
+{
+    public static FrameReport From(TrackingFrame frame) => new(frame.Source.Width, frame.Source.Height, frame.Processed,
+        frame.Statistics.Received, frame.Statistics.Replaced, frame.Estimate?.RawJawOpen, frame.Estimate?.JawOpen,
+        frame.InferenceMilliseconds, frame.FrameAgeMilliseconds, frame.Calibration, frame.Estimate?.AdditionalExpressions,
+        frame.Expressions?.Provided.ToDictionary(item => item.Key.ToString(), item => item.Value));
+}
+
+internal sealed class ReportSink(Action<FrameReport> report) : ITrackingSink
+{
+    public Result<Unit, OutputFailed> Publish(TrackingFrame frame)
+    {
+        report(FrameReport.From(frame));
+        return new Ok<Unit>(Unit.Value);
+    }
+}
