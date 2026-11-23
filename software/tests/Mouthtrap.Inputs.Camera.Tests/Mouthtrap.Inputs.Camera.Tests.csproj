@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
+    <ProjectReference Include="../../src/Mouthtrap.Diagnostics/Mouthtrap.Diagnostics.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ResourceAssert.cs" Link="ResourceAssert.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/TimerAwareTimeProvider.cs" Link="TimerAwareTimeProvider.cs" />
+  </ItemGroup>
+</Project>

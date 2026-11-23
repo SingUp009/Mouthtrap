@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Mouthtrap.Core/Mouthtrap.Core.csproj" />
+    <PackageReference Include="FlashCap" Version="[1.13.0]" />
+  </ItemGroup>
+</Project>

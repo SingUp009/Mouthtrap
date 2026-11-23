@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net11.0": {
+      "FlashCap": {
+        "type": "Transitive",
+        "resolved": "1.13.0",
+        "contentHash": "JWQfmGqo7mNxXxaWRemSbdmUGQ995ykjVvdKKJt91aPdKaQjUxCspWGtutmh6m3mUwjQiMJGUp8W+AvPq4SEjQ==",
+        "dependencies": {
+          "FlashCap.Core": "1.13.0"
+        }
+      },
+      "FlashCap.Core": {
+        "type": "Transitive",
+        "resolved": "1.13.0",
+        "contentHash": "BwlGr96lEib6nwdhgADjdFAaMFd1+aFmZZT1V2xxjRwRKuLbww/UsH3uFaNPWe9r5qgnR/L2/KDnma+jvMd+Fg=="
+      },
+      "Moderato.Effects": {
+        "type": "Transitive",
+        "resolved": "0.1.0-preview.6",
+        "contentHash": "awKqwLS9YcFns1ZIYvQ7+d4EhhyEf6UR88lJHkDtKWACOLZ0cW8g+2oukt5Yoj1xaICDZPOC/j29vfD7SEqk1A==",
+        "dependencies": {
+          "Moderato.Results": "0.1.0-preview.4"
+        }
+      },
+      "Moderato.Results": {
+        "type": "Transitive",
+        "resolved": "0.1.0-preview.4",
+        "contentHash": "1jgyDzsyFIGhfwTIXfZ/AUbYWhkvN3cJUcBereaIiuBwvnwAYaSiK4w7yj75Pn6OFbCcDObkq/vUCPrVAudhqw=="
+      },
+      "mouthtrap.core": {
+        "type": "Project",
+        "dependencies": {
+          "Moderato.Effects": "[0.1.0-preview.6, 0.1.0-preview.6]"
+        }
+      },
+      "mouthtrap.inputs.camera": {
+        "type": "Project",
+        "dependencies": {
+          "FlashCap": "[1.13.0, 1.13.0]",
+          "Mouthtrap.Core": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}
