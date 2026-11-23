@@ -1,0 +1,8 @@
+/build/
+/build-check/
+/managed_components/
+/sdkconfig
+/sdkconfig.old
+/sdkconfig.wifi
+/sdkconfig.wifi.old
+/stream-token.txt
