@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows .NET checks
+    runs-on: windows-2025
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      - name: Restore locked dependencies
+        run: dotnet restore software/Mouthtrap.slnx --locked-mode
+
+      - name: Lint code style
+        run: dotnet format style software/Mouthtrap.slnx --verify-no-changes --no-restore --severity warn
+
+      - name: Lint analyzers
+        run: dotnet format analyzers software/Mouthtrap.slnx --verify-no-changes --no-restore --severity warn
+
+      - name: Check formatting
+        run: dotnet format whitespace software/Mouthtrap.slnx --verify-no-changes --no-restore
+
+      - name: Build Release
+        run: dotnet build software/Mouthtrap.slnx -c Release --no-restore -warnaserror
+
+      - name: Test Release
+        run: dotnet test --solution software/Mouthtrap.slnx -c Release --no-build --no-restore
