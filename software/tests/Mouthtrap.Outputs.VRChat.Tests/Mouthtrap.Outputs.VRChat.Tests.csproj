@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
+  </ItemGroup>
+</Project>

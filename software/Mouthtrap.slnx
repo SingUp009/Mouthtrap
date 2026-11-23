@@ -5,11 +5,13 @@
     <Project Path="src/Mouthtrap.Inference/Mouthtrap.Inference.csproj" />
     <Project Path="src/Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
     <Project Path="src/Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
+    <Project Path="src/Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Mouthtrap.Core.Tests/Mouthtrap.Core.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inference.Tests/Mouthtrap.Inference.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inputs.Camera.Tests/Mouthtrap.Inputs.Camera.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inputs.Network.Tests/Mouthtrap.Inputs.Network.Tests.csproj" />
+    <Project Path="tests/Mouthtrap.Outputs.VRChat.Tests/Mouthtrap.Outputs.VRChat.Tests.csproj" />
   </Folder>
 </Solution>
