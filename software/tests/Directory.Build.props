@@ -1,0 +1,16 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <!-- Every test project runs on xUnit v3 through Microsoft.Testing.Platform (see global.json), as in Moderato.Effects. -->
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.2" />
+    <Using Include="Xunit" />
+    <Compile Include="$(MSBuildThisFileDirectory)Shared/ResultAssert.cs" Link="ResultAssert.cs" />
+  </ItemGroup>
+</Project>

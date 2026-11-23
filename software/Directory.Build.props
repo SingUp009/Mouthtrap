@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>15.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- User-facing strings are English in each project's .resx, with translations in satellite assemblies. -->
+    <NeutralLanguage>en</NeutralLanguage>
+    <WarningsAsErrors>$(WarningsAsErrors);CS8509;CS8655;MEFF310</WarningsAsErrors>
+  </PropertyGroup>
+</Project>
