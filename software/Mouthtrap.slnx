@@ -2,11 +2,13 @@
   <Folder Name="/src/">
     <Project Path="src/Mouthtrap.Core/Mouthtrap.Core.csproj" />
     <Project Path="src/Mouthtrap.Diagnostics/Mouthtrap.Diagnostics.csproj" />
+    <Project Path="src/Mouthtrap.Inference/Mouthtrap.Inference.csproj" />
     <Project Path="src/Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
     <Project Path="src/Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Mouthtrap.Core.Tests/Mouthtrap.Core.Tests.csproj" />
+    <Project Path="tests/Mouthtrap.Inference.Tests/Mouthtrap.Inference.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inputs.Camera.Tests/Mouthtrap.Inputs.Camera.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inputs.Network.Tests/Mouthtrap.Inputs.Network.Tests.csproj" />
   </Folder>

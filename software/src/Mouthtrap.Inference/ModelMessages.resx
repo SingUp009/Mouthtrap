@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ModelPathRequired" xml:space="preserve"><value>Set the model path and the input and output names.</value></data>
+  <data name="InputSizeOutOfRange" xml:space="preserve"><value>The input width and height must be between 1 and 4096.</value></data>
+  <data name="TensorFormatUnsupported" xml:space="preserve"><value>The tensor layout or colour order is not supported.</value></data>
+  <data name="OutputIndexOutOfRange" xml:space="preserve"><value>The output count or the JawOpen index is out of range.</value></data>
+  <data name="TooManyExpressions" xml:space="preserve"><value>Up to 128 additional expressions can be set.</value></data>
+  <data name="ExpressionNameInvalid" xml:space="preserve"><value>The expression name '{0}' is invalid, duplicated or reserved.</value></data>
+  <data name="ExpressionNameUnmapped" xml:space="preserve"><value>The expression name '{0}' is not in the mapping table. Use an ARKit-style name such as MouthSmileLeft.</value></data>
+  <data name="ExpressionIndexInvalid" xml:space="preserve"><value>The output index of expression '{0}' is out of range or duplicated.</value></data>
+  <data name="InputScaleInvalid" xml:space="preserve"><value>The input scale or bias is invalid.</value></data>
+  <data name="Sha256Invalid" xml:space="preserve"><value>Give the SHA256 as 64 hexadecimal digits, or leave it out.</value></data>
+  <data name="DefinitionTooLarge" xml:space="preserve"><value>The model definition must be 64 KiB or smaller.</value></data>
+  <data name="DefinitionEmpty" xml:space="preserve"><value>The model definition is empty.</value></data>
+  <data name="ModelTooLarge" xml:space="preserve"><value>Models are limited to 512 MiB.</value></data>
+  <data name="Sha256Mismatch" xml:space="preserve"><value>The model's SHA256 does not match the definition.</value></data>
+  <data name="ContractMismatch" xml:space="preserve"><value>The model's inputs and outputs do not match the definition.</value></data>
+  <data name="OutputCountMismatch" xml:space="preserve"><value>The model's output count does not match the definition.</value></data>
+  <data name="JawOpenOutputInvalid" xml:space="preserve"><value>The JawOpen output is invalid.</value></data>
+  <data name="ExpressionOutputInvalid" xml:space="preserve"><value>The output of expression '{0}' is invalid.</value></data>
+</root>
