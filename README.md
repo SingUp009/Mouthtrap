@@ -48,7 +48,7 @@ Run `& $cli run --help` for all options.
 ## Limitations
 
 - Tongue keys are off by default: with this model they also react to an open mouth.
-- The camera must stay still and close to the mouth; a mount for the Quest 3S is not available yet.
+- The camera must stay still and close to the mouth, for example in the [Quest 3S mount](hardware/README.md).
 - The Wi-Fi stream is plain HTTP. Use it only on a trusted network.
 
 ## Contributing
