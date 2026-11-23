@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>口元の映像から表情を推論 · 処理はこのPC内のみ</value></data>
+  <data name="StateIdle" xml:space="preserve"><value>待機中</value></data>
+  <data name="StateClosing" xml:space="preserve"><value>終了中</value></data>
+  <data name="StateStopping" xml:space="preserve"><value>停止中…</value></data>
+  <data name="StateRunning" xml:space="preserve"><value>実行中</value></data>
+  <data name="StateDetecting" xml:space="preserve"><value>カメラ検出中</value></data>
+  <data name="InputFpsIdle" xml:space="preserve"><value>入力FPS: —</value></data>
+  <data name="InputFpsStopped" xml:space="preserve"><value>入力FPS: —（停止）</value></data>
+  <data name="RefreshButton" xml:space="preserve"><value>再検出 (_R)</value></data>
+  <data name="StartButton" xml:space="preserve"><value>開始 (_S)</value></data>
+  <data name="StopButton" xml:space="preserve"><value>停止 (_T)</value></data>
+  <data name="StatusPreparing" xml:space="preserve"><value>準備中</value></data>
+  <data name="InputTitle" xml:space="preserve"><value>入力</value></data>
+  <data name="InputKindLabel" xml:space="preserve"><value>入力元 (_I)</value></data>
+  <data name="InputKindName" xml:space="preserve"><value>入力元</value></data>
+  <data name="InputCamera" xml:space="preserve"><value>カメラ</value></data>
+  <data name="InputImage" xml:space="preserve"><value>画像ファイル</value></data>
+  <data name="InputVideo" xml:space="preserve"><value>動画ファイル</value></data>
+  <data name="CameraLabel" xml:space="preserve"><value>カメラ (_C)</value></data>
+  <data name="CameraName" xml:space="preserve"><value>カメラ</value></data>
+  <data name="ModeLabel" xml:space="preserve"><value>解像度・形式・公称FPS (_M)</value></data>
+  <data name="ModeName" xml:space="preserve"><value>撮影モード</value></data>
+  <data name="FileButton" xml:space="preserve"><value>ファイル選択 (_F)</value></data>
+  <data name="FileButtonTip" xml:space="preserve"><value>静止画・動画は最大8192px、合計16777216画素。動画は再生映像のサンプリングです。</value></data>
+  <data name="NoFile" xml:space="preserve"><value>ファイル未選択</value></data>
+  <data name="UrlLabel" xml:space="preserve"><value>配信URL (_U)</value></data>
+  <data name="UrlName" xml:space="preserve"><value>MJPEG配信URL</value></data>
+  <data name="TokenButton" xml:space="preserve"><value>トークンファイル (_K)</value></data>
+  <data name="TokenButtonTip" xml:space="preserve"><value>ファイルの場所だけを保存し、トークンの値は保存しません。</value></data>
+  <data name="NoToken" xml:space="preserve"><value>未選択 · 認証なしで接続</value></data>
+  <data name="CropTitle" xml:space="preserve"><value>口元の範囲</value></data>
+  <data name="CropEnabled" xml:space="preserve"><value>指定範囲を使う</value></data>
+  <data name="CropLeftLabel" xml:space="preserve"><value>左 %</value></data>
+  <data name="CropTopLabel" xml:space="preserve"><value>上 %</value></data>
+  <data name="CropWidthLabel" xml:space="preserve"><value>幅 %</value></data>
+  <data name="CropHeightLabel" xml:space="preserve"><value>高さ %</value></data>
+  <data name="CropLeftName" xml:space="preserve"><value>切り出し左パーセント</value></data>
+  <data name="CropTopName" xml:space="preserve"><value>切り出し上パーセント</value></data>
+  <data name="CropWidthName" xml:space="preserve"><value>切り出し幅パーセント</value></data>
+  <data name="CropHeightName" xml:space="preserve"><value>切り出し高さパーセント</value></data>
+  <data name="ApplyButton" xml:space="preserve"><value>適用 (_A)</value></data>
+  <data name="RotationLabel" xml:space="preserve"><value>回転</value></data>
+  <data name="RotationName" xml:space="preserve"><value>回転角度</value></data>
+  <data name="Mirror" xml:space="preserve"><value>左右反転</value></data>
+  <data name="CropHintFull" xml:space="preserve"><value>全体を使用中。口元の位置は範囲を指定して調整してください。</value></data>
+  <data name="CropHintDrag" xml:space="preserve"><value>入力プレビュー上をドラッグしても範囲を指定できます。</value></data>
+  <data name="CropInvalid" xml:space="preserve"><value>範囲は0〜100%内、幅と高さは0より大きく指定してください。前の設定を維持しています。</value></data>
+  <data name="CropApplied" xml:space="preserve"><value>指定範囲を使用中。緑の枠で位置を確認してください。</value></data>
+  <data name="CropFull" xml:space="preserve"><value>全体を使用中。</value></data>
+  <data name="CropDragTooSmall" xml:space="preserve"><value>範囲はプレビュー上をドラッグして指定してください。前の設定を維持しています。</value></data>
+  <data name="SavedCropApplied" xml:space="preserve"><value>保存した範囲を使用中。緑の枠で位置を確認してください。</value></data>
+  <data name="SavedFull" xml:space="preserve"><value>全体を使用中（保存した設定）。</value></data>
+  <data name="TrackingTitle" xml:space="preserve"><value>表情の推論</value></data>
+  <data name="EnableTracking" xml:space="preserve"><value>口の表情推論 (CPU)</value></data>
+  <data name="ModelButton" xml:space="preserve"><value>モデル設定 (_L)</value></data>
+  <data name="NoModel" xml:space="preserve"><value>未選択 · モデル本体は利用者が用意してください</value></data>
+  <data name="AdaptiveCalibration" xml:space="preserve"><value>自動較正（JawOpenと追加表情）</value></data>
+  <data name="ResetCalibration" xml:space="preserve"><value>較正をやり直す</value></data>
+  <data name="CalibrationHint" xml:space="preserve"><value>自然な開閉で範囲を学習・更新します</value></data>
+  <data name="Smoothing" xml:space="preserve"><value>平滑化</value></data>
+  <data name="Tongue" xml:space="preserve"><value>舌のキーも送る</value></data>
+  <data name="DeadzoneLabel" xml:space="preserve"><value>デッドゾーン (_D)</value></data>
+  <data name="DeadzoneName" xml:space="preserve"><value>デッドゾーン</value></data>
+  <data name="OscEnabled" xml:space="preserve"><value>VRChatへ送信 (OSC) (_O)</value></data>
+  <data name="OscTip" xml:space="preserve"><value>有効にしたときだけ、表情の値（映像ではない）を指定先へ送ります。録画・画像保存は行いません。</value></data>
+  <data name="OscEndpointLabel" xml:space="preserve"><value>送信先 IP:ポート</value></data>
+  <data name="OscEndpointName" xml:space="preserve"><value>OSC送信先</value></data>
+  <data name="OscOff" xml:space="preserve"><value>OSC: 送信しません</value></data>
+  <data name="OscPreparing" xml:space="preserve"><value>OSC: {0}へ送信を準備中</value></data>
+  <data name="OscSending" xml:space="preserve"><value>OSC: 送信中 · {0} 件</value></data>
+  <data name="OscStopped" xml:space="preserve"><value>OSC: 停止 · 送信 {0} 件（最後に全0を送信）</value></data>
+  <data name="LanguageTitle" xml:space="preserve"><value>言語</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>表示言語 (_G)</value></data>
+  <data name="LanguageName" xml:space="preserve"><value>表示言語</value></data>
+  <data name="LanguageSystem" xml:space="preserve"><value>Windowsの設定に合わせる</value></data>
+  <data name="LanguageRestart" xml:space="preserve"><value>Mouthtrapを再起動すると表示言語が切り替わります。</value></data>
+  <data name="SettingsLoading" xml:space="preserve"><value>設定: 読み込み中</value></data>
+  <data name="PreviewHint" xml:space="preserve"><value>入力元を選んで「開始」を押してください</value></data>
+  <data name="PreviewTip" xml:space="preserve"><value>ドラッグで口元の範囲を指定</value></data>
+  <data name="PreviewName" xml:space="preserve"><value>入力プレビュー</value></data>
+  <data name="FrameStatsIdle" xml:space="preserve"><value>受信: 0 · 表示: 0 · プレビュー間引き: 0</value></data>
+  <data name="FrameStatsStart" xml:space="preserve"><value>受信: 0 · 処理: 0 · 表示: 0 · 処理前の置換: 0</value></data>
+  <data name="FrameStats" xml:space="preserve"><value>受信: {0} · 処理: {1} · 表示: {2} · 処理前の置換: {3} · 受信→処理完了: {4:F1} ms</value></data>
+  <data name="ProcessedIdle" xml:space="preserve"><value>前処理結果 · 未処理</value></data>
+  <data name="ProcessedTitle" xml:space="preserve"><value>前処理結果 · {0}×{1} RGB</value></data>
+  <data name="ProcessedName" xml:space="preserve"><value>前処理プレビュー</value></data>
+  <data name="AdditionalTitle" xml:space="preserve"><value>追加表情（未較正）</value></data>
+  <data name="AdditionalName" xml:space="preserve"><value>追加表情の値</value></data>
+  <data name="JawOpenNone" xml:space="preserve"><value>JawOpen: 未推論</value></data>
+  <data name="JawOpenName" xml:space="preserve"><value>JawOpen推定値</value></data>
+  <data name="JawOpenValue" xml:space="preserve"><value>JawOpen: {0:F3}（{1}）</value></data>
+  <data name="CalibrationReady" xml:space="preserve"><value>自動較正</value></data>
+  <data name="CalibrationLearning" xml:space="preserve"><value>学習中・未較正</value></data>
+  <data name="Uncalibrated" xml:space="preserve"><value>未較正</value></data>
+  <data name="TrackingOff" xml:space="preserve"><value>推論オフ · 表情は未較正です</value></data>
+  <data name="TrackingStopped" xml:space="preserve"><value>推論停止 · 表情は未較正です</value></data>
+  <data name="TrackingStats" xml:space="preserve"><value>モデル入力: {0}×{1} · raw: {2:F4}
+推論: {3:F2} ms · Processing FPS: {4:F1}
+推論完了時Frame Age: {5:F1} ms · 処理: {6}
+</value></data>
+  <data name="LearnedRange" xml:space="preserve"><value>推定範囲: {0:F3}〜{1:F3}
+</value></data>
+  <data name="NoFaceGuarantee" xml:space="preserve"><value>値は顔の検出成功を保証しません。</value></data>
+  <data name="PreprocessNone" xml:space="preserve"><value>前処理: —</value></data>
+  <data name="PreprocessWaiting" xml:space="preserve"><value>前処理: 計測待ち</value></data>
+  <data name="PreprocessStats" xml:space="preserve"><value>元: {0}×{1} · 範囲: {2},{3} {4}×{5}
+前処理（復号を除く）: {6:F2} ms</value></data>
+  <data name="FpsCamera" xml:space="preserve"><value>実測Capture FPS</value></data>
+  <data name="FpsStream" xml:space="preserve"><value>受信FPS</value></data>
+  <data name="FpsVideo" xml:space="preserve"><value>動画サンプル FPS</value></data>
+  <data name="FpsMeasuring" xml:space="preserve"><value>{0}: 計測中</value></data>
+  <data name="StillLoading" xml:space="preserve"><value>静止画 · 読み込み中</value></data>
+  <data name="StillHolding" xml:space="preserve"><value>静止画 · 1枚を保持中</value></data>
+  <data name="DetectingCameras" xml:space="preserve"><value>カメラを検出しています…</value></data>
+  <data name="NoCameras" xml:space="preserve"><value>カメラがありません。USB接続を確認してください。</value></data>
+  <data name="DetectFailed" xml:space="preserve"><value>検出失敗 (0x{0:X8}): {1}</value></data>
+  <data name="NeedsWindows" xml:space="preserve"><value>Windowsが必要です。</value></data>
+  <data name="DetectCancelled" xml:space="preserve"><value>検出を中止しました。</value></data>
+  <data name="GuidanceCamera" xml:space="preserve"><value>カメラとモードを確認して開始してください。</value></data>
+  <data name="GuidanceStream" xml:space="preserve"><value>配信URLとトークンファイルを確認して開始してください。</value></data>
+  <data name="GuidanceFile" xml:space="preserve"><value>ファイルを選択して開始してください。</value></data>
+  <data name="TokenDialogTitle" xml:space="preserve"><value>配信トークンのファイルを選択</value></data>
+  <data name="TokenDialogFilter" xml:space="preserve"><value>テキスト|*.txt|すべてのファイル|*.*</value></data>
+  <data name="ImageDialogTitle" xml:space="preserve"><value>入力画像を選択</value></data>
+  <data name="ImageDialogFilter" xml:space="preserve"><value>画像|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff|すべてのファイル|*.*</value></data>
+  <data name="VideoDialogTitle" xml:space="preserve"><value>入力動画を選択</value></data>
+  <data name="VideoDialogFilter" xml:space="preserve"><value>動画|*.mp4;*.avi;*.wmv;*.mov|すべてのファイル|*.*</value></data>
+  <data name="ModelDialogTitle" xml:space="preserve"><value>モデルの入力・出力設定を選択</value></data>
+  <data name="ModelDialogFilter" xml:space="preserve"><value>モデル設定|*.json</value></data>
+  <data name="DeadzoneInvalid" xml:space="preserve"><value>デッドゾーンは0以上0.5未満で指定してください。</value></data>
+  <data name="OscEndpointInvalid" xml:space="preserve"><value>OSCの送信先はIPアドレスとポートで指定してください（例: 127.0.0.1:9000）。</value></data>
+  <data name="StartingInput" xml:space="preserve"><value>入力を開始しています…</value></data>
+  <data name="ModelLoading" xml:space="preserve"><value>モデルを初期化しています…</value></data>
+  <data name="Completed" xml:space="preserve"><value>完了しました。</value></data>
+  <data name="Stopped" xml:space="preserve"><value>停止しました。入力を解放済みです。</value></data>
+  <data name="Stopping" xml:space="preserve"><value>停止・入力の解放を待っています…</value></data>
+  <data name="Previewing" xml:space="preserve"><value>プレビュー中 — 停止すると入力を解放します。</value></data>
+  <data name="DisplayFailed" xml:space="preserve"><value>画像の表示に失敗しました。入力を停止しています…</value></data>
+  <data name="OscFailed" xml:space="preserve"><value>OSC出力に失敗しました: {0}</value></data>
+  <data name="InputSettingsError" xml:space="preserve"><value>入力の設定を確認してください: {0}</value></data>
+  <data name="InputUnavailableWithCode" xml:space="preserve"><value>入力を開始できません (0x{1:X8}): {0}</value></data>
+  <data name="InputUnavailable" xml:space="preserve"><value>入力を開始できません: {0}</value></data>
+  <data name="InputLost" xml:space="preserve"><value>入力が途切れたため停止しました: {0}</value></data>
+  <data name="InputDataError" xml:space="preserve"><value>入力を読み取れません: {0}</value></data>
+  <data name="ModelMissing" xml:space="preserve"><value>モデルまたは設定が見つかりません: {0}</value></data>
+  <data name="ModelLoadFailed" xml:space="preserve"><value>モデルの読み込みに失敗しました: {0}</value></data>
+  <data name="ModelContract" xml:space="preserve"><value>モデル設定を確認してください: {0}</value></data>
+  <data name="InferenceFailed" xml:space="preserve"><value>推論に失敗しました: {0}</value></data>
+  <data name="SettingsRestored" xml:space="preserve"><value>設定: {0} から復元しました。変更すると自動で保存します。</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>設定: {0} に保存しました。</value></data>
+  <data name="SettingsMissing" xml:space="preserve"><value>設定: 保存した設定はありません。既定値で開始し、変更すると自動で保存します。</value></data>
+  <data name="SettingsUnreadable" xml:space="preserve"><value>設定: {0} を読めません（{1}）。</value></data>
+  <data name="SettingsCorrupt" xml:space="preserve"><value>設定: {0} の内容が壊れています（{1}）。既定値で開始し、変更すると上書きします。</value></data>
+  <data name="SettingsVersion" xml:space="preserve"><value>設定: {0} は対応していない形式（version {1}）です。既定値で開始し、変更すると上書きします。</value></data>
+  <data name="SettingsValueInvalid" xml:space="preserve"><value>設定: {0} が範囲外です（{1}）。</value></data>
+  <data name="SettingsWriteFailed" xml:space="preserve"><value>設定: {0} へ保存できませんでした（{1}）。前の内容を残しています。</value></data>
+  <data name="SettingsStartingWithDefaults" xml:space="preserve"><value>既定値で開始します。</value></data>
+  <data name="SettingsNotSaved" xml:space="preserve"><value>保存していません。</value></data>
+  <data name="Defect" xml:space="preserve"><value>エラー: {0}（診断情報をTraceへ出力しました）</value></data>
+</root>

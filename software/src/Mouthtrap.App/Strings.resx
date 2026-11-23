@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="HeaderSubtitle" xml:space="preserve"><value>Expressions from video of your mouth · processed only on this PC</value></data>
+  <data name="StateIdle" xml:space="preserve"><value>Idle</value></data>
+  <data name="StateClosing" xml:space="preserve"><value>Closing</value></data>
+  <data name="StateStopping" xml:space="preserve"><value>Stopping…</value></data>
+  <data name="StateRunning" xml:space="preserve"><value>Running</value></data>
+  <data name="StateDetecting" xml:space="preserve"><value>Detecting cameras</value></data>
+  <data name="InputFpsIdle" xml:space="preserve"><value>Input FPS: —</value></data>
+  <data name="InputFpsStopped" xml:space="preserve"><value>Input FPS: — (stopped)</value></data>
+  <data name="RefreshButton" xml:space="preserve"><value>_Refresh</value></data>
+  <data name="StartButton" xml:space="preserve"><value>_Start</value></data>
+  <data name="StopButton" xml:space="preserve"><value>S_top</value></data>
+  <data name="StatusPreparing" xml:space="preserve"><value>Preparing</value></data>
+  <data name="InputTitle" xml:space="preserve"><value>Input</value></data>
+  <data name="InputKindLabel" xml:space="preserve"><value>_Input</value></data>
+  <data name="InputKindName" xml:space="preserve"><value>Input source</value></data>
+  <data name="InputCamera" xml:space="preserve"><value>Camera</value></data>
+  <data name="InputImage" xml:space="preserve"><value>Image file</value></data>
+  <data name="InputVideo" xml:space="preserve"><value>Video file</value></data>
+  <data name="CameraLabel" xml:space="preserve"><value>_Camera</value></data>
+  <data name="CameraName" xml:space="preserve"><value>Camera</value></data>
+  <data name="ModeLabel" xml:space="preserve"><value>_Mode (resolution, format, nominal FPS)</value></data>
+  <data name="ModeName" xml:space="preserve"><value>Capture mode</value></data>
+  <data name="FileButton" xml:space="preserve"><value>Choose _file</value></data>
+  <data name="FileButtonTip" xml:space="preserve"><value>Images and videos up to 8192 px and 16,777,216 pixels in total. Videos are sampled from playback.</value></data>
+  <data name="NoFile" xml:space="preserve"><value>No file selected</value></data>
+  <data name="UrlLabel" xml:space="preserve"><value>Stream _URL</value></data>
+  <data name="UrlName" xml:space="preserve"><value>MJPEG stream URL</value></data>
+  <data name="TokenButton" xml:space="preserve"><value>To_ken file</value></data>
+  <data name="TokenButtonTip" xml:space="preserve"><value>Only the file's location is saved, never the token itself.</value></data>
+  <data name="NoToken" xml:space="preserve"><value>Not selected · connect without a token</value></data>
+  <data name="CropTitle" xml:space="preserve"><value>Mouth area</value></data>
+  <data name="CropEnabled" xml:space="preserve"><value>Use a crop</value></data>
+  <data name="CropLeftLabel" xml:space="preserve"><value>Left %</value></data>
+  <data name="CropTopLabel" xml:space="preserve"><value>Top %</value></data>
+  <data name="CropWidthLabel" xml:space="preserve"><value>Width %</value></data>
+  <data name="CropHeightLabel" xml:space="preserve"><value>Height %</value></data>
+  <data name="CropLeftName" xml:space="preserve"><value>Crop left in percent</value></data>
+  <data name="CropTopName" xml:space="preserve"><value>Crop top in percent</value></data>
+  <data name="CropWidthName" xml:space="preserve"><value>Crop width in percent</value></data>
+  <data name="CropHeightName" xml:space="preserve"><value>Crop height in percent</value></data>
+  <data name="ApplyButton" xml:space="preserve"><value>_Apply</value></data>
+  <data name="RotationLabel" xml:space="preserve"><value>Rotation</value></data>
+  <data name="RotationName" xml:space="preserve"><value>Rotation angle</value></data>
+  <data name="Mirror" xml:space="preserve"><value>Mirror</value></data>
+  <data name="CropHintFull" xml:space="preserve"><value>Using the whole frame. Set a crop to fit your mouth.</value></data>
+  <data name="CropHintDrag" xml:space="preserve"><value>You can also drag on the input preview to set the area.</value></data>
+  <data name="CropInvalid" xml:space="preserve"><value>Keep the area within 0–100%, with a width and height above 0. The previous setting is kept.</value></data>
+  <data name="CropApplied" xml:space="preserve"><value>Using the crop. Check its position with the green frame.</value></data>
+  <data name="CropFull" xml:space="preserve"><value>Using the whole frame.</value></data>
+  <data name="CropDragTooSmall" xml:space="preserve"><value>Drag on the preview to set the area. The previous setting is kept.</value></data>
+  <data name="SavedCropApplied" xml:space="preserve"><value>Using the saved crop. Check its position with the green frame.</value></data>
+  <data name="SavedFull" xml:space="preserve"><value>Using the whole frame (saved setting).</value></data>
+  <data name="TrackingTitle" xml:space="preserve"><value>Expressions</value></data>
+  <data name="EnableTracking" xml:space="preserve"><value>Mouth expression inference (CPU)</value></data>
+  <data name="ModelButton" xml:space="preserve"><value>Mode_l definition</value></data>
+  <data name="NoModel" xml:space="preserve"><value>Not selected · bring your own model</value></data>
+  <data name="AdaptiveCalibration" xml:space="preserve"><value>Auto-calibration (JawOpen and other expressions)</value></data>
+  <data name="ResetCalibration" xml:space="preserve"><value>Recalibrate</value></data>
+  <data name="CalibrationHint" xml:space="preserve"><value>Learns and updates the range from natural opening and closing</value></data>
+  <data name="Smoothing" xml:space="preserve"><value>Smoothing</value></data>
+  <data name="Tongue" xml:space="preserve"><value>Also send the tongue keys</value></data>
+  <data name="DeadzoneLabel" xml:space="preserve"><value>_Deadzone</value></data>
+  <data name="DeadzoneName" xml:space="preserve"><value>Deadzone</value></data>
+  <data name="OscEnabled" xml:space="preserve"><value>Send to VRChat (_OSC)</value></data>
+  <data name="OscTip" xml:space="preserve"><value>Only while this is on, expression values (not video) are sent to the address. Nothing is recorded or saved as images.</value></data>
+  <data name="OscEndpointLabel" xml:space="preserve"><value>Address (IP:port)</value></data>
+  <data name="OscEndpointName" xml:space="preserve"><value>OSC address</value></data>
+  <data name="OscOff" xml:space="preserve"><value>OSC: not sending</value></data>
+  <data name="OscPreparing" xml:space="preserve"><value>OSC: preparing to send to {0}</value></data>
+  <data name="OscSending" xml:space="preserve"><value>OSC: sending · {0} sent</value></data>
+  <data name="OscStopped" xml:space="preserve"><value>OSC: stopped · {0} sent (all zeros sent last)</value></data>
+  <data name="LanguageTitle" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>Display lan_guage</value></data>
+  <data name="LanguageName" xml:space="preserve"><value>Display language</value></data>
+  <data name="LanguageSystem" xml:space="preserve"><value>Same as Windows</value></data>
+  <data name="LanguageRestart" xml:space="preserve"><value>Restart Mouthtrap to apply the language.</value></data>
+  <data name="SettingsLoading" xml:space="preserve"><value>Settings: loading</value></data>
+  <data name="PreviewHint" xml:space="preserve"><value>Choose an input and press Start</value></data>
+  <data name="PreviewTip" xml:space="preserve"><value>Drag to set the mouth area</value></data>
+  <data name="PreviewName" xml:space="preserve"><value>Input preview</value></data>
+  <data name="FrameStatsIdle" xml:space="preserve"><value>Received: 0 · Shown: 0 · Preview skipped: 0</value></data>
+  <data name="FrameStatsStart" xml:space="preserve"><value>Received: 0 · Processed: 0 · Shown: 0 · Replaced before processing: 0</value></data>
+  <data name="FrameStats" xml:space="preserve"><value>Received: {0} · Processed: {1} · Shown: {2} · Replaced before processing: {3} · Received → processed: {4:F1} ms</value></data>
+  <data name="ProcessedIdle" xml:space="preserve"><value>Preprocessed · none yet</value></data>
+  <data name="ProcessedTitle" xml:space="preserve"><value>Preprocessed · {0}×{1} RGB</value></data>
+  <data name="ProcessedName" xml:space="preserve"><value>Preprocessed preview</value></data>
+  <data name="AdditionalTitle" xml:space="preserve"><value>Other expressions (uncalibrated)</value></data>
+  <data name="AdditionalName" xml:space="preserve"><value>Other expression values</value></data>
+  <data name="JawOpenNone" xml:space="preserve"><value>JawOpen: not inferred</value></data>
+  <data name="JawOpenName" xml:space="preserve"><value>JawOpen estimate</value></data>
+  <data name="JawOpenValue" xml:space="preserve"><value>JawOpen: {0:F3} ({1})</value></data>
+  <data name="CalibrationReady" xml:space="preserve"><value>auto-calibrated</value></data>
+  <data name="CalibrationLearning" xml:space="preserve"><value>learning · uncalibrated</value></data>
+  <data name="Uncalibrated" xml:space="preserve"><value>uncalibrated</value></data>
+  <data name="TrackingOff" xml:space="preserve"><value>Inference off · expressions are uncalibrated</value></data>
+  <data name="TrackingStopped" xml:space="preserve"><value>Inference stopped · expressions are uncalibrated</value></data>
+  <data name="TrackingStats" xml:space="preserve"><value>Model input: {0}×{1} · raw: {2:F4}
+Inference: {3:F2} ms · Processing FPS: {4:F1}
+Frame age at inference: {5:F1} ms · Processed: {6}
+</value></data>
+  <data name="LearnedRange" xml:space="preserve"><value>Estimated range: {0:F3}–{1:F3}
+</value></data>
+  <data name="NoFaceGuarantee" xml:space="preserve"><value>The values do not mean that a face was detected.</value></data>
+  <data name="PreprocessNone" xml:space="preserve"><value>Preprocessing: —</value></data>
+  <data name="PreprocessWaiting" xml:space="preserve"><value>Preprocessing: waiting</value></data>
+  <data name="PreprocessStats" xml:space="preserve"><value>Source: {0}×{1} · Area: {2},{3} {4}×{5}
+Preprocessing (excluding decoding): {6:F2} ms</value></data>
+  <data name="FpsCamera" xml:space="preserve"><value>Measured capture FPS</value></data>
+  <data name="FpsStream" xml:space="preserve"><value>Received FPS</value></data>
+  <data name="FpsVideo" xml:space="preserve"><value>Video sample FPS</value></data>
+  <data name="FpsMeasuring" xml:space="preserve"><value>{0}: measuring</value></data>
+  <data name="StillLoading" xml:space="preserve"><value>Still image · loading</value></data>
+  <data name="StillHolding" xml:space="preserve"><value>Still image · holding one frame</value></data>
+  <data name="DetectingCameras" xml:space="preserve"><value>Detecting cameras…</value></data>
+  <data name="NoCameras" xml:space="preserve"><value>No cameras found. Check the USB connection.</value></data>
+  <data name="DetectFailed" xml:space="preserve"><value>Detection failed (0x{0:X8}): {1}</value></data>
+  <data name="NeedsWindows" xml:space="preserve"><value>Windows is required.</value></data>
+  <data name="DetectCancelled" xml:space="preserve"><value>Camera detection was cancelled.</value></data>
+  <data name="GuidanceCamera" xml:space="preserve"><value>Check the camera and mode, then press Start.</value></data>
+  <data name="GuidanceStream" xml:space="preserve"><value>Check the stream URL and token file, then press Start.</value></data>
+  <data name="GuidanceFile" xml:space="preserve"><value>Choose a file, then press Start.</value></data>
+  <data name="TokenDialogTitle" xml:space="preserve"><value>Choose the stream token file</value></data>
+  <data name="TokenDialogFilter" xml:space="preserve"><value>Text files|*.txt|All files|*.*</value></data>
+  <data name="ImageDialogTitle" xml:space="preserve"><value>Choose an input image</value></data>
+  <data name="ImageDialogFilter" xml:space="preserve"><value>Images|*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff|All files|*.*</value></data>
+  <data name="VideoDialogTitle" xml:space="preserve"><value>Choose an input video</value></data>
+  <data name="VideoDialogFilter" xml:space="preserve"><value>Videos|*.mp4;*.avi;*.wmv;*.mov|All files|*.*</value></data>
+  <data name="ModelDialogTitle" xml:space="preserve"><value>Choose the model definition</value></data>
+  <data name="ModelDialogFilter" xml:space="preserve"><value>Model definitions|*.json</value></data>
+  <data name="DeadzoneInvalid" xml:space="preserve"><value>Set the deadzone to at least 0 and below 0.5.</value></data>
+  <data name="OscEndpointInvalid" xml:space="preserve"><value>Give the OSC address as an IP address and port, such as 127.0.0.1:9000.</value></data>
+  <data name="StartingInput" xml:space="preserve"><value>Starting the input…</value></data>
+  <data name="ModelLoading" xml:space="preserve"><value>Loading the model…</value></data>
+  <data name="Completed" xml:space="preserve"><value>Finished.</value></data>
+  <data name="Stopped" xml:space="preserve"><value>Stopped. The input has been released.</value></data>
+  <data name="Stopping" xml:space="preserve"><value>Stopping and releasing the input…</value></data>
+  <data name="Previewing" xml:space="preserve"><value>Previewing — stopping releases the input.</value></data>
+  <data name="DisplayFailed" xml:space="preserve"><value>Could not show the image. Stopping the input…</value></data>
+  <data name="OscFailed" xml:space="preserve"><value>OSC output failed: {0}</value></data>
+  <data name="InputSettingsError" xml:space="preserve"><value>Check the input settings: {0}</value></data>
+  <data name="InputUnavailableWithCode" xml:space="preserve"><value>Cannot start the input (0x{1:X8}): {0}</value></data>
+  <data name="InputUnavailable" xml:space="preserve"><value>Cannot start the input: {0}</value></data>
+  <data name="InputLost" xml:space="preserve"><value>Stopped because the input was lost: {0}</value></data>
+  <data name="InputDataError" xml:space="preserve"><value>Cannot read the input: {0}</value></data>
+  <data name="ModelMissing" xml:space="preserve"><value>Model or definition not found: {0}</value></data>
+  <data name="ModelLoadFailed" xml:space="preserve"><value>Could not load the model: {0}</value></data>
+  <data name="ModelContract" xml:space="preserve"><value>Check the model definition: {0}</value></data>
+  <data name="InferenceFailed" xml:space="preserve"><value>Inference failed: {0}</value></data>
+  <data name="SettingsRestored" xml:space="preserve"><value>Settings: restored from {0}. Changes are saved automatically.</value></data>
+  <data name="SettingsSaved" xml:space="preserve"><value>Settings: saved to {0}.</value></data>
+  <data name="SettingsMissing" xml:space="preserve"><value>Settings: nothing saved yet. Starting with the defaults; changes are saved automatically.</value></data>
+  <data name="SettingsUnreadable" xml:space="preserve"><value>Settings: cannot read {0} ({1}).</value></data>
+  <data name="SettingsCorrupt" xml:space="preserve"><value>Settings: {0} is damaged ({1}). Starting with the defaults; changes will overwrite it.</value></data>
+  <data name="SettingsVersion" xml:space="preserve"><value>Settings: {0} has an unsupported format (version {1}). Starting with the defaults; changes will overwrite it.</value></data>
+  <data name="SettingsValueInvalid" xml:space="preserve"><value>Settings: {0} is out of range ({1}).</value></data>
+  <data name="SettingsWriteFailed" xml:space="preserve"><value>Settings: could not save to {0} ({1}). The previous contents are kept.</value></data>
+  <data name="SettingsStartingWithDefaults" xml:space="preserve"><value> Starting with the defaults.</value></data>
+  <data name="SettingsNotSaved" xml:space="preserve"><value> Not saved.</value></data>
+  <data name="Defect" xml:space="preserve"><value>Error: {0} (diagnostics written to Trace)</value></data>
+</root>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net11.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Mouthtrap.Core/Mouthtrap.Core.csproj" />
+    <ProjectReference Include="../Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
+    <ProjectReference Include="../Mouthtrap.Inference/Mouthtrap.Inference.csproj" />
+    <ProjectReference Include="../Mouthtrap.Inputs.Windows/Mouthtrap.Inputs.Windows.csproj" />
+    <ProjectReference Include="../Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
+    <ProjectReference Include="../Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Mouthtrap.App.Tests" />
+  </ItemGroup>
+</Project>
