@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Mouthtrap.Core/Mouthtrap.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Mouthtrap.Core.Tests/Mouthtrap.Core.Tests.csproj" />
+  </Folder>
+</Solution>
