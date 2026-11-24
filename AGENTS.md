@@ -29,6 +29,7 @@ Tests follow the conventions of [Moderato.Effects](https://github.com/SingUp009/
 - Cover the happy path, the edge cases and the error paths. Match typed errors by their case, not by message text, unless the message is what you test.
 - Control time with `FakeTimeProvider`. Use `TimerAwareTimeProvider` (in `software/tests/Shared`) to advance time only after the code under test has created its timer.
 - Order concurrent events with `TaskCompletionSource` signals, never with delays. Bound every wait and pass `TestContext.Current.CancellationToken` to it.
+- Firmware logic that needs no hardware lives in components such as `firmware/xiao-wifi/components/mouthtrap_stream`, with Unity tests in `test/host` built for ESP-IDF's linux target. Use the same conventions: a `TEST_GROUP` per function, `TEST(<function>, <Condition>_<ExpectedResult>)`, `// Given`, `// When`, `// Then`, result codes matched by case, and a table of inputs where xUnit would use a theory.
 - Tests do not replace running on hardware. Camera, XIAO and VRChat behaviour is checked by hand; say so when you could not.
 
 ## Checks
@@ -49,6 +50,7 @@ For firmware changes, run what `.github/workflows/firmware.yml` runs, in the ESP
 ```bash
 firmware/build-release.sh 0.0.0-dev .artifacts/firmware
 python firmware/check-size.py .artifacts/firmware/build/xiao-wifi   # and the other variants
+idf.py -C firmware/xiao-wifi/test/host -B "$PWD/.artifacts/build-host" build && .artifacts/build-host/mouthtrap_stream_test.elf
 idf.py -C firmware/xiao-wifi -B "$PWD/.artifacts/build-qemu" -D SDKCONFIG="$PWD/.artifacts/build-qemu/sdkconfig" \
     -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
 MOUTHTRAP_QEMU_BUILD=.artifacts/build-qemu python -m unittest discover -s firmware/xiao-wifi/test -v
@@ -70,7 +72,7 @@ If a check fails, delete the draft and the tag, fix the problem, and tag again.
 
 How the packages are built:
 
-- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware changes, fails when less than 10% of the app partition is free (`firmware/check-size.py`), and runs `firmware/xiao-wifi/test`: unit tests for `provision.py` and start-up tests in QEMU. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
+- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware changes, fails when an app does not fit its partition (`firmware/check-size.py`), and runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, and start-up tests in QEMU. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
 - The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
 - The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml` and `firmware.yml`; keep the two the same. Run the script in that image to reproduce a release's firmware byte for byte.
 - Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.
