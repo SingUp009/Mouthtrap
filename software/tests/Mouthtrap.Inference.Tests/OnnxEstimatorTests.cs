@@ -14,8 +14,7 @@ public sealed class OnnxEstimatorTests
 {
     // Synthetic ReduceMean graph with no trained weights, using the ONNX protobuf schema.
     private const string MeanModel = "CAgSD01vdXRodHJhcCB0ZXN0czprCikKBWltYWdlEgNqYXciClJlZHVjZU1lYW4qDwoIa2VlcGRpbXMYAKABAhIOc3ludGhldGljX21lYW5aHwoFaW1hZ2USFgoUCAESEAoCCAEKAggDCgIIAQoCCAJiDQoDamF3EgYKBAgBEgBCAhAN";
-    // Synthetic Identity and image/image graphs preserve tensor order and let a zero generate NaN.
-    private const string IdentityModel = "CAg6YwoWCgVpbWFnZRIDamF3IghJZGVudGl0eRIJc3ludGhldGljWh8KBWltYWdlEhYKFAgBEhAKAggBCgIIAwoCCAEKAggCYh0KA2phdxIWChQIARIQCgIIAQoCCAMKAggBCgIIAkICEA0=";
+    // A synthetic image/image graph lets a zero generate NaN; TestModels.Identity preserves tensor order.
     private const string DivideModel = "CAg6ZQoYCgVpbWFnZQoFaW1hZ2USA2phdyIDRGl2EglzeW50aGV0aWNaHwoFaW1hZ2USFgoUCAESEAoCCAEKAggDCgIIAQoCCAJiHQoDamF3EhYKFAgBEhAKAggBCgIIAwoCCAEKAggCQgIQDQ==";
 
     private static ModelDefinition Definition => new()
@@ -151,7 +150,7 @@ public sealed class OnnxEstimatorTests
     {
         // Given
         using var files = new Fixture();
-        File.WriteAllBytes(files.Model, Convert.FromBase64String(nonfinite ? DivideModel : IdentityModel));
+        File.WriteAllBytes(files.Model, Convert.FromBase64String(nonfinite ? DivideModel : TestModels.Identity));
         files.WriteDefinition(Definition with
         {
             OutputCount = 6,
@@ -193,7 +192,7 @@ public sealed class OnnxEstimatorTests
     {
         // Given
         using var files = new Fixture();
-        File.WriteAllBytes(files.Model, Convert.FromBase64String(IdentityModel));
+        File.WriteAllBytes(files.Model, Convert.FromBase64String(TestModels.Identity));
         files.WriteDefinition(Definition with { OutputCount = 6 });
         var original = File.ReadAllText(files.Config);
         // Replace the serialized null to test duplicate expression names inside a single object.
