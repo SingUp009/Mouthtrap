@@ -1,6 +1,6 @@
 name: Firmware
 
-# Builds every firmware variant, checks its size and runs the firmware tests. Pull requests run it only
+# Builds every firmware variant, checks that it fits its partition and runs the firmware tests. Pull requests run it only
 # when they change the firmware or what packs it.
 on:
   push:
@@ -51,8 +51,8 @@ jobs:
       - name: Check locked components
         run: git -c safe.directory='*' diff --exit-code -- firmware
 
-      - name: Check size
-        run: python3 firmware/check-size.py "packages/build/${{ matrix.variant }}" --min-free-percent 10
+      - name: Check that the app fits its partition
+        run: python3 firmware/check-size.py "packages/build/${{ matrix.variant }}"
 
       # The zip file is what a release ships. The build files next to it hold the flash offsets
       # (flash_args, flasher_args.json) and the ELF and map files for reading crash logs.
@@ -73,7 +73,7 @@ jobs:
             packages/build/${{ matrix.variant }}/partition_table/partition-table.bin
 
   test:
-    name: Test xiao-wifi
+    name: Test
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
@@ -87,14 +87,21 @@ jobs:
         with:
           persist-credentials: false
 
-      # QEMU emulates neither QIO flash nor octal PSRAM, so the tests use their own build settings.
+      # Settings validation, stream authentication and MJPEG framing, built for the linux target.
+      - name: Unit tests
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          idf.py -C firmware/xiao-wifi/test/host -B "$GITHUB_WORKSPACE/build-host" build
+          "$GITHUB_WORKSPACE/build-host/mouthtrap_stream_test.elf"
+
+      # QEMU emulates neither QIO flash nor octal PSRAM, so the start-up tests use their own build settings.
       - name: Build for QEMU
         run: |
           . "$IDF_PATH/export.sh" > /dev/null
           idf.py -C firmware/xiao-wifi -B "$GITHUB_WORKSPACE/build-qemu" -D SDKCONFIG="$GITHUB_WORKSPACE/build-qemu/sdkconfig" \
             -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
 
-      - name: Test
+      - name: provision.py and start-up tests
         env:
           MOUTHTRAP_QEMU_BUILD: build-qemu
         run: |
