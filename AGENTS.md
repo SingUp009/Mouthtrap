@@ -44,14 +44,35 @@ dotnet build software/Mouthtrap.slnx -c Release --no-restore -warnaserror
 dotnet test --solution software/Mouthtrap.slnx -c Release --no-build --no-restore
 ```
 
+For firmware changes, run what `.github/workflows/firmware.yml` runs, in the ESP-IDF 5.5.4 environment:
+
+```bash
+firmware/build-release.sh 0.0.0-dev .artifacts/firmware
+python firmware/check-size.py .artifacts/firmware/build/xiao-wifi   # and the other variants
+idf.py -C firmware/xiao-wifi -B "$PWD/.artifacts/build-qemu" -D SDKCONFIG="$PWD/.artifacts/build-qemu/sdkconfig" \
+    -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
+MOUTHTRAP_QEMU_BUILD=.artifacts/build-qemu python -m unittest discover -s firmware/xiao-wifi/test -v
+```
+
 Dependencies are locked with `packages.lock.json`. When you add or update a package, commit the updated lock files.
 
 ## Releases
 
-Push a tag such as `v1.2.0` to publish a release. `.github/workflows/release.yml` builds the packages twice, on separate runners and from different checkout folders, and publishes them with checksums and a provenance attestation only if both builds are identical. CI builds the same packages on every change.
+Push a tag such as `v1.2.0` to prepare a release. `.github/workflows/release.yml` builds the packages twice, on separate runners and from different checkout folders, and uploads them with checksums and a provenance attestation to a **draft** release only if both builds are identical.
 
+Publish the draft only after checking its files on hardware. Download them from the draft, not from a CI run, so that the files you check are the ones you publish:
+
+- `xiao-wifi`: flash it, run `provision.py`, see `Camera URL` in the log, and track the mouth through the GUI from the same release. Then flash it again and check that the settings are kept.
+- `xiao-uvc` and `xiao-uvc-multimode`: flash each and check that Windows lists **UVC CAM1** and that the GUI shows every mode of the variant.
+- GUI: on a Windows PC without the .NET SDK, start `Mouthtrap.App.exe` from the zip, and send to VRChat.
+
+If a check fails, delete the draft and the tag, fix the problem, and tag again.
+
+How the packages are built:
+
+- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware changes, fails when less than 10% of the app partition is free (`firmware/check-size.py`), and runs `firmware/xiao-wifi/test`: unit tests for `provision.py` and start-up tests in QEMU. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
 - The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
-- The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml`. Run the script in that image to reproduce a release's firmware byte for byte.
+- The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml` and `firmware.yml`; keep the two the same. Run the script in that image to reproduce a release's firmware byte for byte.
 - Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.
 - Keep the build inputs pinned: the SDK, the ESP-IDF image, the components in `dependencies.lock`, the packages in `packages.lock.json`, the Python version and the actions by commit. Firmware builds set `CONFIG_APP_REPRODUCIBLE_BUILD`, and the firmware takes no build-time secrets, so one build serves everyone.
 
