@@ -84,6 +84,14 @@ public sealed class FramePreprocessorTests
         Assert.Equal(Gray([4, 4, 4, 4]), output);
     }
 
+    [Fact]
+    public void FromPercent_TypedPercents_IsTheSameAsFractions()
+    {
+        // When / Then
+        Assert.Equal(ResultAssert.Ok(CropRegion.Create(.24, .25, .48, .58)), ResultAssert.Ok(CropRegion.FromPercent(24, 25, 48, 58)));
+        Assert.Equal("crop", ResultAssert.Err(CropRegion.FromPercent(60, 0, 50, 100)).Name);
+    }
+
     [Theory]
     [InlineData(-0.1, 0, 1, 1)]
     [InlineData(0, -0.1, 1, 1)]

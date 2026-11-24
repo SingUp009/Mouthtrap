@@ -70,7 +70,7 @@ public sealed record PreprocessingSettings
     public bool Mirror { get; init; }
 
     public Result<CropRegion, InvalidValue> ToCrop() =>
-        UseCrop ? CropRegion.Create(CropLeft / 100, CropTop / 100, CropWidth / 100, CropHeight / 100) : new Ok<CropRegion>(CropRegion.FullFrame);
+        UseCrop ? CropRegion.FromPercent(CropLeft, CropTop, CropWidth, CropHeight) : new Ok<CropRegion>(CropRegion.FullFrame);
 
     public Result<PreprocessSettings, InvalidValue> ToPreprocess() =>
         ToCrop().AndThen(crop => RotationToTurn(Rotation).Map(turn => new PreprocessSettings(crop, turn, Mirror)));

@@ -160,8 +160,16 @@ public sealed partial class Commands
             if (parsedOsc is Err<string>(var oscError)) return Usage(oscError);
             var oscTarget = parsedOsc.UnwrapOr(null);
             if (!double.IsFinite(seconds) || seconds < 0 || seconds > 86400) return Usage("seconds must be between 0 and 86400.");
-            var preprocessed = CropRegion.Create(cropLeft / 100, cropTop / 100, cropWidth / 100, cropHeight / 100)
-                .AndThen(crop => PreprocessingSettings.RotationToTurn(rotation).Map(turn => new PreprocessSettings(crop, turn, mirror)));
+            var preprocessed = new PreprocessingSettings
+            {
+                UseCrop = true,
+                CropLeft = cropLeft,
+                CropTop = cropTop,
+                CropWidth = cropWidth,
+                CropHeight = cropHeight,
+                Rotation = rotation,
+                Mirror = mirror
+            }.ToPreprocess();
             if (preprocessed is Err<InvalidValue>(var invalidPreprocessing)) return Usage(invalidPreprocessing.Message);
             var preprocessing = preprocessed.UnwrapOr(PreprocessSettings.Default);
             IFrameSource input;

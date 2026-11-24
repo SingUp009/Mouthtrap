@@ -25,6 +25,10 @@ public sealed record CropRegion
             ? new Ok<CropRegion>(new(x, y, width, height))
             : new Err<InvalidValue>(new("crop", "The crop must be a nonempty rectangle inside the frame."));
 
+    // The same crop in percent of the frame, as the GUI, the CLI and the settings file hold it.
+    public static Result<CropRegion, InvalidValue> FromPercent(double left, double top, double width, double height) =>
+        Create(left / 100, top / 100, width / 100, height / 100);
+
     public PixelRegion ToPixels(int width, int height)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);

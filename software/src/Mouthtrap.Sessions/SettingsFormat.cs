@@ -107,8 +107,9 @@ public static class SettingsFormat
         if (FilePath(settings.Model.DefinitionPath, "model.definitionPath") is { } model) return model;
 
         var preprocessing = settings.Preprocessing;
-        if (CropRegion.Create(preprocessing.CropLeft / 100, preprocessing.CropTop / 100, preprocessing.CropWidth / 100,
-                preprocessing.CropHeight / 100) is Err<InvalidValue>)
+        // The typed crop is checked even while it is turned off, so turning it on cannot load an unusable one.
+        if (CropRegion.FromPercent(preprocessing.CropLeft, preprocessing.CropTop, preprocessing.CropWidth, preprocessing.CropHeight)
+            is Err<InvalidValue>)
             return new("preprocessing.crop", "The crop must lie within 0 to 100 % with a width and height above 0.");
         if (preprocessing.Rotation is not (0 or 90 or 180 or 270)) return new("preprocessing.rotation", "Rotation must be 0, 90, 180 or 270.");
 

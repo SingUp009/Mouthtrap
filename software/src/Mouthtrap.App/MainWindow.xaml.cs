@@ -527,7 +527,7 @@ public partial class MainWindow : Window
         var useCrop = CropEnabled.IsChecked == true;
         var typed = (Left: Percent(CropX.Text), Top: Percent(CropY.Text), Width: Percent(CropWidth.Text), Height: Percent(CropHeight.Text));
         var crop = !useCrop ? new Ok<CropRegion>(CropRegion.FullFrame)
-            : typed is ({ } left, { } top, { } width, { } height) ? CropRegion.Create(left / 100, top / 100, width / 100, height / 100)
+            : typed is ({ } left, { } top, { } width, { } height) ? CropRegion.FromPercent(left, top, width, height)
             : new Err<InvalidValue>(new("crop", "The crop must be numbers."));
         if (crop.Map(region => new PreprocessSettings(region, (QuarterTurn)Rotation.SelectedIndex, Mirror.IsChecked == true))
             is not Ok<PreprocessSettings>(var next))
