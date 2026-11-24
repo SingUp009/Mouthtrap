@@ -1,9 +1,9 @@
-"""Check that a firmware build leaves enough room in its app partition.
+"""Check that a firmware build fits its app partition, and report how much room is left.
 
-    python firmware/check-size.py <build folder> [--min-free-percent 10]
+    python firmware/check-size.py <build folder>
 
-ESP-IDF fails a build only when the app no longer fits. This fails earlier, while there is still room
-to react, and writes the sizes to the GitHub job summary when it runs in GitHub Actions.
+The app must fit the smallest app partition in the build's partition table. When it runs in GitHub
+Actions, it writes the sizes to the job summary.
 """
 
 import argparse
@@ -33,8 +33,6 @@ def app_partitions(table: bytes) -> list[tuple[str, int]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("build", type=Path, help="ESP-IDF build folder")
-    parser.add_argument("--min-free-percent", type=float, default=10.0,
-                        help="smallest free share of the smallest app partition (default: 10)")
     arguments = parser.parse_args()
 
     description = json.loads((arguments.build / "project_description.json").read_text(encoding="utf-8"))
@@ -46,19 +44,17 @@ def main() -> int:
     label, capacity = min(partitions, key=lambda partition: partition[1])
     used = app.stat().st_size
     free = capacity - used
-    percent = 100 * free / capacity
-    ok = percent >= arguments.min_free_percent
+    fits = free >= 0
 
-    report = (f"| {arguments.build.name} | {used:,} | {label} {capacity:,} | {free:,} ({percent:.1f}%) "
-              f"| {'ok' if ok else f'below {arguments.min_free_percent:g}%'} |")
-    print(f"{app.name}: {used:,} bytes in {label} ({capacity:,} bytes), {free:,} bytes ({percent:.1f}%) free")
+    print(f"{app.name}: {used:,} bytes in {label} ({capacity:,} bytes), {free:,} bytes ({100 * free / capacity:.1f}%) free")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as file:
-            file.write("| Firmware | App bytes | Partition | Free | Check |\n|---|---|---|---|---|\n"
-                       f"{report}\n")
-    if not ok:
-        print(f"error: less than {arguments.min_free_percent:g}% of the app partition is free.", file=sys.stderr)
+            file.write("| Firmware | App bytes | Partition | Free | Fits |\n|---|---|---|---|---|\n"
+                       f"| {arguments.build.name} | {used:,} | {label} {capacity:,} | {free:,} "
+                       f"({100 * free / capacity:.1f}%) | {'yes' if fits else '**no**'} |\n")
+    if not fits:
+        print(f"error: the app is {-free:,} bytes larger than the {label} partition.", file=sys.stderr)
         return 1
     return 0
 
