@@ -4,3 +4,4 @@ TestResults/
 .artifacts/
 .vs/
 docs/
+!hardware/docs/
