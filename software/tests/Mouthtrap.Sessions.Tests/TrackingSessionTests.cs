@@ -55,8 +55,8 @@ public sealed class TrackingSessionTests
         // Then
         Assert.True(exit is Ok<Unit>);
         var frame = Assert.Single(sink.Frames);
-        Assert.Same(Pixel, frame.Source);
-        Assert.Null(frame.Estimate);
+        Assert.Same(Pixel, frame.Diagnostics.Source);
+        Assert.Null(frame.Result);
         Assert.Equal(1, session.Frames.Statistics.Received);
     }
 

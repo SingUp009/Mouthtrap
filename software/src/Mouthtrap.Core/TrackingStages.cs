@@ -2,10 +2,10 @@ using Moderato.Results;
 
 namespace Mouthtrap.Core;
 
-// What the stages made of one frame. Pixels (packed RGB24) belongs to the receivers. Estimate, Calibration and
-// Expressions are null without a model.
+// What the stages made of one frame. Pixels (packed RGB24) belongs to the receivers. Result and
+// InferenceMilliseconds are null without a model.
 public sealed record ProcessedFrame(byte[] Pixels, int PixelWidth, int PixelHeight, double PreprocessMilliseconds,
-    MouthEstimate? Estimate, double? InferenceMilliseconds, CalibrationSnapshot? Calibration, ExpressionFrame? Expressions);
+    TrackingResult? Result, double? InferenceMilliseconds);
 
 // One session's per-frame stages: preprocess → estimate → express. Preprocessing and expression processing are
 // pure; estimation is the model port. The estimator is borrowed: the pipeline owns and disposes it after the stages
@@ -43,7 +43,7 @@ public sealed class TrackingStages
         var pixels = Preprocess(frame.Image, frame.Settings.Preprocessing);
         var preprocessMs = clock.GetElapsedTime(preprocessAt).TotalMilliseconds;
         if (estimator is null)
-            return new Ok<ProcessedFrame>(new(pixels, OutputWidth, OutputHeight, preprocessMs, null, null, null, null));
+            return new Ok<ProcessedFrame>(new(pixels, OutputWidth, OutputHeight, preprocessMs, null, null));
 
         var inferenceAt = clock.GetTimestamp();
         return estimator.Estimate(pixels, cancellationToken).Map(estimate =>
@@ -51,8 +51,8 @@ public sealed class TrackingStages
             var inferenceMs = clock.GetElapsedTime(inferenceAt).TotalMilliseconds;
             cancellationToken.ThrowIfCancellationRequested();
             var (expressions, calibration) = processor.Process(estimate, clock.GetElapsedTime(sessionStartedAt));
-            return new ProcessedFrame(pixels, OutputWidth, OutputHeight, preprocessMs, estimate, inferenceMs, calibration,
-                expressions);
+            return new ProcessedFrame(pixels, OutputWidth, OutputHeight, preprocessMs,
+                new TrackingResult(estimate, expressions, calibration), inferenceMs);
         });
     }
 

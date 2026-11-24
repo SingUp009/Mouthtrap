@@ -45,13 +45,13 @@ public sealed class TrackingPipelineTests
         Assert.True(source.Released);
         Assert.True(model.Disposed);
         var frame = Assert.Single(sink.Frames);
-        Assert.Equal(1, frame.Processed);
-        Assert.Equal(1f, frame.Estimate!.JawOpen);
-        Assert.Equal(1f, frame.Expressions![UnifiedExpression.JawOpen]);
-        Assert.Equal(1, frame.Expressions.ProvidedCount);
-        Assert.Same(Red, frame.Source);
+        Assert.Equal(1, frame.Diagnostics.Processed);
+        Assert.Equal(1f, frame.Result!.Estimate.JawOpen);
+        Assert.Equal(1f, frame.Result!.Expressions[UnifiedExpression.JawOpen]);
+        Assert.Equal(1, frame.Result!.Expressions.ProvidedCount);
+        Assert.Same(Red, frame.Diagnostics.Source);
         Assert.Equal(new byte[] { 255, 0, 0 }, model.Pixels);
-        Assert.Equal(new byte[] { 255, 0, 0 }, frame.Pixels);
+        Assert.Equal(new byte[] { 255, 0, 0 }, frame.Diagnostics.Pixels);
     }
 
     [Fact]
@@ -66,14 +66,12 @@ public sealed class TrackingPipelineTests
         // Then
         Assert.True(exit is Ok<Unit>);
         var frame = Assert.Single(sink.Frames);
-        Assert.Equal(TrackingPipeline.UnmodeledOutputSize, frame.PixelWidth);
-        Assert.Equal(TrackingPipeline.UnmodeledOutputSize, frame.PixelHeight);
-        Assert.Equal(frame.PixelWidth * frame.PixelHeight * 3, frame.Pixels.Length);
-        Assert.Equal(new byte[] { 255, 0, 0 }, frame.Pixels[^3..]);
-        Assert.Null(frame.Estimate);
-        Assert.Null(frame.Expressions);
-        Assert.Null(frame.InferenceMilliseconds);
-        Assert.Null(frame.Calibration);
+        Assert.Equal(TrackingPipeline.UnmodeledOutputSize, frame.Diagnostics.PixelWidth);
+        Assert.Equal(TrackingPipeline.UnmodeledOutputSize, frame.Diagnostics.PixelHeight);
+        Assert.Equal(frame.Diagnostics.PixelWidth * frame.Diagnostics.PixelHeight * 3, frame.Diagnostics.Pixels.Length);
+        Assert.Equal(new byte[] { 255, 0, 0 }, frame.Diagnostics.Pixels[^3..]);
+        Assert.Null(frame.Result);
+        Assert.Null(frame.Diagnostics.InferenceMilliseconds);
     }
 
     [Theory]
@@ -91,13 +89,13 @@ public sealed class TrackingPipelineTests
         // Then
         Assert.True(exit is Ok<Unit>);
         var frame = Assert.Single(sink.Frames);
-        Assert.Equal(1, frame.Estimate!.RawJawOpen);
+        Assert.Equal(1, frame.Result!.Estimate.RawJawOpen);
         if (enabled)
         {
-            Assert.False(frame.Calibration!.Value.IsReady);
-            Assert.Null(frame.Calibration.Value.JawOpen);
+            Assert.False(frame.Result!.Calibration!.Value.IsReady);
+            Assert.Null(frame.Result!.Calibration!.Value.JawOpen);
         }
-        else Assert.Null(frame.Calibration);
+        else Assert.Null(frame.Result!.Calibration);
         Assert.True(model.Disposed);
     }
 
@@ -165,7 +163,7 @@ public sealed class TrackingPipelineTests
         var first = new Sink();
         var failing = new Sink { Failure = new("closed") };
         var last = new Sink();
-        var frame = new TrackingFrame(Red, 0, new(PreprocessSettings.Default, 0), [255, 0, 0], 1, 1, 0, null, null, null, 0, 1, default);
+        var frame = new TrackingFrame(null, new(Red, 0, new(PreprocessSettings.Default, 0), [255, 0, 0], 1, 1, 0, null, 0, 1, default));
 
         // When
         var result = new CompositeTrackingSink(first, failing, last).Publish(frame);
@@ -269,21 +267,21 @@ public sealed class TrackingPipelineTests
         var sink = new Sink();
         var run = Run(new FakeSource { Image = redBlue, WaitForCancellation = true }, null, sink, control,
             cancellationToken: cancellation.Token);
-        await sink.WaitFor(frame => frame.Processed == 1, cancellation.Token);
+        await sink.WaitFor(frame => frame.Diagnostics.Processed == 1, cancellation.Token);
 
         // When
         var revision = control.Update(new(ResultAssert.Ok(CropRegion.Create(.5, 0, .5, 1)), QuarterTurn.None, false));
 
         // Then
-        var updated = await sink.WaitFor(frame => frame.Settings.Revision == revision, cancellation.Token);
+        var updated = await sink.WaitFor(frame => frame.Diagnostics.Settings.Revision == revision, cancellation.Token);
         cancellation.Cancel();
         Assert.True(await run is Interrupted);
         var first = sink.Frames.First();
-        Assert.Equal(new byte[] { 255, 0, 0 }, first.Pixels[..3]);
-        Assert.Equal(new byte[] { 0, 0, 255 }, updated.Pixels[..3]);
-        Assert.Same(redBlue, updated.Source);
-        Assert.Equal(2, updated.Processed);
-        Assert.Equal(1, updated.Statistics.Received);
+        Assert.Equal(new byte[] { 255, 0, 0 }, first.Diagnostics.Pixels[..3]);
+        Assert.Equal(new byte[] { 0, 0, 255 }, updated.Diagnostics.Pixels[..3]);
+        Assert.Same(redBlue, updated.Diagnostics.Source);
+        Assert.Equal(2, updated.Diagnostics.Processed);
+        Assert.Equal(1, updated.Diagnostics.Statistics.Received);
     }
 
     [Fact]
@@ -303,26 +301,26 @@ public sealed class TrackingPipelineTests
             if (i > 0) clock.Advance(TimeSpan.FromMilliseconds(100));
             var value = i % 20 < 10 ? (byte)26 : (byte)230;
             frames.Publish(new Rgb24FrameImage([value, value, value], 1, 1, 3), clock.GetTimestamp());
-            await sink.WaitFor(frame => frame.Processed == i + 1, cancellation.Token, clock);
+            await sink.WaitFor(frame => frame.Diagnostics.Processed == i + 1, cancellation.Token, clock);
         }
         var learned = sink.Latest!;
-        Assert.True(learned.Calibration!.Value.IsReady);
+        Assert.True(learned.Result!.Calibration!.Value.IsReady);
         // Once calibration is ready, the Unified Expressions JawOpen carries the calibrated value, not the raw one.
-        Assert.Equal(learned.Calibration.Value.JawOpen, learned.Expressions![UnifiedExpression.JawOpen]);
-        Assert.NotEqual(learned.Estimate!.JawOpen, learned.Expressions[UnifiedExpression.JawOpen]);
+        Assert.Equal(learned.Result!.Calibration!.Value.JawOpen, learned.Result!.Expressions[UnifiedExpression.JawOpen]);
+        Assert.NotEqual(learned.Result!.Estimate.JawOpen, learned.Result!.Expressions[UnifiedExpression.JawOpen]);
         clock.Advance(TimeSpan.FromMilliseconds(100));
 
         // When
         var revision = control.ResetCalibration();
 
         // Then
-        var reset = await sink.WaitFor(frame => frame.Settings.Revision == revision, cancellation.Token, clock);
+        var reset = await sink.WaitFor(frame => frame.Diagnostics.Settings.Revision == revision, cancellation.Token, clock);
         cancellation.Cancel();
         Assert.True(await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken) is Interrupted);
-        Assert.False(reset.Calibration!.Value.IsReady);
-        Assert.Null(reset.Calibration.Value.JawOpen);
-        Assert.Equal(reset.Estimate!.JawOpen, reset.Expressions![UnifiedExpression.JawOpen]);
-        Assert.Equal(62, reset.Processed);
+        Assert.False(reset.Result!.Calibration!.Value.IsReady);
+        Assert.Null(reset.Result!.Calibration!.Value.JawOpen);
+        Assert.Equal(reset.Result!.Estimate.JawOpen, reset.Result!.Expressions[UnifiedExpression.JawOpen]);
+        Assert.Equal(62, reset.Diagnostics.Processed);
     }
 
     [Fact]

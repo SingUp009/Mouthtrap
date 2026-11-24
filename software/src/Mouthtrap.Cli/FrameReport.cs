@@ -11,10 +11,14 @@ public sealed record FrameReport(int Width, int Height, long Processed, long Rec
     CalibrationSnapshot? Calibration = null, ImmutableArray<MouthExpression>? AdditionalExpressions = null,
     IReadOnlyDictionary<string, float>? Expressions = null)
 {
-    public static FrameReport From(TrackingFrame frame) => new(frame.Source.Width, frame.Source.Height, frame.Processed,
-        frame.Statistics.Received, frame.Statistics.Replaced, frame.Estimate?.RawJawOpen, frame.Estimate?.JawOpen,
-        frame.InferenceMilliseconds, frame.FrameAgeMilliseconds, frame.Calibration, frame.Estimate?.AdditionalExpressions,
-        frame.Expressions?.Provided.ToDictionary(item => item.Key.ToString(), item => item.Value));
+    public static FrameReport From(TrackingFrame frame)
+    {
+        var (result, diagnostics) = (frame.Result, frame.Diagnostics);
+        return new(diagnostics.Source.Width, diagnostics.Source.Height, diagnostics.Processed, diagnostics.Statistics.Received,
+            diagnostics.Statistics.Replaced, result?.Estimate.RawJawOpen, result?.Estimate.JawOpen, diagnostics.InferenceMilliseconds,
+            diagnostics.FrameAgeMilliseconds, result?.Calibration, result?.Estimate.AdditionalExpressions,
+            result?.Expressions.Provided.ToDictionary(item => item.Key.ToString(), item => item.Value));
+    }
 }
 
 internal sealed class ReportSink(Action<FrameReport> report) : ITrackingSink

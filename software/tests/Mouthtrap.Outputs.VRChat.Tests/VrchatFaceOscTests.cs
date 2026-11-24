@@ -179,8 +179,8 @@ public sealed class VrchatFaceOscTests
     }
 
     private static TrackingFrame Frame(ExpressionFrame? expressions) =>
-        new(new([0, 0, 0], 1, 1, 3), 0, new(PreprocessSettings.Default, 0), [0, 0, 0], 1, 1, 0, null, null, null, 0, 1,
-            default, expressions);
+        new(expressions is null ? null : new(new MouthEstimate(0f), expressions, null),
+            new(new([0, 0, 0], 1, 1, 3), 0, new(PreprocessSettings.Default, 0), [0, 0, 0], 1, 1, 0, null, 0, 1, default));
 
     private sealed class RecordingTransport : IOscTransport
     {

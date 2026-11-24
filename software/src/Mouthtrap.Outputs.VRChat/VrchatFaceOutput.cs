@@ -23,7 +23,7 @@ public sealed class VrchatFaceOutput(IOscTransport transport, OscPacketCount? co
     public long Sent => count.Sent;
 
     public Result<Unit, OutputFailed> Publish(TrackingFrame frame) =>
-        frame.Expressions is { } expressions ? Send(expressions) : new Ok<Unit>(Unit.Value);
+        frame.Result is { } result ? Send(result.Expressions) : new Ok<Unit>(Unit.Value);
 
     public Result<Unit, OutputFailed> Send(ExpressionFrame expressions)
     {

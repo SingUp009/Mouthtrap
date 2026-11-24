@@ -25,10 +25,8 @@ public sealed class TrackingStagesTests
         Assert.Equal(TrackingStages.UnmodeledOutputSize, processed.PixelWidth);
         Assert.Equal(TrackingStages.UnmodeledOutputSize, processed.PixelHeight);
         Assert.Equal(processed.PixelWidth * processed.PixelHeight * 3, processed.Pixels.Length);
-        Assert.Null(processed.Estimate);
+        Assert.Null(processed.Result);
         Assert.Null(processed.InferenceMilliseconds);
-        Assert.Null(processed.Calibration);
-        Assert.Null(processed.Expressions);
     }
 
     [Fact]
@@ -46,8 +44,8 @@ public sealed class TrackingStagesTests
         // Then
         Assert.Equal(new byte[] { 0, 0, 255 }, model.Pixels);
         Assert.Equal(new byte[] { 0, 0, 255 }, processed.Pixels);
-        Assert.Equal(0f, processed.Estimate!.JawOpen);
-        Assert.Equal(0f, processed.Expressions![UnifiedExpression.JawOpen]);
+        Assert.Equal(0f, processed.Result!.Estimate.JawOpen);
+        Assert.Equal(0f, processed.Result!.Expressions[UnifiedExpression.JawOpen]);
         Assert.NotNull(processed.InferenceMilliseconds);
     }
 
@@ -90,7 +88,7 @@ public sealed class TrackingStagesTests
             if (i > 0) clock.Advance(TimeSpan.FromMilliseconds(100));
             var value = i % 20 < 10 ? (byte)26 : (byte)230;
             var frame = new FrameSelection(new([value, value, value], 1, 1, 3), 0, new(PreprocessSettings.Default, 0), i == 0);
-            learned = ResultAssert.Ok(stages.Process(frame, startedAt, clock, TestContext.Current.CancellationToken)).Calibration;
+            learned = ResultAssert.Ok(stages.Process(frame, startedAt, clock, TestContext.Current.CancellationToken)).Result!.Calibration;
         }
         Assert.True(learned!.Value.IsReady);
         clock.Advance(TimeSpan.FromMilliseconds(100));
@@ -100,7 +98,7 @@ public sealed class TrackingStagesTests
             startedAt, clock, TestContext.Current.CancellationToken));
 
         // Then
-        Assert.False(reset.Calibration!.Value.IsReady);
+        Assert.False(reset.Result!.Calibration!.Value.IsReady);
     }
 
     private static FrameSelection Select(Rgb24FrameImage image, PreprocessSettings? settings = null) =>

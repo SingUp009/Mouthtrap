@@ -19,8 +19,9 @@ public sealed class FrameReportTests
         // When
         var report = FrameReport.From(Frame(new MouthEstimate(1.25f, expressions), 6.5, calibration));
 
-        // Then
-        Assert.Equal(new FrameReport(640, 480, 7, 9, 2, 1.25f, 1f, 6.5, 12.5, calibration, expressions), report);
+        // Then: a modeled frame always reports its sent expressions, none here.
+        Assert.Equal(new FrameReport(640, 480, 7, 9, 2, 1.25f, 1f, 6.5, 12.5, calibration, expressions), report with { Expressions = null });
+        Assert.Empty(report.Expressions!);
     }
 
     [Fact]
@@ -30,7 +31,7 @@ public sealed class FrameReportTests
         var expressions = ExpressionFrame.Create([new(UnifiedExpression.JawOpen, .5f), new(UnifiedExpression.MouthCornerPullLeft, .25f)]);
 
         // When
-        var report = FrameReport.From(Frame(new MouthEstimate(.5f), 6.5, null) with { Expressions = expressions });
+        var report = FrameReport.From(Frame(new MouthEstimate(.5f), 6.5, null, expressions));
 
         // Then
         Assert.Equal(new Dictionary<string, float> { ["JawOpen"] = .5f, ["MouthCornerPullLeft"] = .25f }, report.Expressions);
@@ -52,7 +53,8 @@ public sealed class FrameReportTests
         Assert.Null(report.Expressions);
     }
 
-    private static TrackingFrame Frame(MouthEstimate? estimate, double? inferenceMs, CalibrationSnapshot? calibration) =>
-        new(Source, 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, .5, estimate, inferenceMs, calibration,
-            12.5, 7, new FrameStatistics(9, 2, 0));
+    private static TrackingFrame Frame(MouthEstimate? estimate, double? inferenceMs, CalibrationSnapshot? calibration,
+        ExpressionFrame? expressions = null) =>
+        new(estimate is null ? null : new(estimate, expressions ?? ExpressionFrame.Empty, calibration),
+            new(Source, 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, .5, inferenceMs, 12.5, 7, new FrameStatistics(9, 2, 0)));
 }

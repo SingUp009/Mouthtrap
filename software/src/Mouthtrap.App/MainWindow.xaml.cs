@@ -362,9 +362,9 @@ public partial class MainWindow : Window
         try
         {
             var frame = sink.Latest;
-            if (frame is not null && frame.Processed != renderedProcessed)
+            if (frame is not null && frame.Diagnostics.Processed != renderedProcessed)
             {
-                renderedProcessed = frame.Processed;
+                renderedProcessed = frame.Diagnostics.Processed;
                 ShowFrame(frame);
             }
             var elapsed = clock.GetElapsedTime(fpsAt);
@@ -373,7 +373,7 @@ public partial class MainWindow : Window
                 var count = tracking.Frames.Statistics.Received;
                 CaptureFpsText.Text = InputKind.SelectedIndex == 1 ? Strings.Get("StillHolding")
                     : string.Create(CultureInfo.CurrentCulture, $"{FpsLabel}: {(count - fpsCount) / elapsed.TotalSeconds:F1}");
-                var processed = frame?.Processed ?? 0;
+                var processed = frame?.Diagnostics.Processed ?? 0;
                 processingFps = (processed - processingCount) / elapsed.TotalSeconds;
                 fpsCount = count;
                 processingCount = processed;
@@ -392,15 +392,16 @@ public partial class MainWindow : Window
 
     private void ShowFrame(TrackingFrame frame)
     {
-        var source = frame.Source;
+        var diagnostics = frame.Diagnostics;
+        var source = diagnostics.Source;
         sourceBitmap = Draw(sourceBitmap, source.Width, source.Height, source.Data, source.Stride);
         Preview.Source = sourceBitmap;
-        processedBitmap = Draw(processedBitmap, frame.PixelWidth, frame.PixelHeight, frame.Pixels, frame.PixelWidth * 3);
+        processedBitmap = Draw(processedBitmap, diagnostics.PixelWidth, diagnostics.PixelHeight, diagnostics.Pixels, diagnostics.PixelWidth * 3);
         ProcessedPreview.Source = processedBitmap;
-        ProcessedTitleText.Text = Strings.Format("ProcessedTitle", frame.PixelWidth, frame.PixelHeight);
+        ProcessedTitleText.Text = Strings.Format("ProcessedTitle", diagnostics.PixelWidth, diagnostics.PixelHeight);
         PreviewHint.Visibility = Visibility.Collapsed;
 
-        var crop = frame.Settings.Preprocessing.Crop;
+        var crop = diagnostics.Settings.Preprocessing.Crop;
         var region = crop.ToPixels(source.Width, source.Height);
         PreviewSurface.Width = source.Width;
         PreviewSurface.Height = source.Height;
@@ -413,15 +414,15 @@ public partial class MainWindow : Window
             CropOutline.Visibility = crop == CropRegion.FullFrame ? Visibility.Collapsed : Visibility.Visible;
         }
         PreprocessStatsText.Text = Strings.Format("PreprocessStats", source.Width, source.Height, region.X, region.Y, region.Width, region.Height,
-            frame.PreprocessMilliseconds);
+            diagnostics.PreprocessMilliseconds);
 
         displayed++;
-        var statistics = frame.Statistics;
-        FrameStatsText.Text = Strings.Format("FrameStats", statistics.Received, frame.Processed, displayed, statistics.Replaced, frame.FrameAgeMilliseconds);
+        var statistics = diagnostics.Statistics;
+        FrameStatsText.Text = Strings.Format("FrameStats", statistics.Received, diagnostics.Processed, displayed, statistics.Replaced, diagnostics.FrameAgeMilliseconds);
         if (sessionCancellation?.IsCancellationRequested == false)
             StatusText.Text = Strings.Get("Previewing");
         // Results computed with settings older than the last change are not shown.
-        if (session is { UsesModel: true } tracking && frame.Settings.Revision == tracking.Control.Current.Revision) RenderTracking(frame);
+        if (session is { UsesModel: true } tracking && diagnostics.Settings.Revision == tracking.Control.Current.Revision) RenderTracking(frame);
     }
 
     private static WriteableBitmap Draw(WriteableBitmap? bitmap, int width, int height, byte[] rgb24, int stride)
@@ -507,8 +508,8 @@ public partial class MainWindow : Window
 
     private void RenderTracking(TrackingFrame frame)
     {
-        if (frame.Estimate is not { } estimate) return;
-        var calibration = frame.Calibration;
+        if (frame.Result is not { } result) return;
+        var (estimate, calibration, diagnostics) = (result.Estimate, result.Calibration, frame.Diagnostics);
         var value = calibration?.JawOpen ?? estimate.JawOpen;
         var label = Strings.Get(calibration is { IsReady: true } ? "CalibrationReady" : calibration is not null ? "CalibrationLearning" : "Uncalibrated");
         JawOpenText.Text = Strings.Format("JawOpenValue", value, label);
@@ -517,8 +518,8 @@ public partial class MainWindow : Window
         var additional = estimate.AdditionalExpressions;
         AdditionalExpressionPanel.Visibility = additional.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
         AdditionalExpressionText.Text = string.Join("\n", additional.Select(item => $"{item.Name}: {item.Value:F3}  (raw: {item.Raw:F4})"));
-        TrackingStatsText.Text = Strings.Format("TrackingStats", frame.PixelWidth, frame.PixelHeight, estimate.RawJawOpen,
-                frame.InferenceMilliseconds, processingFps, frame.FrameAgeMilliseconds, frame.Processed) +
+        TrackingStatsText.Text = Strings.Format("TrackingStats", diagnostics.PixelWidth, diagnostics.PixelHeight, estimate.RawJawOpen,
+                diagnostics.InferenceMilliseconds, processingFps, diagnostics.FrameAgeMilliseconds, diagnostics.Processed) +
             (calibration is { IsReady: true } learned ? Strings.Format("LearnedRange", learned.Lower, learned.Upper) : "") +
             Strings.Get("NoFaceGuarantee");
     }

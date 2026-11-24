@@ -13,13 +13,21 @@ public sealed record TrackingOutputFailed(OutputFailed Error);
 [Error]
 public partial union TrackingError(TrackingInputFailed, TrackingModelFailed, TrackingOutputFailed);
 
-// Source is shared with the input and Pixels (packed RGB24) belongs to the receivers; neither may be mutated.
-// Estimate holds the model's raw outputs; Expressions holds what is sent: calibrated, smoothed Unified Expressions
-// (see ExpressionProcessor). Calibration is the JawOpen range before smoothing.
-public sealed record TrackingFrame(Rgb24FrameImage Source, long ReceivedAt, TrackingControlState Settings,
-    byte[] Pixels, int PixelWidth, int PixelHeight, double PreprocessMilliseconds, MouthEstimate? Estimate,
-    double? InferenceMilliseconds, CalibrationSnapshot? Calibration, double FrameAgeMilliseconds, long Processed,
-    FrameStatistics Statistics, ExpressionFrame? Expressions = null);
+// What tracking made of one frame. Estimate holds the model's raw outputs; Expressions holds what is sent:
+// calibrated, smoothed Unified Expressions (see ExpressionProcessor). Calibration is the JawOpen range before
+// smoothing, present while adaptive calibration is on.
+public sealed record TrackingResult(MouthEstimate Estimate, ExpressionFrame Expressions, CalibrationSnapshot? Calibration);
+
+// How one frame went through the pipeline, for previews and reports. Source is shared with the input and Pixels
+// (the preprocessed, packed RGB24) belongs to the receivers; neither may be mutated. InferenceMilliseconds is null
+// without a model.
+public sealed record FrameDiagnostics(Rgb24FrameImage Source, long ReceivedAt, TrackingControlState Settings,
+    byte[] Pixels, int PixelWidth, int PixelHeight, double PreprocessMilliseconds, double? InferenceMilliseconds,
+    double FrameAgeMilliseconds, long Processed, FrameStatistics Statistics);
+
+// One processed frame. Result is null without a model. Outputs that send results read Result; Diagnostics is for
+// hosts that show or report how the frame was processed.
+public sealed record TrackingFrame(TrackingResult? Result, FrameDiagnostics Diagnostics);
 
 public interface ITrackingSink
 {
@@ -95,12 +103,10 @@ public static class TrackingPipeline
 
                     var result = consumer.Get(stages.Process(selected, startedAt, clock, cancellationToken)
                         .MapErr(error => new TrackingModelFailed(error)));
-                    consumer.Get(sink.Publish(new(selected.Image, selected.ReceivedAt, selected.Settings, result.Pixels,
-                            result.PixelWidth, result.PixelHeight, result.PreprocessMilliseconds, result.Estimate,
-                            result.InferenceMilliseconds, result.Calibration,
-                            clock.GetElapsedTime(selected.ReceivedAt).TotalMilliseconds, ++processed, frames.Statistics,
-                            result.Expressions))
-                        .MapErr(error => new TrackingOutputFailed(error)));
+                    var diagnostics = new FrameDiagnostics(selected.Image, selected.ReceivedAt, selected.Settings, result.Pixels,
+                        result.PixelWidth, result.PixelHeight, result.PreprocessMilliseconds, result.InferenceMilliseconds,
+                        clock.GetElapsedTime(selected.ReceivedAt).TotalMilliseconds, ++processed, frames.Statistics);
+                    consumer.Get(sink.Publish(new(result.Result, diagnostics)).MapErr(error => new TrackingOutputFailed(error)));
                 }
                 return Unit.Value;
             }).OnThreadPool();

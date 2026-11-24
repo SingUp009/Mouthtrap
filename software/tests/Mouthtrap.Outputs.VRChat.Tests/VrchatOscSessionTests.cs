@@ -107,8 +107,9 @@ public sealed class VrchatOscSessionTests
     }
 
     private static TrackingFrame Frame(ExpressionFrame expressions) =>
-        new(new Rgb24FrameImage(new byte[3], 1, 1, 3), 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, 0, null, null, null, 0, 1,
-            new(1, 0, 0), expressions);
+        new(new(new MouthEstimate(0f), expressions, null),
+            new(new Rgb24FrameImage(new byte[3], 1, 1, 3), 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, 0, null, 0, 1,
+                new(1, 0, 0)));
 
     private sealed class SocketLikeException : Exception;
 
