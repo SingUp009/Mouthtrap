@@ -13,14 +13,16 @@ public sealed class FrameReportTests
     public void From_ModeledFrame_ReportsSourceSizeCountersRawAndClampedValues()
     {
         // Given
-        var expressions = ImmutableArray.Create(new MouthExpression("MouthPucker", 1.5f));
+        var expressions = ImmutableArray.Create(new MouthExpression(ArkitShape.MouthPucker, 1.5f));
         var calibration = new CalibrationSnapshot(true, .5f, .1f, .9f);
 
         // When
         var report = FrameReport.From(Frame(new MouthEstimate(1.25f, expressions), 6.5, calibration));
 
         // Then: a modeled frame always reports its sent expressions, none here.
-        Assert.Equal(new FrameReport(640, 480, 7, 9, 2, 1.25f, 1f, 6.5, 12.5, calibration, expressions), report with { Expressions = null });
+        Assert.Equal(new FrameReport(640, 480, 7, 9, 2, 1.25f, 1f, 6.5, 12.5, calibration),
+            report with { AdditionalExpressions = null, Expressions = null });
+        Assert.Equal([new ReportedExpression("MouthPucker", 1.5f, 1f)], report.AdditionalExpressions!);
         Assert.Empty(report.Expressions!);
     }
 

@@ -123,7 +123,7 @@ public sealed class ExpressionProcessorTests
     public void Process_TongueOutputs_UnprovidedByDefaultAndSentWhenAsked()
     {
         // Given
-        var estimate = new MouthEstimate(.5f, [new("TongueOut", .9f), new("MouthPucker", .6f)]);
+        var estimate = new MouthEstimate(.5f, [new(ArkitShape.TongueOut, .9f), new(ArkitShape.MouthPucker, .6f)]);
         var plain = new ExpressionOptions { AdaptiveCalibration = false, Smoothing = false, Deadzone = Deadzone.None };
 
         // When
@@ -151,7 +151,7 @@ public sealed class ExpressionProcessorTests
             "MouthStretchRight", "TongueOut", "TongueUp", "TongueDown", "TongueLeft", "TongueRight", "TongueRoll",
             "TongueBendDown", "TongueCurlUp", "TongueSquish", "TongueFlat", "TongueTwistLeft", "TongueTwistRight"
         ];
-        var estimate = new MouthEstimate(.5f, [.. names.Select(name => new MouthExpression(name, .5f))]);
+        var estimate = new MouthEstimate(.5f, [.. names.Select(name => new MouthExpression(Enum.Parse<ArkitShape>(name), .5f))]);
 
         // When
         var expressions = new ExpressionProcessor(ExpressionOptions.Default).Process(estimate, Seconds(0)).Expressions;
@@ -165,14 +165,14 @@ public sealed class ExpressionProcessorTests
     {
         // Given
         var processor = new ExpressionProcessor(new ExpressionOptions { Smoothing = false, Deadzone = Deadzone.None });
-        var resting = new MouthEstimate(.1f, [new("MouthSmileLeft", .38f)]);
+        var resting = new MouthEstimate(.1f, [new(ArkitShape.MouthSmileLeft, .38f)]);
         for (var i = 0; i <= 40; i++) processor.Process(resting, Seconds(i * .1));
 
         // When
-        var smiling = processor.Process(new MouthEstimate(.1f, [new("MouthSmileLeft", .69f)]), Seconds(4.1)).Expressions;
+        var smiling = processor.Process(new MouthEstimate(.1f, [new(ArkitShape.MouthSmileLeft, .69f)]), Seconds(4.1)).Expressions;
 
         // Then
-        Assert.Equal(.38f, processor.BaselineOf("MouthSmileLeft")!.Value, 3);
+        Assert.Equal(.38f, processor.BaselineOf(ArkitShape.MouthSmileLeft)!.Value, 3);
         Assert.Equal(.5f, smiling[MouthCornerPullLeft]!.Value, 2);
         Assert.Equal(0f, processor.Process(resting, Seconds(4.2)).Expressions[MouthCornerPullLeft]!.Value, 3);
 
@@ -180,7 +180,7 @@ public sealed class ExpressionProcessorTests
         processor.Reset();
 
         // Then
-        Assert.Null(processor.BaselineOf("MouthSmileLeft"));
+        Assert.Null(processor.BaselineOf(ArkitShape.MouthSmileLeft));
         Assert.Equal(.38f, processor.Process(resting, Seconds(4.3)).Expressions[MouthCornerPullLeft]);
     }
 
@@ -195,7 +195,7 @@ public sealed class ExpressionProcessorTests
         {
             for (var end = t + seconds; t < end; t += .05)
             {
-                processor.Process(new MouthEstimate(jaw, [new("MouthSmileLeft", smile)]), Seconds(t));
+                processor.Process(new MouthEstimate(jaw, [new(ArkitShape.MouthSmileLeft, smile)]), Seconds(t));
                 ungated.Observe(jaw, Seconds(t));
             }
         }
@@ -203,7 +203,7 @@ public sealed class ExpressionProcessorTests
         Feed(.35f, .95f, 8);
 
         // When
-        var closed = processor.Process(new MouthEstimate(.6f, [new("MouthSmileLeft", .38f)]), Seconds(t));
+        var closed = processor.Process(new MouthEstimate(.6f, [new(ArkitShape.MouthSmileLeft, .38f)]), Seconds(t));
 
         // Then
         Assert.True(closed.JawOpen!.Value.IsReady);

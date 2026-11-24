@@ -32,9 +32,9 @@ public sealed class ExpressionProcessor(ExpressionOptions options)
     public const float MinCutoff = .7f;
     public const float Beta = 3f;
 
-    private readonly Dictionary<string, AdaptiveBaseline> baselines = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, OneEuroFilter> filters = new(StringComparer.Ordinal);
-    private readonly List<KeyValuePair<string, float>> values = [];
+    private readonly Dictionary<ArkitShape, AdaptiveBaseline> baselines = [];
+    private readonly Dictionary<ArkitShape, OneEuroFilter> filters = [];
+    private readonly List<KeyValuePair<ArkitShape, float>> values = [];
     private readonly AdaptiveJawCalibration jaw = new();
 
     public ExpressionOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
@@ -47,7 +47,7 @@ public sealed class ExpressionProcessor(ExpressionOptions options)
     }
 
     // The learned resting level of an output, or null before it is learned or when calibration is off.
-    public float? BaselineOf(string name) => baselines.TryGetValue(name, out var baseline) ? baseline.Level : null;
+    public float? BaselineOf(ArkitShape shape) => baselines.TryGetValue(shape, out var baseline) ? baseline.Level : null;
 
     public ExpressionResult Process(MouthEstimate estimate, TimeSpan now)
     {
@@ -56,30 +56,30 @@ public sealed class ExpressionProcessor(ExpressionOptions options)
         float? smile = null;
         foreach (var expression in estimate.AdditionalExpressions)
         {
-            if (!Options.Tongue && expression.Name.StartsWith("Tongue", StringComparison.Ordinal)) continue;
+            if (!Options.Tongue && ArkitExpressionMap.IsTongue(expression.Shape)) continue;
             var value = expression.Value;
             if (Options.AdaptiveCalibration)
             {
-                if (!baselines.TryGetValue(expression.Name, out var baseline)) baselines[expression.Name] = baseline = new();
+                if (!baselines.TryGetValue(expression.Shape, out var baseline)) baselines[expression.Shape] = baseline = new();
                 value = baseline.Observe(expression.Raw, now);
-                if (expression.Name is "MouthSmileLeft" or "MouthSmileRight" && baseline.Level is not null)
+                if (expression.Shape is ArkitShape.MouthSmileLeft or ArkitShape.MouthSmileRight && baseline.Level is not null)
                     smile = Math.Max(smile ?? 0f, value);
             }
-            values.Add(new(expression.Name, value));
+            values.Add(new(expression.Shape, value));
         }
         CalibrationSnapshot? snapshot = Options.AdaptiveCalibration
             ? jaw.Observe(estimate.RawJawOpen, now, learn: smile is not { } level || level < SmileGate)
             : null;
-        values.Add(new("JawOpen", snapshot?.JawOpen ?? estimate.JawOpen));
+        values.Add(new(ArkitShape.JawOpen, snapshot?.JawOpen ?? estimate.JawOpen));
         for (var i = 0; i < values.Count; i++)
             values[i] = new(values[i].Key, Options.Deadzone.Apply(Smooth(values[i].Key, values[i].Value, now)));
         return new(ArkitExpressionMap.Map(values), snapshot);
     }
 
-    private float Smooth(string name, float value, TimeSpan now)
+    private float Smooth(ArkitShape shape, float value, TimeSpan now)
     {
         if (!Options.Smoothing) return value;
-        if (!filters.TryGetValue(name, out var filter)) filters[name] = filter = new(MinCutoff, Beta);
+        if (!filters.TryGetValue(shape, out var filter)) filters[shape] = filter = new(MinCutoff, Beta);
         return Math.Clamp(filter.Filter(value, now), 0f, 1f);
     }
 }

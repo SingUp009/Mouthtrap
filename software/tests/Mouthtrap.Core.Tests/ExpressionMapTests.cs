@@ -59,8 +59,11 @@ public sealed class ExpressionMapTests
     [InlineData("TongueTwistLeft", new[] { TongueTwistLeft })]
     public void TargetsOf_RenamedOrFannedOutOutput_FollowsMappingTable(string name, UnifiedExpression[] targets)
     {
+        // Given
+        Assert.True(ArkitExpressionMap.TryParse(name, out var shape));
+
         // When
-        var mapped = ArkitExpressionMap.TargetsOf(name);
+        var mapped = ArkitExpressionMap.TargetsOf(shape);
 
         // Then
         Assert.Equal(targets, mapped);
@@ -71,8 +74,11 @@ public sealed class ExpressionMapTests
     {
         // Given
         Assert.Equal(44, BabbleOutputs.Distinct().Count());
-        Assert.All(BabbleOutputs, name => Assert.True(ArkitExpressionMap.IsKnown(name), name));
-        KeyValuePair<string, float>[] outputs = [new("JawOpen", .75f), .. BabbleOutputs.Select(name => new KeyValuePair<string, float>(name, .5f))];
+        // ArkitShape is exactly the Babble model's outputs.
+        Assert.Equal(BabbleOutputs.Append(nameof(ArkitShape.JawOpen)).Order(StringComparer.Ordinal),
+            Enum.GetNames<ArkitShape>().Order(StringComparer.Ordinal));
+        KeyValuePair<ArkitShape, float>[] outputs =
+            [new(ArkitShape.JawOpen, .75f), .. BabbleOutputs.Select(name => new KeyValuePair<ArkitShape, float>(Enum.Parse<ArkitShape>(name), .5f))];
 
         // When
         var frame = ArkitExpressionMap.Map(outputs);
@@ -97,7 +103,7 @@ public sealed class ExpressionMapTests
     public void Map_ZeroAndAbsentOutputs_KeepsZeroProvidedAndLeavesAbsentUnprovided()
     {
         // Given
-        KeyValuePair<string, float>[] outputs = [new("JawOpen", 1f), new("MouthSmileLeft", 1f), new("TongueOut", 0f)];
+        KeyValuePair<ArkitShape, float>[] outputs = [new(ArkitShape.JawOpen, 1f), new(ArkitShape.MouthSmileLeft, 1f), new(ArkitShape.TongueOut, 0f)];
 
         // When
         var frame = ArkitExpressionMap.Map(outputs);
@@ -113,14 +119,31 @@ public sealed class ExpressionMapTests
 
     [Theory]
     [InlineData("JawOpen", true)]
+    [InlineData("MouthSmileLeft", true)]
     [InlineData("MouthSmile", false)]
     [InlineData("mouthSmileLeft", false)]
     [InlineData("MouthCornerPullLeft", false)]
-    public void IsKnown_Name_AcceptsOnlyArkitStyleNames(string name, bool known)
+    [InlineData("12", false)]
+    [InlineData("", false)]
+    public void TryParse_Name_AcceptsOnlyExactArkitNames(string name, bool known)
     {
         // When / Then
-        Assert.Equal(known, ArkitExpressionMap.IsKnown(name));
-        if (!known) Assert.Throws<ArgumentException>(() => ArkitExpressionMap.TargetsOf(name));
+        Assert.Equal(known, ArkitExpressionMap.TryParse(name, out _));
+    }
+
+    [Fact]
+    public void IsTongue_EveryShape_IsTrueExactlyForTongueShapes()
+    {
+        // When / Then
+        Assert.All(Enum.GetValues<ArkitShape>(), shape =>
+            Assert.Equal(shape.ToString().StartsWith("Tongue", StringComparison.Ordinal), ArkitExpressionMap.IsTongue(shape)));
+    }
+
+    [Fact]
+    public void TargetsOf_UndefinedShape_Throws()
+    {
+        // When / Then
+        Assert.Throws<ArgumentOutOfRangeException>(() => ArkitExpressionMap.TargetsOf((ArkitShape)999));
     }
 
     [Fact]

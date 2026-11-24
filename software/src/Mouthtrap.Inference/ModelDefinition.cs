@@ -24,6 +24,12 @@ public sealed record ModelDefinition
     [JsonIgnore] public int Channels => Color == InputColor.Gray ? 1 : 3;
     [JsonIgnore] public long[] Shape => Layout == TensorLayout.Nchw ? [1, Channels, Height, Width] : [1, Height, Width, Channels];
 
+    // The additional outputs by shape. Only for a definition that passed Validate, which rejects unknown names.
+    public KeyValuePair<ArkitShape, int>[] Expressions() =>
+        ExpressionIndices?.Select(item => ArkitExpressionMap.TryParse(item.Key, out var shape)
+            ? new KeyValuePair<ArkitShape, int>(shape, item.Value)
+            : throw new InvalidOperationException($"'{item.Key}' was not validated.")).ToArray() ?? [];
+
     public string? Validate()
     {
         if (string.IsNullOrWhiteSpace(ModelPath) || string.IsNullOrWhiteSpace(InputName) || string.IsNullOrWhiteSpace(OutputName))
@@ -36,14 +42,14 @@ public sealed record ModelDefinition
         if (ExpressionIndices is { } expressions)
         {
             if (expressions.Count > 128) return ModelMessages.Get("TooManyExpressions");
-            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "JawOpen" };
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { nameof(ArkitShape.JawOpen) };
             var indices = new HashSet<int> { JawOpenIndex };
             foreach (var (name, index) in expressions)
             {
                 if (name.Length is < 1 or > 64 || !char.IsAsciiLetter(name[0]) ||
                     name.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '_') || !names.Add(name))
                     return ModelMessages.Format("ExpressionNameInvalid", name);
-                if (!ArkitExpressionMap.IsKnown(name))
+                if (!ArkitExpressionMap.TryParse(name, out _))
                     return ModelMessages.Format("ExpressionNameUnmapped", name);
                 if (index < 0 || index >= OutputCount || !indices.Add(index))
                     return ModelMessages.Format("ExpressionIndexInvalid", name);

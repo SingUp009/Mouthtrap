@@ -8,63 +8,56 @@ namespace Mouthtrap.Core;
 // and a smile drives MouthCornerPull only, as upstream Baballonia does.
 public static class ArkitExpressionMap
 {
-    private static readonly FrozenDictionary<string, ImmutableArray<UnifiedExpression>> Targets = Build();
+    private static readonly FrozenDictionary<ArkitShape, ImmutableArray<UnifiedExpression>> Targets = Build();
 
-    public static IEnumerable<string> Names => Targets.Keys;
+    // The shape a model output name stands for, matched exactly. Model definitions are read with this, so an
+    // unknown name is rejected when the model loads.
+    public static bool TryParse(string name, out ArkitShape shape)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        shape = default;
+        return name.Length > 0 && char.IsAsciiLetter(name[0]) && Enum.TryParse(name, ignoreCase: false, out shape) && Enum.IsDefined(shape);
+    }
 
-    public static bool IsKnown(string name) => Targets.ContainsKey(name);
+    // Tongue outputs react to an open mouth with the Babble model and a front camera, so they can be left out.
+    public static bool IsTongue(ArkitShape shape) => shape is >= ArkitShape.TongueOut and <= ArkitShape.TongueTwistRight;
 
-    public static ImmutableArray<UnifiedExpression> TargetsOf(string name) =>
-        Targets.TryGetValue(name, out var targets) ? targets
-            : throw new ArgumentException($"'{name}' is not an ARKit-style expression name.", nameof(name));
+    public static ImmutableArray<UnifiedExpression> TargetsOf(ArkitShape shape) =>
+        Targets.TryGetValue(shape, out var targets) ? targets : throw new ArgumentOutOfRangeException(nameof(shape));
 
-    // Maps output names (JawOpen included) and their 0..1 values; outputs left out stay unprovided.
-    public static ExpressionFrame Map(IEnumerable<KeyValuePair<string, float>> outputs)
+    // Maps outputs (JawOpen included) and their 0..1 values; outputs left out stay unprovided.
+    public static ExpressionFrame Map(IEnumerable<KeyValuePair<ArkitShape, float>> outputs)
     {
         ArgumentNullException.ThrowIfNull(outputs);
         var provided = new List<KeyValuePair<UnifiedExpression, float>>();
-        foreach (var (name, value) in outputs)
-            foreach (var target in TargetsOf(name))
+        foreach (var (shape, value) in outputs)
+            foreach (var target in TargetsOf(shape))
                 provided.Add(new(target, value));
         return ExpressionFrame.Create(provided);
     }
 
-    private static FrozenDictionary<string, ImmutableArray<UnifiedExpression>> Build()
+    private static FrozenDictionary<ArkitShape, ImmutableArray<UnifiedExpression>> Build()
     {
-        // Same name in both standards.
-        UnifiedExpression[] identical =
-        [
-            UnifiedExpression.CheekPuffLeft, UnifiedExpression.CheekPuffRight,
-            UnifiedExpression.CheekSuckLeft, UnifiedExpression.CheekSuckRight,
-            UnifiedExpression.JawOpen, UnifiedExpression.JawForward, UnifiedExpression.JawLeft, UnifiedExpression.JawRight,
-            UnifiedExpression.NoseSneerLeft, UnifiedExpression.NoseSneerRight,
-            UnifiedExpression.MouthFrownLeft, UnifiedExpression.MouthFrownRight,
-            UnifiedExpression.MouthDimpleLeft, UnifiedExpression.MouthDimpleRight,
-            UnifiedExpression.MouthUpperUpLeft, UnifiedExpression.MouthUpperUpRight,
-            UnifiedExpression.MouthLowerDownLeft, UnifiedExpression.MouthLowerDownRight,
-            UnifiedExpression.MouthPressLeft, UnifiedExpression.MouthPressRight,
-            UnifiedExpression.MouthStretchLeft, UnifiedExpression.MouthStretchRight,
-            UnifiedExpression.TongueOut, UnifiedExpression.TongueUp, UnifiedExpression.TongueDown,
-            UnifiedExpression.TongueLeft, UnifiedExpression.TongueRight, UnifiedExpression.TongueRoll,
-            UnifiedExpression.TongueBendDown, UnifiedExpression.TongueCurlUp,
-            UnifiedExpression.TongueSquish, UnifiedExpression.TongueFlat,
-            UnifiedExpression.TongueTwistLeft, UnifiedExpression.TongueTwistRight
-        ];
-        var map = identical.ToDictionary(key => key.ToString(), key => ImmutableArray.Create(key), StringComparer.Ordinal);
-        // Renamed or fanned out.
-        map.Add("MouthClose", [UnifiedExpression.MouthClosed]);
-        map.Add("MouthShrugUpper", [UnifiedExpression.MouthRaiserUpper]);
-        map.Add("MouthShrugLower", [UnifiedExpression.MouthRaiserLower]);
-        map.Add("MouthFunnel", [UnifiedExpression.LipFunnelUpperRight, UnifiedExpression.LipFunnelUpperLeft,
-            UnifiedExpression.LipFunnelLowerRight, UnifiedExpression.LipFunnelLowerLeft]);
-        map.Add("MouthPucker", [UnifiedExpression.LipPuckerUpperRight, UnifiedExpression.LipPuckerUpperLeft,
-            UnifiedExpression.LipPuckerLowerRight, UnifiedExpression.LipPuckerLowerLeft]);
-        map.Add("MouthRollUpper", [UnifiedExpression.LipSuckUpperRight, UnifiedExpression.LipSuckUpperLeft]);
-        map.Add("MouthRollLower", [UnifiedExpression.LipSuckLowerRight, UnifiedExpression.LipSuckLowerLeft]);
-        map.Add("MouthLeft", [UnifiedExpression.MouthUpperLeft, UnifiedExpression.MouthLowerLeft]);
-        map.Add("MouthRight", [UnifiedExpression.MouthUpperRight, UnifiedExpression.MouthLowerRight]);
-        map.Add("MouthSmileLeft", [UnifiedExpression.MouthCornerPullLeft]);
-        map.Add("MouthSmileRight", [UnifiedExpression.MouthCornerPullRight]);
-        return map.ToFrozenDictionary(StringComparer.Ordinal);
+        var map = new Dictionary<ArkitShape, ImmutableArray<UnifiedExpression>>
+        {
+            // Renamed or fanned out.
+            [ArkitShape.MouthClose] = [UnifiedExpression.MouthClosed],
+            [ArkitShape.MouthShrugUpper] = [UnifiedExpression.MouthRaiserUpper],
+            [ArkitShape.MouthShrugLower] = [UnifiedExpression.MouthRaiserLower],
+            [ArkitShape.MouthFunnel] = [UnifiedExpression.LipFunnelUpperRight, UnifiedExpression.LipFunnelUpperLeft,
+                UnifiedExpression.LipFunnelLowerRight, UnifiedExpression.LipFunnelLowerLeft],
+            [ArkitShape.MouthPucker] = [UnifiedExpression.LipPuckerUpperRight, UnifiedExpression.LipPuckerUpperLeft,
+                UnifiedExpression.LipPuckerLowerRight, UnifiedExpression.LipPuckerLowerLeft],
+            [ArkitShape.MouthRollUpper] = [UnifiedExpression.LipSuckUpperRight, UnifiedExpression.LipSuckUpperLeft],
+            [ArkitShape.MouthRollLower] = [UnifiedExpression.LipSuckLowerRight, UnifiedExpression.LipSuckLowerLeft],
+            [ArkitShape.MouthLeft] = [UnifiedExpression.MouthUpperLeft, UnifiedExpression.MouthLowerLeft],
+            [ArkitShape.MouthRight] = [UnifiedExpression.MouthUpperRight, UnifiedExpression.MouthLowerRight],
+            [ArkitShape.MouthSmileLeft] = [UnifiedExpression.MouthCornerPullLeft],
+            [ArkitShape.MouthSmileRight] = [UnifiedExpression.MouthCornerPullRight]
+        };
+        // Every other shape has the same name in both standards.
+        foreach (var shape in Enum.GetValues<ArkitShape>())
+            if (!map.ContainsKey(shape)) map[shape] = [Enum.Parse<UnifiedExpression>(shape.ToString())];
+        return map.ToFrozenDictionary();
     }
 }

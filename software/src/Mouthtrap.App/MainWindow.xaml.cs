@@ -515,7 +515,7 @@ public partial class MainWindow : Window
         JawOpenBar.Visibility = Visibility.Visible;
         var additional = estimate.AdditionalExpressions;
         AdditionalExpressionPanel.Visibility = additional.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
-        AdditionalExpressionText.Text = string.Join("\n", additional.Select(item => $"{item.Name}: {item.Value:F3}  (raw: {item.Raw:F4})"));
+        AdditionalExpressionText.Text = string.Join("\n", additional.Select(item => $"{item.Shape}: {item.Value:F3}  (raw: {item.Raw:F4})"));
         TrackingStatsText.Text = Strings.Format("TrackingStats", diagnostics.PixelWidth, diagnostics.PixelHeight, estimate.RawJawOpen,
                 diagnostics.InferenceMilliseconds, processingFps, diagnostics.FrameAgeMilliseconds, diagnostics.Processed) +
             (calibration is { IsReady: true } learned ? Strings.Format("LearnedRange", learned.Lower, learned.Upper) : "") +

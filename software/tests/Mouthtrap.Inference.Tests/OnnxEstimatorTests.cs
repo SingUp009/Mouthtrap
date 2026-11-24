@@ -175,12 +175,12 @@ public sealed class OnnxEstimatorTests
         Assert.Equal(.5f, estimate.RawJawOpen, 5);
         Assert.Collection(estimate.AdditionalExpressions, left =>
         {
-            Assert.Equal("MouthSmileLeft", left.Name);
+            Assert.Equal(ArkitShape.MouthSmileLeft, left.Shape);
             Assert.Equal(-.25f, left.Raw, 5);
             Assert.Equal(0f, left.Value);
         }, right =>
         {
-            Assert.Equal("MouthSmileRight", right.Name);
+            Assert.Equal(ArkitShape.MouthSmileRight, right.Shape);
             Assert.Equal(1.25f, right.Raw, 5);
             Assert.Equal(1f, right.Value);
         }, pucker => Assert.Equal(.25f, pucker.Value, 5));

@@ -13,7 +13,7 @@ public sealed record ModelInferenceFailed(string Message);
 [Error]
 public partial union ModelError(ModelFileMissing, ModelLoadFailed, ModelContractMismatch, ModelInferenceFailed);
 
-public readonly record struct MouthExpression(string Name, float Raw)
+public readonly record struct MouthExpression(ArkitShape Shape, float Raw)
 {
     public float Raw { get; } = float.IsFinite(Raw) ? Raw : throw new ArgumentOutOfRangeException(nameof(Raw));
     public float Value => Math.Clamp(Raw, 0f, 1f);

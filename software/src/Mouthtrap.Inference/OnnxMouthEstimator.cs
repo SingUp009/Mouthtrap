@@ -18,14 +18,14 @@ public sealed class OnnxMouthEstimator : IMouthEstimator
     private readonly float[] input;
     private readonly OrtValue inputValue;
     private readonly Dictionary<string, OrtValue> inputs;
-    private readonly KeyValuePair<string, int>[] expressionIndices;
+    private readonly KeyValuePair<ArkitShape, int>[] expressionIndices;
     private bool disposed;
 
     private OnnxMouthEstimator(InferenceSession session, ModelDefinition definition)
     {
         this.definition = definition;
         this.session = session;
-        expressionIndices = definition.ExpressionIndices?.ToArray() ?? [];
+        expressionIndices = definition.Expressions();
         input = new float[checked(definition.Width * definition.Height * definition.Channels)];
         inputValue = OrtValue.CreateTensorValueFromMemory(input, definition.Shape);
         try { inputs = new() { [definition.InputName] = inputValue }; }
@@ -132,11 +132,11 @@ public sealed class OnnxMouthEstimator : IMouthEstimator
             if (expressionIndices.Length == 0) return new Ok<MouthEstimate>(new(values[definition.JawOpenIndex]));
 
             var expressions = ImmutableArray.CreateBuilder<MouthExpression>(expressionIndices.Length);
-            foreach (var (name, index) in expressionIndices)
+            foreach (var (shape, index) in expressionIndices)
             {
                 var raw = values[index];
-                if (!float.IsFinite(raw)) return new Err<ModelInferenceFailed>(new(ModelMessages.Format("ExpressionOutputInvalid", name)));
-                expressions.Add(new(name, raw));
+                if (!float.IsFinite(raw)) return new Err<ModelInferenceFailed>(new(ModelMessages.Format("ExpressionOutputInvalid", shape)));
+                expressions.Add(new(shape, raw));
             }
             return new Ok<MouthEstimate>(new(values[definition.JawOpenIndex], expressions.MoveToImmutable()));
         }
