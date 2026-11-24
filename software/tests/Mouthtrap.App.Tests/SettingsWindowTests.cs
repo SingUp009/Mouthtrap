@@ -12,6 +12,7 @@ using Xunit;
 
 namespace Mouthtrap.App.Tests;
 
+[Collection(WindowCollection.Name)]
 public sealed class SettingsWindowTests : IDisposable
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), "mouthtrap-window-" + Guid.NewGuid().ToString("N"));

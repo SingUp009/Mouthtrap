@@ -5,6 +5,7 @@ using Xunit;
 
 namespace Mouthtrap.App.Tests;
 
+[Collection(WindowCollection.Name)]
 public sealed class WindowLifetimeTests
 {
     [Fact]

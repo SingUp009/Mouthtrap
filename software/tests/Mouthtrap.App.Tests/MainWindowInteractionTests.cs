@@ -11,6 +11,7 @@ using Xunit;
 namespace Mouthtrap.App.Tests;
 
 // User flows through the real window, driven through UI Automation (see WindowDriver).
+[Collection(WindowCollection.Name)]
 public sealed class MainWindowInteractionTests : IDisposable
 {
     private readonly string directory = Path.Combine(Path.GetTempPath(), "mouthtrap-interaction-" + Guid.NewGuid().ToString("N"));
