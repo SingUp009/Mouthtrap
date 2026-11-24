@@ -1,0 +1,102 @@
+name: Firmware
+
+# Builds every firmware variant, checks its size and runs the firmware tests. Pull requests run it only
+# when they change the firmware or what packs it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - firmware/**
+      - tools/release/pack.py
+      - .github/workflows/firmware.yml
+  pull_request:
+    paths:
+      - firmware/**
+      - tools/release/pack.py
+      - .github/workflows/firmware.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.variant }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # ESP-IDF v5.5.4, pinned by digest. Keep it the same as in build.yml.
+    container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [xiao-wifi, xiao-uvc, xiao-uvc-multimode]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and pack
+        run: firmware/build-release.sh "0.0.0-ci.${GITHUB_SHA::7}" packages "${{ matrix.variant }}"
+
+      # The component manager rewrites dependencies.lock when the build did not use the locked versions.
+      - name: Check locked components
+        run: git -c safe.directory='*' diff --exit-code -- firmware
+
+      - name: Check size
+        run: python3 firmware/check-size.py "packages/build/${{ matrix.variant }}" --min-free-percent 10
+
+      # The zip file is what a release ships. The build files next to it hold the flash offsets
+      # (flash_args, flasher_args.json) and the ELF and map files for reading crash logs.
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: firmware-${{ matrix.variant }}
+          if-no-files-found: error
+          path: |
+            packages/*.zip
+            packages/build/${{ matrix.variant }}/flash_args
+            packages/build/${{ matrix.variant }}/flasher_args.json
+            packages/build/${{ matrix.variant }}/sdkconfig
+            packages/build/${{ matrix.variant }}/*.bin
+            packages/build/${{ matrix.variant }}/*.elf
+            packages/build/${{ matrix.variant }}/*.map
+            packages/build/${{ matrix.variant }}/bootloader/bootloader.bin
+            packages/build/${{ matrix.variant }}/partition_table/partition-table.bin
+
+  test:
+    name: Test xiao-wifi
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # QEMU emulates neither QIO flash nor octal PSRAM, so the tests use their own build settings.
+      - name: Build for QEMU
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          idf.py -C firmware/xiao-wifi -B "$GITHUB_WORKSPACE/build-qemu" -D SDKCONFIG="$GITHUB_WORKSPACE/build-qemu/sdkconfig" \
+            -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
+
+      - name: Test
+        env:
+          MOUTHTRAP_QEMU_BUILD: build-qemu
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          python -m unittest discover -s firmware/xiao-wifi/test -v

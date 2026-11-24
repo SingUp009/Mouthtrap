@@ -1,7 +1,7 @@
 name: Build packages
 
 # Builds the release zip files: the GUI for Windows and every firmware variant. CI calls it to check
-# that packaging works, and Release calls it twice to check that the files are reproducible.
+# that the GUI packaging works, and Release calls it twice to check that the files are reproducible.
 on:
   workflow_call:
     inputs:
@@ -13,6 +13,10 @@ on:
         description: Folder in the workspace to check out into. A second build uses another one.
         type: string
         default: source
+      firmware:
+        description: Also build the firmware. CI leaves it to firmware.yml.
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -59,9 +63,11 @@ jobs:
 
   firmware:
     name: Firmware
+    if: inputs.firmware
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    # ESP-IDF v5.5.4, pinned by digest so that every build uses the same toolchain.
+    # ESP-IDF v5.5.4, pinned by digest so that every build uses the same toolchain. Keep it the same
+    # as in firmware.yml.
     container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
     defaults:
       run:

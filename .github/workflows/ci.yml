@@ -47,3 +47,5 @@ jobs:
   packages:
     name: Packages
     uses: ./.github/workflows/build.yml
+    with:
+      firmware: false
