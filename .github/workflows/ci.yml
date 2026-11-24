@@ -43,3 +43,7 @@ jobs:
 
       - name: Test Release
         run: dotnet test --solution software/Mouthtrap.slnx -c Release --no-build --no-restore
+
+  packages:
+    name: Packages
+    uses: ./.github/workflows/build.yml
