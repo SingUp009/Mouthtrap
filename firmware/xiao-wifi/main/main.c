@@ -10,9 +10,15 @@
 #include "esp_netif.h"
 #include "esp_timer.h"
 #include "esp_wifi.h"
+#include "nvs.h"
 #include "nvs_flash.h"
 
 static const char *TAG = "mouthtrap";
+// provision.py writes these keys to the "nvs" partition in partitions.csv.
+#define SETTINGS_NAMESPACE "mouthtrap"
+static char wifi_ssid[33];
+static char wifi_password[64];
+static char stream_token[121];
 static EventGroupHandle_t wifi_events;
 static int retries;
 static bool stopping;
@@ -51,8 +57,8 @@ static bool wifi_start(void)
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event, NULL));
     wifi_config_t config = {0};
-    memcpy(config.sta.ssid, CONFIG_MOUTHTRAP_WIFI_SSID, strlen(CONFIG_MOUTHTRAP_WIFI_SSID));
-    memcpy(config.sta.password, CONFIG_MOUTHTRAP_WIFI_PASSWORD, strlen(CONFIG_MOUTHTRAP_WIFI_PASSWORD));
+    memcpy(config.sta.ssid, wifi_ssid, strlen(wifi_ssid));
+    memcpy(config.sta.password, wifi_password, strlen(wifi_password));
     config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &config));
@@ -90,7 +96,7 @@ static bool authorized(httpd_req_t *request)
 {
     char expected[128];
     char provided[128];
-    int length = snprintf(expected, sizeof(expected), "Bearer %s", CONFIG_MOUTHTRAP_STREAM_TOKEN);
+    int length = snprintf(expected, sizeof(expected), "Bearer %s", stream_token);
     if (length <= 0 || length >= sizeof(expected) || httpd_req_get_hdr_value_len(request, "Authorization") != length) return false;
     if (httpd_req_get_hdr_value_str(request, "Authorization", provided, sizeof(provided)) != ESP_OK) return false;
     unsigned char difference = 0;
@@ -125,28 +131,58 @@ static esp_err_t stream(httpd_req_t *request)
     }
 }
 
-void app_main(void)
+static bool read_setting(nvs_handle_t settings, const char *key, char *value, size_t size)
 {
-    size_t ssid_length = strlen(CONFIG_MOUTHTRAP_WIFI_SSID);
-    size_t password_length = strlen(CONFIG_MOUTHTRAP_WIFI_PASSWORD);
-    size_t token_length = strlen(CONFIG_MOUTHTRAP_STREAM_TOKEN);
+    size_t length = size;
+    esp_err_t result = nvs_get_str(settings, key, value, &length);
+    if (result == ESP_OK) return true;
+    ESP_LOGE(TAG, "Setting \"%s\" could not be read: %s", key, esp_err_to_name(result));
+    return false;
+}
+
+static bool settings_load(void)
+{
+    nvs_handle_t settings;
+    esp_err_t result = nvs_open(SETTINGS_NAMESPACE, NVS_READONLY, &settings);
+    if (result != ESP_OK) {
+        ESP_LOGE(TAG, "No settings found: %s", esp_err_to_name(result));
+        return false;
+    }
+    bool loaded = read_setting(settings, "ssid", wifi_ssid, sizeof(wifi_ssid))
+        && read_setting(settings, "password", wifi_password, sizeof(wifi_password))
+        && read_setting(settings, "token", stream_token, sizeof(stream_token));
+    nvs_close(settings);
+    if (!loaded) return false;
+    size_t ssid_length = strlen(wifi_ssid);
+    size_t password_length = strlen(wifi_password);
+    size_t token_length = strlen(stream_token);
     bool valid_token = token_length >= 32 && token_length <= 120;
     for (size_t i = 0; i < token_length; i++) {
-        char c = CONFIG_MOUTHTRAP_STREAM_TOKEN[i];
+        char c = stream_token[i];
         valid_token &= (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_';
     }
     if (ssid_length == 0 || ssid_length > 32 || password_length < 8 || password_length > 63 || !valid_token) {
-        ESP_LOGE(TAG, "Set the private Wi-Fi configuration and a 32-120 character stream token before flashing.");
-        return;
+        ESP_LOGE(TAG, "The stored settings are invalid.");
+        return false;
     }
+    ESP_LOGI(TAG, "Settings loaded; connecting to Wi-Fi.");
+    return true;
+}
+
+void app_main(void)
+{
     esp_err_t result = nvs_flash_init();
     if (result != ESP_OK) {
         // Preserve existing NVS rather than erasing credentials or other device data automatically.
         ESP_LOGE(TAG, "NVS initialization failed: %s", esp_err_to_name(result));
         return;
     }
+    if (!settings_load()) {
+        ESP_LOGE(TAG, "Store the Wi-Fi settings and a 32-120 character stream token with provision.py, then reset.");
+        return;
+    }
     if (!wifi_start()) {
-        ESP_LOGE(TAG, "Wi-Fi did not connect; check the local configuration and reset to retry.");
+        ESP_LOGE(TAG, "Wi-Fi did not connect; check the stored settings and reset to retry.");
         stopping = true;
         esp_wifi_stop();
         return;
