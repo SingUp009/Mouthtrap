@@ -147,7 +147,6 @@ public sealed partial class Commands
         var (tongue, deadzone, osc, oscDryRun) = (options.Tongue, options.Deadzone, options.Osc, options.OscDryRun);
         return StaDispatcher.Run(async dispatcher =>
         {
-            using var http = source == InputKind.Mjpeg ? new System.Net.Http.HttpClient { Timeout = Timeout.InfiniteTimeSpan } : null;
             var parsedDeadzone = Deadzone.Create(deadzone);
             if (parsedDeadzone is Err<InvalidValue>(var invalidDeadzone)) return Usage(invalidDeadzone.Message);
             var expressionOptions = new ExpressionOptions
@@ -172,7 +171,7 @@ public sealed partial class Commands
                 if (devices is null) return cancellationToken.IsCancellationRequested ? 130 : 1;
                 if (camera < 0 && options.Camera is { } saved)
                 {
-                    camera = Array.FindIndex(devices, device => device.Identity.ToString() == saved.Identity);
+                    camera = SavedCamera.IndexOf(devices, saved);
                     if (camera < 0) return Usage($"The saved camera '{saved.Name}' is not connected; select --camera from cameras.");
                     if (mode < 0 && saved.Mode is { } savedMode)
                         mode = Array.FindIndex(devices[camera].Characteristics, item => SavedCamera.Matches(item, savedMode));
@@ -187,15 +186,13 @@ public sealed partial class Commands
             {
                 if (StreamUrl.Create(url) is not Ok<StreamUrl>(var address))
                     return Usage("Mjpeg requires an absolute HTTP(S) --url without a user name or password.");
-                if (tokenFile is not null)
+                // The token file is checked here so that a bad file is a usage error; the input reads it again when it starts.
+                if (tokenFile is not null && StreamTokenFile.Read(tokenFile) is Err<InputSettingsInvalid>(var invalid))
                 {
-                    switch (StreamTokenFile.Read(tokenFile))
-                    {
-                        case Ok<string>(var token): http!.DefaultRequestHeaders.Authorization = new("Bearer", token); break;
-                        case Err<InputSettingsInvalid>(var invalid): Error("token_file", invalid.Message); return 2;
-                    }
+                    Error("token_file", invalid.Message);
+                    return 2;
                 }
-                input = new MjpegFrameSource(address.Address, http!);
+                input = new MjpegStreamInput(address, tokenFile);
             }
             else if (string.IsNullOrWhiteSpace(path)) return Usage("Image and Video require --path.");
             else if (source == InputKind.Image) input = new ImageFileSource(path);

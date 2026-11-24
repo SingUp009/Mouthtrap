@@ -10,6 +10,33 @@ public sealed class SavedCameraTests
 {
     private static readonly CameraModeSettings Saved = new(1280, 720, "JPEG", 30);
 
+    [Fact]
+    public void IndexOf_SavedIdentityConnected_FindsItEvenWhenAnotherHasTheName()
+    {
+        // Given
+        CaptureDeviceDescriptor[] devices = [new Camera("Desk camera", "usb#2"), new Camera("Desk camera", "usb#1")];
+
+        // When / Then
+        Assert.Equal(1, SavedCamera.IndexOf(devices, new("Desk camera", "usb#1")));
+    }
+
+    [Fact]
+    public void IndexOf_CameraMovedToAnotherPort_FindsItByName()
+    {
+        // Given
+        CaptureDeviceDescriptor[] devices = [new Camera("Other", "usb#1"), new Camera("Desk camera", "usb#3")];
+
+        // When / Then
+        Assert.Equal(1, SavedCamera.IndexOf(devices, new("Desk camera", "usb#2")));
+    }
+
+    [Fact]
+    public void IndexOf_SavedCameraNotConnected_IsMinusOne()
+    {
+        // When / Then
+        Assert.Equal(-1, SavedCamera.IndexOf([new Camera("Other", "usb#1")], new("Desk camera", "usb#2")));
+    }
+
     [Theory]
     [InlineData(1280, 720, 30, 1)]
     [InlineData(1280, 720, 2997, 100)]
@@ -33,5 +60,16 @@ public sealed class SavedCameraTests
 
         // When / Then
         Assert.False(SavedCamera.Matches(mode, Saved));
+    }
+
+    private sealed class Camera(string name, string identity)
+        : CaptureDeviceDescriptor(name, "test camera", [], new DefaultBufferPool())
+    {
+        public override object Identity => identity;
+        public override DeviceTypes DeviceType => DeviceTypes.DirectShow;
+
+        protected override Task<CaptureDevice> OnOpenWithFrameProcessorAsync(VideoCharacteristics characteristics,
+            TranscodeFormats transcodeFormat, FrameProcessor frameProcessor, CancellationToken ct) =>
+            throw new InvalidOperationException("Finding a camera must not open it.");
     }
 }

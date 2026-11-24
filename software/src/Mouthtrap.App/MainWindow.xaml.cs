@@ -96,8 +96,7 @@ public partial class MainWindow : Window
                     {
                         Cameras.ItemsSource = devices;
                         var saved = settings.Input.Camera;
-                        Cameras.SelectedItem = devices.FirstOrDefault(device => saved is not null && device.Identity.ToString() == saved.Identity)
-                            ?? devices.FirstOrDefault(device => saved is not null && device.Name == saved.Name);
+                        Cameras.SelectedItem = saved is not null && SavedCamera.IndexOf(devices, saved) is >= 0 and var index ? devices[index] : null;
                     }
                     finally { restoring--; }
                     ShowCameraResult(devices.Length == 0 ? Strings.Get("NoCameras") : IdleGuidance);
