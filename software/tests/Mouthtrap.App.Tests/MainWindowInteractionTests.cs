@@ -105,8 +105,7 @@ public sealed class MainWindowInteractionTests : IDisposable
             await ui.Click("Start");
             await ui.UntilText(ui.Window.SessionStateText, text => text == Strings.Get("StateIdle") &&
                 ui.Window.StatusText.Text != Strings.Get("StartingInput"));
-            Assert.StartsWith(Strings.Format("ModelMissing", ""), ui.Window.StatusText.Text, StringComparison.Ordinal);
-            Assert.Contains(missing, ui.Window.StatusText.Text, StringComparison.Ordinal);
+            Assert.Equal(Strings.Format("ModelMissing", missing), ui.Window.StatusText.Text);
             Assert.True(ui.IsEnabled(AutomationControlType.Button, "Start"));
         });
     }

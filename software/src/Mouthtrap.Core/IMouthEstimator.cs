@@ -4,6 +4,7 @@ using Moderato.Results;
 
 namespace Mouthtrap.Core;
 
+// Path is the full path of the definition or model file that does not exist.
 public sealed record ModelFileMissing(string Path);
 public sealed record ModelLoadFailed(string Message);
 public sealed record ModelContractMismatch(string Message);

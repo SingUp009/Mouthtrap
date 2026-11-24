@@ -277,7 +277,7 @@ public sealed partial class Commands
         },
         TrackingModelFailed(var model) => model switch
         {
-            ModelFileMissing(var message) => Failure("model_file_missing", message),
+            ModelFileMissing(var path) => Failure("model_file_missing", $"No model file at {path}."),
             ModelLoadFailed(var message) => Failure("model_load", message),
             ModelContractMismatch(var message) => Failure("model_contract", message),
             ModelInferenceFailed(var message) => Failure("model_inference", message)

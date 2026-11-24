@@ -69,17 +69,19 @@ public sealed class OnnxMouthEstimator : IMouthEstimator
     private static async ValueTask<Result<(byte[]? Data, string FullPath), ModelError>> ReadFile(string path, string? relativeTo,
         long limit, CancellationToken cancellationToken)
     {
+        string? fullPath = null;
         try
         {
-            var fullPath = relativeTo is null ? Path.GetFullPath(path) : Path.GetFullPath(path, relativeTo);
+            fullPath = relativeTo is null ? Path.GetFullPath(path) : Path.GetFullPath(path, relativeTo);
             await using var file = File.OpenRead(fullPath);
             if (file.Length > limit) return new Ok<(byte[]?, string)>((null, fullPath));
             var data = new byte[checked((int)file.Length)];
             await file.ReadExactlyAsync(data, cancellationToken).ConfigureAwait(false);
             return new Ok<(byte[]?, string)>((data, fullPath));
         }
-        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
-        { return new Err<ModelError>(new ModelFileMissing(exception.Message)); }
+        // Only opening the resolved path reports a missing file or folder, so fullPath is set by then.
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException && fullPath is not null)
+        { return new Err<ModelError>(new ModelFileMissing(fullPath)); }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         { return new Err<ModelError>(new ModelLoadFailed(exception.Message)); }
     }

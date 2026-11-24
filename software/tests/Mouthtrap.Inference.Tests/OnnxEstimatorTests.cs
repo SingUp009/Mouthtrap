@@ -285,6 +285,24 @@ public sealed class OnnxEstimatorTests
         if (condition == "model-is-folder") Directory.Delete(files.Model);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Load_FileMissing_NamesTheFullPathOfThatFile(bool definition)
+    {
+        // Given
+        using var files = new Fixture();
+        files.WriteDefinition(Definition);
+        var missing = definition ? files.Config : files.Model;
+        File.Delete(missing);
+
+        // When
+        var exit = await OnnxMouthEstimator.Load(files.Config).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+
+        // Then
+        Assert.True(exit is Err<ModelError>(ModelFileMissing(var path)) && path == Path.GetFullPath(missing), exit.ToString());
+    }
+
     [Fact]
     public async Task Load_Cancelled_IsInterruptedNotAFailure()
     {
