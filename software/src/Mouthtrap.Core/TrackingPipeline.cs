@@ -68,9 +68,20 @@ public static class TrackingPipeline
                 estimator = await scope.Acquire(resource);
             }
             scope.CancellationToken.ThrowIfCancellationRequested();
+            // The loop sleeps until a frame arrives, the settings change or the input ends.
+            var wake = new WakeSignal();
+            Action notify = wake.Set;
+            frames.Published += notify;
+            control.Changed += notify;
+            scope.Defer(_ => Effect<PreviewEnvironment>.Sync(() =>
+            {
+                frames.Published -= notify;
+                control.Changed -= notify;
+                return Unit.Value;
+            }));
             var sourceEnded = 0;
             var source = input.Run(frames).MapErr<TrackingError>(error => new TrackingInputFailed(error))
-                .Map(value => { Volatile.Write(ref sourceEnded, 1); return value; });
+                .Map(value => { Volatile.Write(ref sourceEnded, 1); wake.Set(); return value; });
             // The loop takes and decodes frames, waits, publishes and lifts each stage's error into TrackingError;
             // the selector and the stages decide what is processed and how.
             var consume = Scope<TrackingError, PreviewEnvironment>.Gen(async consumer =>
@@ -97,7 +108,7 @@ public static class TrackingPipeline
                     if (selector.Select(arrived, receivedAt, settings) is not { } selected)
                     {
                         if (ended) break;
-                        await Task.Delay(TimeSpan.FromMilliseconds(5), clock, cancellationToken).ConfigureAwait(false);
+                        await wake.WaitAsync(cancellationToken).ConfigureAwait(false);
                         continue;
                     }
 

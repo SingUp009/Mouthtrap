@@ -285,6 +285,34 @@ public sealed class TrackingPipelineTests
     }
 
     [Fact]
+    public async Task Run_FramesAndSettingsChangeWhileTimeStandsStill_ProcessesEachWithoutPolling()
+    {
+        // Given: a clock that never moves, so only the arrival or the change itself can wake the pipeline.
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var clock = new FakeTimeProvider();
+        var frames = new LatestFrameBuffer();
+        var control = new TrackingControl();
+        var sink = new Sink();
+        var run = TrackingPipeline.Run(new FakeSource { WaitForCancellation = true }, frames, new PassThroughDecoder(), null,
+                control, sink)
+            .RunExitAsync(new(clock), cancellation.Token).AsTask();
+
+        // When
+        frames.Publish(Red, clock.GetTimestamp());
+        await sink.WaitFor(frame => frame.Diagnostics.Processed == 1, cancellation.Token);
+        frames.Publish(new Rgb24FrameImage([0, 0, 255], 1, 1, 3), clock.GetTimestamp());
+        await sink.WaitFor(frame => frame.Diagnostics.Processed == 2, cancellation.Token);
+        var revision = control.ResetCalibration();
+
+        // Then
+        var reset = await sink.WaitFor(frame => frame.Diagnostics.Settings.Revision == revision, cancellation.Token);
+        cancellation.Cancel();
+        Assert.True(await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken) is Interrupted);
+        Assert.Equal(3, reset.Diagnostics.Processed);
+        Assert.Equal(new byte[] { 0, 0, 255 }, reset.Diagnostics.Pixels[..3]);
+    }
+
+    [Fact]
     public async Task ResetCalibration_AfterLearning_RestartsLearningAndReprocessesHeldFrame()
     {
         // Given
@@ -301,7 +329,7 @@ public sealed class TrackingPipelineTests
             if (i > 0) clock.Advance(TimeSpan.FromMilliseconds(100));
             var value = i % 20 < 10 ? (byte)26 : (byte)230;
             frames.Publish(new Rgb24FrameImage([value, value, value], 1, 1, 3), clock.GetTimestamp());
-            await sink.WaitFor(frame => frame.Diagnostics.Processed == i + 1, cancellation.Token, clock);
+            await sink.WaitFor(frame => frame.Diagnostics.Processed == i + 1, cancellation.Token);
         }
         var learned = sink.Latest!;
         Assert.True(learned.Result!.Calibration!.Value.IsReady);
@@ -314,7 +342,7 @@ public sealed class TrackingPipelineTests
         var revision = control.ResetCalibration();
 
         // Then
-        var reset = await sink.WaitFor(frame => frame.Diagnostics.Settings.Revision == revision, cancellation.Token, clock);
+        var reset = await sink.WaitFor(frame => frame.Diagnostics.Settings.Revision == revision, cancellation.Token);
         cancellation.Cancel();
         Assert.True(await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken) is Interrupted);
         Assert.False(reset.Result!.Calibration!.Value.IsReady);
@@ -368,6 +396,7 @@ public sealed class TrackingPipelineTests
     {
         private readonly ConcurrentQueue<TrackingFrame> frames = new();
         private TrackingFrame? latest;
+        private TaskCompletionSource published = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public OutputFailed? Failure { get; init; }
         public IReadOnlyCollection<TrackingFrame> Frames => frames;
         public TrackingFrame? Latest => Volatile.Read(ref latest);
@@ -377,19 +406,18 @@ public sealed class TrackingPipelineTests
             onPublish?.Invoke(frame);
             frames.Enqueue(frame);
             Volatile.Write(ref latest, frame);
+            Interlocked.Exchange(ref published, new(TaskCreationOptions.RunContinuationsAsynchronously)).TrySetResult();
             return Failure is { } failure ? new Err<OutputFailed>(failure) : new Ok<Unit>(Unit.Value);
         }
 
-        // The pipeline checks for new frames every 5 ms on the session clock, so with a fake clock the wait moves it
-        // forward by that step until the frame arrives.
-        public async Task<TrackingFrame> WaitFor(Func<TrackingFrame, bool> condition, CancellationToken cancellationToken,
-            FakeTimeProvider? clock = null)
+        // Waits for a published frame that meets the condition, checking again after each publication.
+        public async Task<TrackingFrame> WaitFor(Func<TrackingFrame, bool> condition, CancellationToken cancellationToken)
         {
             while (true)
             {
+                var next = Volatile.Read(ref published).Task;
                 if (Latest is { } frame && condition(frame)) return frame;
-                clock?.Advance(TimeSpan.FromMilliseconds(5));
-                await Task.Delay(TimeSpan.FromMilliseconds(1), TimeProvider.System, cancellationToken);
+                await next.WaitAsync(cancellationToken);
             }
         }
     }

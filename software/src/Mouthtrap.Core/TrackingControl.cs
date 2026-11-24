@@ -26,6 +26,9 @@ public sealed class TrackingControl
     private readonly object gate = new();
     private TrackingControlState current;
 
+    // Raised after each new revision, on the thread that made it.
+    public event Action? Changed;
+
     public TrackingControl(PreprocessSettings? preprocessing = null) =>
         current = new(preprocessing ?? PreprocessSettings.Default, 0);
 
@@ -37,19 +40,25 @@ public sealed class TrackingControl
     public int Update(PreprocessSettings preprocessing)
     {
         ArgumentNullException.ThrowIfNull(preprocessing);
+        int revision;
         lock (gate)
         {
             current = new(preprocessing, current.Revision + 1);
-            return current.Revision;
+            revision = current.Revision;
         }
+        Changed?.Invoke();
+        return revision;
     }
 
     public int ResetCalibration()
     {
+        int revision;
         lock (gate)
         {
             current = current with { Revision = current.Revision + 1 };
-            return current.Revision;
+            revision = current.Revision;
         }
+        Changed?.Invoke();
+        return revision;
     }
 }

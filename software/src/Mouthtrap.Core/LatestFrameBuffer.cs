@@ -35,6 +35,9 @@ public sealed class LatestFrameBuffer : IFrameWriter
     private long replaced;
     private long lastReceivedAt;
 
+    // Raised after each publication, on the publishing thread, so a consumer can wake instead of polling.
+    public event Action? Published;
+
     public void Publish(byte[] ownedImage, long receivedAt)
     {
         ArgumentNullException.ThrowIfNull(ownedImage);
@@ -53,6 +56,7 @@ public sealed class LatestFrameBuffer : IFrameWriter
             received++;
             lastReceivedAt = frame.ReceivedAt;
         }
+        Published?.Invoke();
     }
 
     public PreviewFrame? Take()
