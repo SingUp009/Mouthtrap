@@ -15,7 +15,7 @@ These rules apply to everyone who changes this repository, human or AI agent. Th
 
 ## Privacy
 
-- Never commit or print Wi-Fi credentials, the stream token (`firmware/xiao-wifi/stream-token.txt`, `sdkconfig.wifi`), or firmware build output that contains them.
+- Never commit or print Wi-Fi credentials or the stream token (`stream-token.txt`). The firmware must not contain them: they are stored on the board at run time with `firmware/xiao-wifi/provision.py`. Settings images written with `provision.py --image`, and an old `sdkconfig.wifi` with its build output, contain them too.
 - Do not commit camera captures or recordings of faces. Keep local experiments in the git-ignored `.artifacts/` folder.
 - Models are not part of the repository. Do not commit model weights.
 
@@ -45,6 +45,15 @@ dotnet test --solution software/Mouthtrap.slnx -c Release --no-build --no-restor
 ```
 
 Dependencies are locked with `packages.lock.json`. When you add or update a package, commit the updated lock files.
+
+## Releases
+
+Push a tag such as `v1.2.0` to publish a release. `.github/workflows/release.yml` builds the packages twice, on separate runners and from different checkout folders, and publishes them with checksums and a provenance attestation only if both builds are identical. CI builds the same packages on every change.
+
+- The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
+- The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml`. Run the script in that image to reproduce a release's firmware byte for byte.
+- Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.
+- Keep the build inputs pinned: the SDK, the ESP-IDF image, the components in `dependencies.lock`, the packages in `packages.lock.json`, the Python version and the actions by commit. Firmware builds set `CONFIG_APP_REPRODUCIBLE_BUILD`, and the firmware takes no build-time secrets, so one build serves everyone.
 
 ## Commits
 
