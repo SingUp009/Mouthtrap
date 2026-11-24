@@ -1,0 +1,92 @@
+name: Build packages
+
+# Builds the release zip files: the GUI for Windows and every firmware variant. CI calls it to check
+# that packaging works, and Release calls it twice to check that the files are reproducible.
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: Prefix for the uploaded artifacts, to keep several builds apart.
+        type: string
+        default: packages
+      checkout-path:
+        description: Folder in the workspace to check out into. A second build uses another one.
+        type: string
+        default: source
+
+permissions:
+  contents: read
+
+jobs:
+  gui:
+    name: GUI (win-x64)
+    runs-on: windows-2025
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.checkout-path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ${{ inputs.checkout-path }}
+          persist-credentials: false
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: ${{ inputs.checkout-path }}/global.json
+
+      # The exact version fixes the zlib that compresses the zip file.
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: 3.13.18
+
+      - name: Publish and pack
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then version=${GITHUB_REF_NAME#v}; else version=0.0.0-ci.${GITHUB_SHA::7}; fi
+          python tools/release/publish_app.py "$version" "$GITHUB_WORKSPACE/packages"
+
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.name }}-gui
+          path: packages/*.zip
+          if-no-files-found: error
+
+  firmware:
+    name: Firmware
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # ESP-IDF v5.5.4, pinned by digest so that every build uses the same toolchain.
+    container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.checkout-path }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ${{ inputs.checkout-path }}
+          persist-credentials: false
+
+      - name: Build and pack
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then version=${GITHUB_REF_NAME#v}; else version=0.0.0-ci.${GITHUB_SHA::7}; fi
+          firmware/build-release.sh "$version" "$GITHUB_WORKSPACE/packages"
+
+      # The component manager rewrites dependencies.lock when the build did not use the locked versions.
+      - name: Check locked components
+        run: git -c safe.directory='*' diff --exit-code -- firmware
+
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ inputs.name }}-firmware
+          path: packages/*.zip
+          if-no-files-found: error
