@@ -12,19 +12,21 @@
 #include "esp_wifi.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "stream_auth.h"
+#include "stream_mjpeg.h"
+#include "stream_settings.h"
 
 static const char *TAG = "mouthtrap";
 // provision.py writes these keys to the "nvs" partition in partitions.csv.
 #define SETTINGS_NAMESPACE "mouthtrap"
-static char wifi_ssid[33];
-static char wifi_password[64];
-static char stream_token[121];
+static char wifi_ssid[SETTINGS_SSID_MAX + 1];
+static char wifi_password[SETTINGS_PASSWORD_MAX + 1];
+static char stream_token[SETTINGS_TOKEN_MAX + 1];
 static EventGroupHandle_t wifi_events;
 static int retries;
 static bool stopping;
 #define CONNECTED BIT0
 #define FAILED BIT1
-#define BOUNDARY "mouthtrap-frame"
 
 static void wifi_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
@@ -92,42 +94,43 @@ static esp_err_t camera_start(void)
     return ESP_OK;
 }
 
-static bool authorized(httpd_req_t *request)
+static auth_result_t authorize(httpd_req_t *request)
 {
-    char expected[128];
-    char provided[128];
-    int length = snprintf(expected, sizeof(expected), "Bearer %s", stream_token);
-    if (length <= 0 || length >= sizeof(expected) || httpd_req_get_hdr_value_len(request, "Authorization") != length) return false;
-    if (httpd_req_get_hdr_value_str(request, "Authorization", provided, sizeof(provided)) != ESP_OK) return false;
-    unsigned char difference = 0;
-    for (int i = 0; i < length; i++) difference |= (unsigned char)(expected[i] ^ provided[i]);
-    return difference == 0;
+    size_t length = httpd_req_get_hdr_value_len(request, "Authorization");
+    if (length == 0) return auth_check(stream_token, NULL);
+    // A header longer than any valid one cannot match, so it is not read.
+    if (length > AUTH_HEADER_MAX) return AUTH_WRONG_TOKEN;
+    char authorization[AUTH_HEADER_MAX + 1];
+    if (httpd_req_get_hdr_value_str(request, "Authorization", authorization, sizeof(authorization)) != ESP_OK) {
+        return AUTH_WRONG_TOKEN;
+    }
+    return auth_check(stream_token, authorization);
+}
+
+static int send_chunk(void *request, const char *data, size_t length)
+{
+    return httpd_resp_send_chunk(request, data, (ssize_t)length) == ESP_OK ? 0 : -1;
 }
 
 static esp_err_t stream(httpd_req_t *request)
 {
-    if (!authorized(request)) {
+    if (authorize(request) != AUTH_OK) {
         httpd_resp_set_status(request, "401 Unauthorized");
         return httpd_resp_sendstr(request, "A stream token is required.");
     }
-    esp_err_t result = httpd_resp_set_type(request, "multipart/x-mixed-replace; boundary=" BOUNDARY);
+    esp_err_t result = httpd_resp_set_type(request, MJPEG_CONTENT_TYPE);
     if (result != ESP_OK) return result;
     while (true) {
         int64_t started = esp_timer_get_time();
         camera_fb_t *frame = esp_camera_fb_get();
         if (!frame) return ESP_FAIL;
-        char header[160];
-        int length = snprintf(header, sizeof(header), "\r\n--" BOUNDARY "\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", (unsigned)frame->len);
-        if (length <= 0 || length >= sizeof(header) || frame->format != PIXFORMAT_JPEG) result = ESP_FAIL;
-        else {
-            result = httpd_resp_send_chunk(request, header, length);
-            if (result == ESP_OK) result = httpd_resp_send_chunk(request, (const char *)frame->buf, frame->len);
-        }
+        result = frame->format == PIXFORMAT_JPEG && mjpeg_send_frame(frame->buf, frame->len, send_chunk, request) == MJPEG_OK
+            ? ESP_OK : ESP_FAIL;
         // The synchronous send has finished using the borrowed camera buffer on every path.
         esp_camera_fb_return(frame);
         if (result != ESP_OK) return result;
-        int64_t remaining = 67000 - (esp_timer_get_time() - started);
-        if (remaining > 1000) vTaskDelay(pdMS_TO_TICKS((uint32_t)(remaining / 1000)));
+        uint32_t delay = mjpeg_frame_delay_ms(started, esp_timer_get_time());
+        if (delay > 0) vTaskDelay(pdMS_TO_TICKS(delay));
     }
 }
 
@@ -153,16 +156,9 @@ static bool settings_load(void)
         && read_setting(settings, "token", stream_token, sizeof(stream_token));
     nvs_close(settings);
     if (!loaded) return false;
-    size_t ssid_length = strlen(wifi_ssid);
-    size_t password_length = strlen(wifi_password);
-    size_t token_length = strlen(stream_token);
-    bool valid_token = token_length >= 32 && token_length <= 120;
-    for (size_t i = 0; i < token_length; i++) {
-        char c = stream_token[i];
-        valid_token &= (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_';
-    }
-    if (ssid_length == 0 || ssid_length > 32 || password_length < 8 || password_length > 63 || !valid_token) {
-        ESP_LOGE(TAG, "The stored settings are invalid.");
+    settings_error_t error = settings_validate(wifi_ssid, wifi_password, stream_token);
+    if (error != SETTINGS_OK) {
+        ESP_LOGE(TAG, "The stored settings are invalid: %s.", settings_error_text(error));
         return false;
     }
     ESP_LOGI(TAG, "Settings loaded; connecting to Wi-Fi.");
