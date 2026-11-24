@@ -181,8 +181,8 @@ public sealed partial class Commands
                 {
                     camera = SavedCamera.IndexOf(devices, saved);
                     if (camera < 0) return Usage($"The saved camera '{saved.Name}' is not connected; select --camera from cameras.");
-                    if (mode < 0 && saved.Mode is { } savedMode)
-                        mode = Array.FindIndex(devices[camera].Characteristics, item => SavedCamera.Matches(item, savedMode));
+                    if (mode < 0 && SavedCamera.ModeOf(devices[camera], saved) is { } savedMode)
+                        mode = Array.IndexOf(devices[camera].Characteristics, savedMode);
                 }
                 if (camera < 0 || camera >= devices.Length) return Usage("Select --camera from cameras.");
                 var descriptor = devices[camera];

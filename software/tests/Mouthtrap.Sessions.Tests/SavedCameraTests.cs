@@ -62,8 +62,49 @@ public sealed class SavedCameraTests
         Assert.False(SavedCamera.Matches(mode, Saved));
     }
 
-    private sealed class Camera(string name, string identity)
-        : CaptureDeviceDescriptor(name, "test camera", [], new DefaultBufferPool())
+    [Fact]
+    public void ModeOf_CameraMovedToAnotherPort_FindsTheSavedMode()
+    {
+        // Given
+        var saved = new VideoCharacteristics(PixelFormats.JPEG, 1280, 720, 30);
+        var camera = new Camera("Desk camera", "usb#3", new VideoCharacteristics(PixelFormats.JPEG, 640, 480, 30), saved);
+
+        // When / Then
+        Assert.Same(saved, SavedCamera.ModeOf(camera, new("Desk camera", "usb#2", Saved)));
+    }
+
+    [Fact]
+    public void ModeOf_AnotherCameraWithTheSavedMode_IsNull()
+    {
+        // Given
+        var camera = new Camera("Other", "usb#1", new VideoCharacteristics(PixelFormats.JPEG, 1280, 720, 30));
+
+        // When / Then
+        Assert.Null(SavedCamera.ModeOf(camera, new("Desk camera", "usb#2", Saved)));
+    }
+
+    [Fact]
+    public void ModeOf_SavedModeNotOffered_IsNull()
+    {
+        // Given
+        var camera = new Camera("Desk camera", "usb#2", new VideoCharacteristics(PixelFormats.JPEG, 640, 480, 30));
+
+        // When / Then
+        Assert.Null(SavedCamera.ModeOf(camera, new("Desk camera", "usb#2", Saved)));
+    }
+
+    [Fact]
+    public void ModeOf_NoModeSaved_IsNull()
+    {
+        // Given
+        var camera = new Camera("Desk camera", "usb#2", new VideoCharacteristics(PixelFormats.JPEG, 1280, 720, 30));
+
+        // When / Then
+        Assert.Null(SavedCamera.ModeOf(camera, new("Desk camera", "usb#2")));
+    }
+
+    private sealed class Camera(string name, string identity, params VideoCharacteristics[] modes)
+        : CaptureDeviceDescriptor(name, "test camera", modes, new DefaultBufferPool())
     {
         public override object Identity => identity;
         public override DeviceTypes DeviceType => DeviceTypes.DirectShow;

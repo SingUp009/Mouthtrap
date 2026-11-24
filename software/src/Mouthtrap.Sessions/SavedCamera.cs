@@ -19,6 +19,17 @@ public static class SavedCamera
         return -1;
     }
 
+    // The saved capture mode among the device's supported modes, when the device is the saved camera as IndexOf finds
+    // it (the same identity, or the same name after it moved to another port). Null when it is another camera, no mode
+    // was saved, or the device no longer offers the saved mode.
+    public static VideoCharacteristics? ModeOf(CaptureDeviceDescriptor device, CameraSettings saved)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+        ArgumentNullException.ThrowIfNull(saved);
+        if (IndexOf([device], saved) != 0 || saved.Mode is not { } mode) return null;
+        return device.Characteristics.FirstOrDefault(item => item.PixelFormat != PixelFormats.Unknown && Matches(item, mode));
+    }
+
     // A mode is the saved one when its size and format are the same and its rate is within 0.05 fps.
     public static bool Matches(VideoCharacteristics mode, CameraModeSettings saved)
     {

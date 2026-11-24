@@ -145,10 +145,8 @@ public partial class MainWindow : Window
             try
             {
                 Modes.ItemsSource = modes;
-                var saved = settings.Input.Camera is { } camera && camera.Identity == descriptor.Identity.ToString() ? camera.Mode : null;
-                Modes.SelectedItem = modes.FirstOrDefault(mode => saved is not null && SavedCamera.Matches(mode, saved))
-                    ?? modes.FirstOrDefault(mode => mode.Width == 1280 && mode.Height == 720 &&
-                        mode.PixelFormat == FlashCap.PixelFormats.JPEG && Math.Abs((double)mode.FramesPerSecond - 30) <= 0.05);
+                // Only the saved mode is chosen for the user; any other camera's mode is theirs to pick.
+                Modes.SelectedItem = settings.Input.Camera is { } camera ? SavedCamera.ModeOf(descriptor, camera) : null;
             }
             finally { restoring--; }
         }
