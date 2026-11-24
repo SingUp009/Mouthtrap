@@ -23,11 +23,12 @@ public sealed record SessionRequest(IFrameSource Input)
 }
 
 // One tracking session as the GUI and the CLI run it: the input, an optional model and optional VRChat output around
-// TrackingPipeline. Frames and Control belong to this session, so run it once.
+// TrackingPipeline. Frames and Control belong to this session, so it runs once: running it again is a defect.
 public sealed class TrackingSession
 {
     private readonly SessionRequest request;
     private readonly OscPacketCount oscPackets = new();
+    private int started;
 
     private TrackingSession(SessionRequest request)
     {
@@ -61,9 +62,15 @@ public sealed class TrackingSession
         Effect<Unit, TrackingError, TrackingEnvironment> Pipeline(ITrackingSink output) => TrackingPipeline.Run(request.Input,
             Frames, FrameImageDecoder.Instance, request.Model is { } model ? OnnxMouthEstimator.Load(model) : null, Control,
             output, request.Expressions);
-        if (request.Osc is not { } transport) return Pipeline(sink);
         return Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
         {
+            if (Interlocked.Exchange(ref started, 1) != 0)
+                throw new InvalidOperationException("A tracking session runs once; create another for the next run.");
+            if (request.Osc is not { } transport)
+            {
+                await scope.Run(Pipeline(sink));
+                return Unit.Value;
+            }
             var osc = await scope.Acquire(VrchatOscSession.Output(transport, oscPackets)
                 .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
             await scope.Run(Pipeline(new CompositeTrackingSink(sink, osc)));

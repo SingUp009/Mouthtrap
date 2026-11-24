@@ -61,6 +61,23 @@ public sealed class TrackingSessionTests
     }
 
     [Fact]
+    public async Task Run_SecondTime_DiesWithoutRunningTheInputAgain()
+    {
+        // Given
+        var source = new OneFrameSource(Pixel);
+        var session = ResultAssert.Ok(TrackingSession.Create(new(source)));
+        Assert.True(await session.Run(new RecordingSink()).RunExitAsync(new(TimeProvider.System), TestContext.Current.CancellationToken) is Ok<Unit>);
+        source.Started = false;
+
+        // When
+        var exit = await session.Run(new RecordingSink()).RunExitAsync(new(TimeProvider.System), TestContext.Current.CancellationToken);
+
+        // Then
+        Assert.IsType<InvalidOperationException>(Assert.IsType<Die>(exit.Value).Exception);
+        Assert.False(source.Started);
+    }
+
+    [Fact]
     public async Task Run_ModelFileMissing_FailsWithModelErrorAndSendsZerosBeforeReleasingOsc()
     {
         // Given
@@ -84,7 +101,7 @@ public sealed class TrackingSessionTests
     // Publishes one frame and ends, as a still image would without waiting.
     private sealed class OneFrameSource(FrameImage image) : IFrameSource
     {
-        public bool Started { get; private set; }
+        public bool Started { get; set; }
 
         public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
             Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
