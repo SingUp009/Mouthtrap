@@ -68,6 +68,37 @@ public sealed class FileFrameSourceTests
         Assert.True(exit is Err<FrameSourceError>(InputUnavailable));
     });
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task Run_PathWithNullCharacter_FailsAsSettingsError(bool video) => OnSta(async () =>
+    {
+        // Given
+        IFrameSource source = video ? new VideoFileSource("still\0.png", Dispatcher.CurrentDispatcher) : new ImageFileSource("still\0.png");
+
+        // When
+        var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+
+        // Then
+        Assert.True(exit is Err<FrameSourceError>(InputSettingsInvalid));
+    });
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task Run_PathIsAFolder_FailsAsUnavailable(bool video) => OnSta(async () =>
+    {
+        // Given
+        var folder = Path.GetTempPath();
+        IFrameSource source = video ? new VideoFileSource(folder, Dispatcher.CurrentDispatcher) : new ImageFileSource(folder);
+
+        // When
+        var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+
+        // Then
+        Assert.True(exit is Err<FrameSourceError>(InputUnavailable));
+    });
+
     [Fact]
     public Task Run_InvalidImage_FailsWithDataError() => OnSta(async () =>
     {

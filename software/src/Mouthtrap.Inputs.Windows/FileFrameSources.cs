@@ -15,7 +15,7 @@ public sealed record ImageFileSource(string Path) : IFrameSource
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
-            var image = scope.Get(Decode(Path));
+            var image = scope.Get(MediaFiles.Open(Path).AndThen(Decode));
             scope.CancellationToken.ThrowIfCancellationRequested();
             var clock = scope.Env.Resolve<TimeProvider>();
             frames.Publish(image, clock.GetTimestamp());
@@ -24,19 +24,20 @@ public sealed record ImageFileSource(string Path) : IFrameSource
             return Unit.Value;
         }).OnThreadPool();
 
-    // Opening and decoding the file; only the failures MediaFrames.Classify recognizes are input errors.
-    private static Result<Rgb24FrameImage, FrameSourceError> Decode(string path)
+    // WIC reports data it cannot decode as NotSupportedException or FileFormatException while the decoder loads the
+    // first frame; the file is read whole here, so later reads cannot fail. Anything else is a defect.
+    private static Result<Rgb24FrameImage, FrameSourceError> Decode(FileStream file)
     {
-        try
+        BitmapSource frame;
+        using (file)
         {
-            using var stream = File.OpenRead(System.IO.Path.GetFullPath(path));
-            var decoder = BitmapDecoder.Create(stream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-            return MediaFrames.ToRgb24(decoder.Frames[0]).MapErr<FrameSourceError>(invalid => invalid);
+            try { frame = BitmapDecoder.Create(file, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad).Frames[0]; }
+            catch (Exception exception) when (exception is NotSupportedException or FileFormatException)
+            {
+                return new Err<FrameSourceError>(new InputDataInvalid(exception.Message));
+            }
         }
-        catch (Exception exception) when (MediaFrames.Classify(exception) is { } error)
-        {
-            return new Err<FrameSourceError>(error);
-        }
+        return MediaFrames.ToRgb24(frame).MapErr<FrameSourceError>(invalid => invalid);
     }
 }
 
@@ -46,7 +47,11 @@ public sealed record VideoFileSource(string Path, Dispatcher Dispatcher) : IFram
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
-            var fullPath = scope.Get(Open(Path));
+            var fullPath = scope.Get(MediaFiles.Open(Path).Map(file =>
+            {
+                // Opening the file first reports a missing or unreadable file before playback starts.
+                using (file) return file.Name;
+            }));
             var clock = scope.Env.Resolve<TimeProvider>();
             var resource = Resource.Make(Effect<PreviewEnvironment>.Async(async ct =>
                 await Dispatcher.InvokeAsync(() => new VideoPlayback(frames, clock), DispatcherPriority.Normal, ct)),
@@ -62,34 +67,28 @@ public sealed record VideoFileSource(string Path, Dispatcher Dispatcher) : IFram
             if (error is { } failure) throw scope.Fail(failure);
             return Unit.Value;
         });
+}
 
-    // Opening the file first reports a missing or unreadable file before playback starts.
-    private static Result<string, FrameSourceError> Open(string path)
+internal static class MediaFiles
+{
+    // Resolves and opens a chosen file for reading. A path that is not a valid path is a settings error; a file that
+    // is missing, locked or denied is unavailable. These are the exceptions Path.GetFullPath and File.OpenRead raise
+    // for such paths; anything else is a defect.
+    public static Result<FileStream, FrameSourceError> Open(string path)
     {
-        try
+        string fullPath;
+        try { fullPath = Path.GetFullPath(path); }
+        catch (ArgumentException exception) { return new Err<FrameSourceError>(new InputSettingsInvalid(exception.Message)); }
+        try { return new Ok<FileStream>(File.OpenRead(fullPath)); }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            var fullPath = System.IO.Path.GetFullPath(path);
-            using var file = File.OpenRead(fullPath);
-            return new Ok<string>(fullPath);
-        }
-        catch (Exception exception) when (MediaFrames.Classify(exception) is { } error)
-        {
-            return new Err<FrameSourceError>(error);
+            return new Err<FrameSourceError>(new InputUnavailable(exception.Message));
         }
     }
 }
 
 internal static class MediaFrames
 {
-    // Null for exceptions that are not expected input failures, which stay defects.
-    public static FrameSourceError? Classify(Exception exception) => exception switch
-    {
-        ArgumentException => new InputSettingsInvalid(exception.Message),
-        InvalidDataException or FileFormatException or NotSupportedException => new InputDataInvalid(exception.Message),
-        IOException or UnauthorizedAccessException => new InputUnavailable(exception.Message),
-        _ => null
-    };
-
     // An image outside the size limit is an expected data error.
     public static Result<Rgb24FrameImage, InputDataInvalid> ToRgb24(BitmapSource bitmap)
     {
@@ -127,19 +126,14 @@ internal sealed class VideoPlayback : IDisposable
         player.MediaFailed += Failed;
     }
 
+    // path is the full path of a file that was opened before; MediaPlayer reports problems with its content through
+    // MediaFailed, so an exception here is a defect.
     public void Open(string path)
     {
-        try
-        {
-            openedAt = clock.GetTimestamp();
-            player.Open(new Uri(path, UriKind.Absolute));
-            player.Play();
-            timer.Start();
-        }
-        catch (Exception exception) when (MediaFrames.Classify(exception) is { } error)
-        {
-            Completion.TrySetResult(error);
-        }
+        openedAt = clock.GetTimestamp();
+        player.Open(new Uri(path, UriKind.Absolute));
+        player.Play();
+        timer.Start();
     }
 
     private void Opened(object? sender, EventArgs e)
