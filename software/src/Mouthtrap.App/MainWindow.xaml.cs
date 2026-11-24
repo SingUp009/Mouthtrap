@@ -97,8 +97,7 @@ public partial class MainWindow : Window
                         Cameras.ItemsSource = devices;
                         var saved = settings.Input.Camera;
                         Cameras.SelectedItem = devices.FirstOrDefault(device => saved is not null && device.Identity.ToString() == saved.Identity)
-                            ?? devices.FirstOrDefault(device => saved is not null && device.Name == saved.Name)
-                            ?? devices.FirstOrDefault(device => device.Name == "Anker PowerConf C200" && device.DeviceType == DeviceTypes.DirectShow);
+                            ?? devices.FirstOrDefault(device => saved is not null && device.Name == saved.Name);
                     }
                     finally { restoring--; }
                     ShowCameraResult(devices.Length == 0 ? Strings.Get("NoCameras") : IdleGuidance);

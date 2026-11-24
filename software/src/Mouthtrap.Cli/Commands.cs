@@ -51,7 +51,7 @@ public sealed partial class Commands
     }
 
     /// <summary>Capture camera, image, video or HTTP MJPEG frames; optionally run a model. Output is JSON Lines.</summary>
-    /// <param name="source">Camera, Image, Video or Mjpeg (default: the saved input, else Camera).</param>
+    /// <param name="source">Camera, Image, Video or Mjpeg (default: the saved input, else Mjpeg).</param>
     /// <param name="path">Image or video file path.</param>
     /// <param name="url">HTTP(S) MJPEG stream URL.</param>
     /// <param name="tokenFile">Optional file containing the stream bearer token (not placed on the command line).</param>

@@ -38,7 +38,8 @@ public sealed record AppSettings
 
 public sealed record InputSettings
 {
-    public InputSourceKind Kind { get; init; } = InputSourceKind.Camera;
+    // Mouthtrap is built around a XIAO ESP32S3 Sense streaming MJPEG over Wi-Fi, so that is the first input offered.
+    public InputSourceKind Kind { get; init; } = InputSourceKind.Mjpeg;
     public CameraSettings? Camera { get; init; }
     public string? ImagePath { get; init; }
     public string? VideoPath { get; init; }

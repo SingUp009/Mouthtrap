@@ -123,11 +123,11 @@ public sealed class SettingsWindowTests : IDisposable
         // When / Then
         await OnWindow(SettingsFile, "ja", window =>
         {
-            Assert.Equal(0, window.InputKind.SelectedIndex);
+            Assert.Equal(3, window.InputKind.SelectedIndex);
             Assert.Equal("0.15", window.Deadzone.Text);
             Assert.Contains("壊れて", window.SettingsStatusText.Text, StringComparison.Ordinal);
             Assert.Equal(Visibility.Visible, window.SettingsStatusText.Visibility);
-            Assert.Equal("カメラとモードを確認して開始してください。", window.StatusText.Text);
+            Assert.Equal("配信URLとトークンファイルを確認して開始してください。", window.StatusText.Text);
         });
 
         // Then
@@ -155,8 +155,8 @@ public sealed class SettingsWindowTests : IDisposable
     }
 
     [Theory]
-    [InlineData("en", "_Start", "Check the camera and mode, then press Start.", "Language")]
-    [InlineData("ja", "開始 (_S)", "カメラとモードを確認して開始してください。", "言語")]
+    [InlineData("en", "_Start", "Check the stream URL and token file, then press Start.", "Language")]
+    [InlineData("ja", "開始 (_S)", "配信URLとトークンファイルを確認して開始してください。", "言語")]
     public async Task Open_UiLanguage_BuildsWindowInThatLanguage(string culture, string start, string guidance, string languageTitle)
     {
         // When / Then

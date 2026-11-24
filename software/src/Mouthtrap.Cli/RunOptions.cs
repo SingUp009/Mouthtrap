@@ -37,7 +37,7 @@ public sealed record RunOptions(InputKind Source, string? Path, string? Url, str
     public static RunOptions Resolve(RunArguments given, AppSettings? saved)
     {
         ArgumentNullException.ThrowIfNull(given);
-        var source = given.Source ?? (saved is null ? InputKind.Camera : (InputKind)saved.Input.Kind);
+        var source = given.Source ?? (InputKind)(saved ?? AppSettings.Default).Input.Kind;
         var input = saved?.Input;
         var path = given.Path ?? source switch
         {

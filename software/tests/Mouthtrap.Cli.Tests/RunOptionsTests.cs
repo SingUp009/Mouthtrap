@@ -29,7 +29,7 @@ public sealed class RunOptionsTests
         var options = RunOptions.Resolve(new(), null);
 
         // Then
-        Assert.Equal(new RunOptions(InputKind.Camera, null, null, null, null, 0, 0, 100, 100, 0, false,
+        Assert.Equal(new RunOptions(InputKind.Mjpeg, null, null, null, null, 0, 0, 100, 100, 0, false,
             CalibrationMode.Adaptive, SmoothingMode.OneEuro, false, Deadzone.DefaultValue, null, false, null), options);
     }
 
