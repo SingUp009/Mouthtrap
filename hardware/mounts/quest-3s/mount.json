@@ -1,0 +1,48 @@
+{
+  "id": "quest-3s",
+  "hmd": "Meta Quest 3S",
+  "mount_revision": "R20",
+  "mmi_version": "0.1",
+  "role": "reference implementation of the HMD side of MMI v0.1",
+  "files": {
+    "stl": "../../stl/CentralMount.stl"
+  },
+  "mmi_to_file": [
+    [
+      0.0,
+      0.0,
+      -1.0,
+      115.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      22.099430084
+    ],
+    [
+      1.0,
+      0.0,
+      0.0,
+      12.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "fasteners": {
+    "M3x20 SHCS": 2,
+    "M3 nyloc nut DIN 985": 2
+  },
+  "status": {
+    "designed": true,
+    "test_printed": null,
+    "verified_on_hmd": null
+  },
+  "status_note": "null = not recorded here. The R20 release notes state that the R20 print, fit, load and durability were not checked.",
+  "license": "MIT (repository LICENSE)",
+  "hmd_reference_geometry": "Fitted to a user-supplied Quest 3S STL whose scale was inferred, not verified. That STL is not redistributed."
+}

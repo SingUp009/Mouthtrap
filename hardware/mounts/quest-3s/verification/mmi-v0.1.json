@@ -1,0 +1,610 @@
+{
+  "mmi_version": "0.1",
+  "scope": "CAD/mesh checks only. Printing, fit with real hardware, strength and field of view are not covered.",
+  "input": {
+    "file": "stl/CentralMount.stl",
+    "sha256": "a02cb96a148412b9831d216bddbf7cdf93d8e8087abeaf6c5e065b8aefa84574",
+    "mmi_to_file": [
+      [
+        0.0,
+        0.0,
+        -1.0,
+        115.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        22.099430084
+      ],
+      [
+        1.0,
+        0.0,
+        0.0,
+        12.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "mount_id": "quest-3s"
+  },
+  "tools": {
+    "python": "3.13.18",
+    "trimesh": "5.2.2",
+    "manifold3d": "unknown",
+    "shapely": "2.2.0"
+  },
+  "summary": {
+    "required_failed": [],
+    "warnings": [
+      "tkz.clearance"
+    ],
+    "conforms": true
+  },
+  "checks": [
+    {
+      "id": "mesh.valid",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "watertight": true,
+        "winding_consistent": true,
+        "bodies": 1,
+        "volume_mm3": 14632.494,
+        "triangles": 90624
+      },
+      "requirement": "closed, consistently wound, one body, positive volume"
+    },
+    {
+      "id": "pivot.bore",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "area_equivalent_diameter": 3.3993,
+        "centre_error": 0.0,
+        "material_inside_min_diameter_mm3": 0.0
+      },
+      "requirement": "3.35 <= d <= 3.6, centre within 0.05"
+    },
+    {
+      "id": "pivot.seat_and_face",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "seat_x": -5.4,
+        "face_x": 0.6,
+        "grip_mm": 13.6,
+        "max_seat_dev": 0.0,
+        "max_face_dev": 0.0
+      },
+      "requirement": "seat -5.4+/-0.1, face 0.6+/-0.05"
+    },
+    {
+      "id": "pivot.nut_pocket",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "best_clocking_deg": 29.0,
+        "material_in_min_hex_mm3": 0.0,
+        "material_in_insertion_corridor_mm3": 0.0,
+        "measured_af_at_seat_minus_2": 5.8
+      },
+      "requirement": "AF 5.7..5.95, depth >= 4.3, open towards -X"
+    },
+    {
+      "id": "pivot.seat_fill",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "fill": 1.0
+      },
+      "requirement": ">= 0.95"
+    },
+    {
+      "id": "pivot.bearing_fill",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "radius": 5.0,
+        "fill": 1.0
+      },
+      "requirement": ">= 0.98"
+    },
+    {
+      "id": "pivot.pocket_wall",
+      "level": "recommended",
+      "status": "pass",
+      "measured": {
+        "min_wall": 2.6495
+      },
+      "requirement": ">= 0.85"
+    },
+    {
+      "id": "stop.bore",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "area_equivalent_diameter": 3.3993,
+        "centre_error": 0.0,
+        "material_inside_min_diameter_mm3": 0.0
+      },
+      "requirement": "3.35 <= d <= 3.6, centre within 0.05"
+    },
+    {
+      "id": "stop.seat_and_face",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "seat_x": -5.4,
+        "face_x": 0.6,
+        "grip_mm": 13.6,
+        "max_seat_dev": 0.0,
+        "max_face_dev": 0.0
+      },
+      "requirement": "seat -5.4+/-0.1, face 0.6+/-0.05"
+    },
+    {
+      "id": "stop.nut_pocket",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "best_clocking_deg": 29.0,
+        "material_in_min_hex_mm3": 0.0,
+        "material_in_insertion_corridor_mm3": 0.0,
+        "measured_af_at_seat_minus_2": 5.8
+      },
+      "requirement": "AF 5.7..5.95, depth >= 4.3, open towards -X"
+    },
+    {
+      "id": "stop.seat_fill",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "fill": 1.0
+      },
+      "requirement": ">= 0.95"
+    },
+    {
+      "id": "stop.bearing_fill",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "radius": 3.5,
+        "fill": 1.0
+      },
+      "requirement": ">= 0.98"
+    },
+    {
+      "id": "stop.pocket_wall",
+      "level": "recommended",
+      "status": "pass",
+      "measured": {
+        "min_wall": 1.05
+      },
+      "requirement": ">= 0.85"
+    },
+    {
+      "id": "washer_gap.empty",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "no material in 0.6 < x <= 1.0 under the swept ear"
+    },
+    {
+      "id": "tkz.no_intersection",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "intersection_mm3": 0.0
+      },
+      "requirement": "mount outside the TKZ swept over +/-16.3 deg"
+    },
+    {
+      "id": "tkz.clearance",
+      "level": "recommended",
+      "status": "warn",
+      "measured": {
+        "min_gap_mm": 0.0589
+      },
+      "requirement": ">= 0.3"
+    },
+    {
+      "id": "fastener_zone.pivot_shank",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "empty"
+    },
+    {
+      "id": "fastener_zone.pivot_head_and_tool",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "empty"
+    },
+    {
+      "id": "fastener_zone.pivot_washer",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "empty"
+    },
+    {
+      "id": "fastener_zone.stop_shank",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "empty"
+    },
+    {
+      "id": "fastener_zone.stop_head_and_tool",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "empty"
+    },
+    {
+      "id": "r20_tracker_sweep",
+      "level": "informational",
+      "status": "pass",
+      "measured": {
+        "min_gap_mm": 0.0741,
+        "at_theta_deg": 16.3,
+        "by_angle": [
+          {
+            "theta_deg": -16.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -15.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -15.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -14.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -14.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -13.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -13.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -12.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -12.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -11.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -11.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -10.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -10.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -9.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -9.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -8.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -8.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -7.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -7.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -6.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -6.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -5.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -5.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -4.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -4.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -3.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -3.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -2.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -2.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -1.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -1.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -0.8,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": -0.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 0.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 0.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 1.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 1.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 2.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 2.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 3.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 3.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 4.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 4.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 5.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 5.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 6.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 6.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 7.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 7.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 8.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 8.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 9.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 9.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 10.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 10.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 11.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 11.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 12.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 12.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 13.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 13.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.4
+          },
+          {
+            "theta_deg": 14.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.3931
+          },
+          {
+            "theta_deg": 14.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.3172
+          },
+          {
+            "theta_deg": 15.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.2407
+          },
+          {
+            "theta_deg": 15.7,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.1646
+          },
+          {
+            "theta_deg": 16.2,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.0891
+          },
+          {
+            "theta_deg": 16.3,
+            "intersection_mm3": 0.0,
+            "min_gap_mm": 0.0741
+          }
+        ]
+      },
+      "requirement": "reference R20 case + cover, no intersection over the mechanical range"
+    }
+  ]
+}

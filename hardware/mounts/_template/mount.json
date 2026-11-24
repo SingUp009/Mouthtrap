@@ -1,0 +1,23 @@
+{
+  "id": "your-hmd",
+  "hmd": "Manufacturer Model",
+  "mount_revision": "1",
+  "mmi_version": "0.1",
+  "files": {
+    "stl": "your-hmd_mmi.stl"
+  },
+  "mmi_to_file": null,
+  "fasteners": {
+    "M3x20 SHCS": 2,
+    "M3 nyloc nut DIN 985": 2
+  },
+  "status": {
+    "designed": false,
+    "test_printed": false,
+    "verified_on_hmd": false
+  },
+  "status_note": "",
+  "license": "MIT (repository LICENSE)",
+  "hmd_reference_geometry": "How you obtained the headset shape (your own measurements, a scan you made, a model whose license allows use). Do not commit third-party geometry.",
+  "authors": []
+}
