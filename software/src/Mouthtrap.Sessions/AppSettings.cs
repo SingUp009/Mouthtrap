@@ -83,15 +83,6 @@ public sealed record PreprocessingSettings
         270 => new Ok<QuarterTurn>(QuarterTurn.Clockwise270),
         _ => new Err<InvalidValue>(new("rotation", "Rotation must be 0, 90, 180 or 270."))
     };
-
-    public static int TurnToRotation(QuarterTurn turn) => turn switch
-    {
-        QuarterTurn.None => 0,
-        QuarterTurn.Clockwise90 => 90,
-        QuarterTurn.HalfTurn => 180,
-        QuarterTurn.Clockwise270 => 270,
-        _ => throw new ArgumentOutOfRangeException(nameof(turn))
-    };
 }
 
 public sealed record ExpressionSettings

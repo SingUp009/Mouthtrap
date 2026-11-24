@@ -522,29 +522,21 @@ public partial class MainWindow : Window
 
     private void ApplyPreprocessing_Click(object sender, RoutedEventArgs e)
     {
-        var useCrop = CropEnabled.IsChecked == true;
+        // The full frame keeps the last applied crop, so turning the crop on again brings it back. The settings convert
+        // the typed values as they do for the CLI and the settings file.
         var typed = (Left: Percent(CropX.Text), Top: Percent(CropY.Text), Width: Percent(CropWidth.Text), Height: Percent(CropHeight.Text));
-        var crop = !useCrop ? new Ok<CropRegion>(CropRegion.FullFrame)
-            : typed is ({ } left, { } top, { } width, { } height) ? CropRegion.FromPercent(left, top, width, height)
-            : new Err<InvalidValue>(new("crop", "The crop must be numbers."));
-        if (crop.Map(region => new PreprocessSettings(region, (QuarterTurn)Rotation.SelectedIndex, Mirror.IsChecked == true))
-            is not Ok<PreprocessSettings>(var next))
+        PreprocessingSettings? chosen = CropEnabled.IsChecked != true ? savedPreprocessing with { UseCrop = false }
+            : typed is ({ } left, { } top, { } width, { } height)
+                ? new() { UseCrop = true, CropLeft = left, CropTop = top, CropWidth = width, CropHeight = height }
+                : null;
+        chosen = chosen is null ? null : chosen with { Rotation = Rotation.SelectedIndex * 90, Mirror = Mirror.IsChecked == true };
+        if (chosen?.ToPreprocess() is not Ok<PreprocessSettings>(var next))
         {
             PreprocessStatusText.Text = Strings.Get("CropInvalid");
             return;
         }
         preprocessing = next;
-        savedPreprocessing = useCrop
-            ? new()
-            {
-                UseCrop = true,
-                CropLeft = typed.Left!.Value,
-                CropTop = typed.Top!.Value,
-                CropWidth = typed.Width!.Value,
-                CropHeight = typed.Height!.Value
-            }
-            : savedPreprocessing with { UseCrop = false };
-        savedPreprocessing = savedPreprocessing with { Rotation = PreprocessingSettings.TurnToRotation(next.Rotation), Mirror = next.Mirror };
+        savedPreprocessing = chosen;
         session?.Control.Update(next);
         InvalidateTracking();
         PreprocessStatusText.Text = CropEnabled.IsChecked == true ? Strings.Get("CropApplied") : Strings.Get("CropFull");

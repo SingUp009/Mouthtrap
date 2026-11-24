@@ -124,6 +124,73 @@ public sealed class MainWindowInteractionTests : IDisposable
         });
     }
 
+    [Fact]
+    public async Task Apply_CropRotationAndMirror_AppliesAndSavesThem()
+    {
+        // Given
+        Save(StillImage());
+
+        // When / Then
+        await WindowDriver.Run(SettingsFile, "en", async ui =>
+        {
+            ui.Toggle("Use a crop");
+            ui.Type("Crop left in percent", "10");
+            ui.Type("Crop top in percent", "20");
+            ui.Type("Crop width in percent", "30");
+            ui.Type("Crop height in percent", "40");
+            ui.Choose("Rotation angle", "90°");
+            ui.Toggle("Mirror");
+            await ui.Click("Apply");
+            Assert.Equal(Strings.Get("CropApplied"), ui.Window.PreprocessStatusText.Text);
+            Assert.Equal(new PreprocessingSettings
+            {
+                UseCrop = true,
+                CropLeft = 10,
+                CropTop = 20,
+                CropWidth = 30,
+                CropHeight = 40,
+                Rotation = 90,
+                Mirror = true
+            }, Saved().Preprocessing);
+        });
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("not a number")]
+    public async Task Apply_CropThatCannotBeUsed_KeepsThePreviousSetting(string width)
+    {
+        // Given
+        Save(StillImage());
+
+        // When / Then
+        await WindowDriver.Run(SettingsFile, "en", async ui =>
+        {
+            ui.Toggle("Use a crop");
+            ui.Type("Crop width in percent", width);
+            await ui.Click("Apply");
+            Assert.Equal(Strings.Get("CropInvalid"), ui.Window.PreprocessStatusText.Text);
+            Assert.Equal(AppSettings.Default.Preprocessing, Saved().Preprocessing);
+        });
+    }
+
+    [Fact]
+    public async Task Apply_CropTurnedOff_UsesTheFullFrameAndKeepsTheCropForLater()
+    {
+        // Given
+        var crop = new PreprocessingSettings { UseCrop = true, CropLeft = 10, CropTop = 20, CropWidth = 30, CropHeight = 40 };
+        Save(StillImage() with { Preprocessing = crop });
+
+        // When / Then
+        await WindowDriver.Run(SettingsFile, "en", async ui =>
+        {
+            ui.Toggle("Use a crop");
+            await ui.Click("Apply");
+            Assert.Equal(Strings.Get("CropFull"), ui.Window.PreprocessStatusText.Text);
+            Assert.Equal(crop with { UseCrop = false }, Saved().Preprocessing);
+        });
+    }
+
     private AppSettings StillImage() => AppSettings.Default with
     {
         Input = new() { Kind = InputSourceKind.Image, ImagePath = ImageFile },
@@ -131,4 +198,7 @@ public sealed class MainWindowInteractionTests : IDisposable
     };
 
     private void Save(AppSettings settings) => Assert.True(SettingsStore.Save(SettingsFile, settings) is Ok<Unit>);
+
+    private AppSettings Saved() => SettingsStore.Load(SettingsFile) is Ok<AppSettings>(var saved) ? saved
+        : throw new Xunit.Sdk.XunitException("The settings file cannot be read.");
 }
