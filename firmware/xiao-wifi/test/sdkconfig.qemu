@@ -1,0 +1,8 @@
+# Test-only settings for running the firmware in Espressif's QEMU, which emulates neither QIO flash nor
+# octal PSRAM and shows only UART0. Never flash a build with these settings to a board.
+CONFIG_ESPTOOLPY_FLASHMODE_QIO=n
+CONFIG_ESPTOOLPY_FLASHMODE_DIO=y
+CONFIG_SPIRAM_MODE_OCT=n
+CONFIG_SPIRAM_MODE_QUAD=y
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=n
+CONFIG_ESP_CONSOLE_UART_DEFAULT=y
