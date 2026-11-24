@@ -1,4 +1,0 @@
-# Copy to sdkconfig.wifi locally; never paste credentials into chat or commit them.
-CONFIG_MOUTHTRAP_WIFI_SSID=""
-CONFIG_MOUTHTRAP_WIFI_PASSWORD=""
-CONFIG_MOUTHTRAP_STREAM_TOKEN=""
