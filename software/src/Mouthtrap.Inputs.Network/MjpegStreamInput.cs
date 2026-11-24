@@ -45,7 +45,7 @@ public static class StreamTokenFile
 // when the run starts. Handler replaces the network in tests and is borrowed, not disposed.
 public sealed record MjpegStreamInput(Uri Address, string? TokenFile, HttpMessageHandler? Handler = null) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames) =>
+    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             var token = TokenFile is { } path ? scope.Get(StreamTokenFile.Read(path)) : null;

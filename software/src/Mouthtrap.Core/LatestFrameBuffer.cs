@@ -26,14 +26,14 @@ public sealed record Rgb24FrameImage : FrameImage
 public sealed record PreviewFrame(FrameImage Image, long ReceivedAt);
 public readonly record struct FrameStatistics(long Received, long Replaced, long LastReceivedAt);
 
-public sealed class LatestFrameBuffer
+// Keeps only the newest frame: a slow consumer skips frames instead of falling behind.
+public sealed class LatestFrameBuffer : IFrameWriter
 {
     private readonly object gate = new();
     private PreviewFrame? latest;
     private long received;
     private long replaced;
     private long lastReceivedAt;
-    private Exception? failure;
 
     public void Publish(byte[] ownedImage, long receivedAt)
     {
@@ -68,15 +68,5 @@ public sealed class LatestFrameBuffer
     public FrameStatistics Statistics
     {
         get { lock (gate) return new(received, replaced, lastReceivedAt); }
-    }
-
-    public void Fail(Exception exception)
-    {
-        lock (gate) failure ??= exception;
-    }
-
-    public Exception? Failure
-    {
-        get { lock (gate) return failure; }
     }
 }

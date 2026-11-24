@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -12,7 +11,7 @@ namespace Mouthtrap.Inputs;
 
 public sealed record ImageFileSource(string Path) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames) =>
+    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
@@ -20,9 +19,8 @@ public sealed record ImageFileSource(string Path) : IFrameSource
             scope.CancellationToken.ThrowIfCancellationRequested();
             var clock = scope.Env.Resolve<TimeProvider>();
             frames.Publish(image, clock.GetTimestamp());
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1), clock);
-            while (await timer.WaitForNextTickAsync(scope.CancellationToken))
-                if (frames.Failure is { } failure) ExceptionDispatchInfo.Capture(failure).Throw();
+            // A still image stays the input until the session is stopped.
+            await Task.Delay(Timeout.InfiniteTimeSpan, clock, scope.CancellationToken);
             return Unit.Value;
         }).OnThreadPool();
 
@@ -44,7 +42,7 @@ public sealed record ImageFileSource(string Path) : IFrameSource
 
 public sealed record VideoFileSource(string Path, Dispatcher Dispatcher) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames) =>
+    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
@@ -108,7 +106,7 @@ internal static class MediaFrames
 
 internal sealed class VideoPlayback : IDisposable
 {
-    private readonly LatestFrameBuffer frames;
+    private readonly IFrameWriter frames;
     private readonly TimeProvider clock;
     private readonly MediaPlayer player = new() { IsMuted = true, Volume = 0 };
     private readonly DispatcherTimer timer;
@@ -118,7 +116,7 @@ internal sealed class VideoPlayback : IDisposable
     private TimeSpan lastPosition = TimeSpan.MinValue;
     public TaskCompletionSource<FrameSourceError?> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public VideoPlayback(LatestFrameBuffer frames, TimeProvider clock)
+    public VideoPlayback(IFrameWriter frames, TimeProvider clock)
     {
         this.frames = frames;
         this.clock = clock;
@@ -167,7 +165,6 @@ internal sealed class VideoPlayback : IDisposable
         try
         {
             if (Completion.Task.IsCompleted) return;
-            if (frames.Failure is { } failure) ExceptionDispatchInfo.Capture(failure).Throw();
             if (target is null)
             {
                 if (clock.GetElapsedTime(openedAt) >= TimeSpan.FromSeconds(10))

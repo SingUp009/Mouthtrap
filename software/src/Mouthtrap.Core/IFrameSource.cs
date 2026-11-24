@@ -19,8 +19,15 @@ public partial union FrameSourceError(InputSettingsInvalid, InputUnavailable, In
 [Moderato.Effects.Environment]
 public sealed partial record PreviewEnvironment(TimeProvider Clock);
 
+// Where an input publishes what it captures. Publishing transfers ownership: the input must not mutate the image
+// afterwards. Safe to call from any thread; what is kept and for how long is the pipeline's choice.
+public interface IFrameWriter
+{
+    void Publish(FrameImage ownedImage, long receivedAt);
+}
+
 public interface IFrameSource
 {
-    // Publish owned images and observe frames.Failure; cancellation must await input release.
-    Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames);
+    // Publishes owned images until the input ends; cancellation must await input release.
+    Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames);
 }

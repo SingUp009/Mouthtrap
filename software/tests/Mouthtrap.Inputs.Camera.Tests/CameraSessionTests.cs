@@ -28,7 +28,7 @@ public sealed class CameraSessionTests
             IFrameSource source = new CameraFrameSource(descriptor, descriptor.Characteristics[0]);
 
             // When
-            var exit = await source.Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+            var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
             // Then
             Assert.True(exit is Err<FrameSourceError>(InputUnavailable(var message, unchecked((int)0x80070020))) && message == expected);
@@ -54,7 +54,7 @@ public sealed class CameraSessionTests
         IFrameSource source = new CameraFrameSource(new FakeDescriptor(device), new(PixelFormats.Unknown, 1280, 720, 30));
 
         // When
-        var exit = await source.Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+        var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
         Assert.True(exit is Err<FrameSourceError>(InputSettingsInvalid));
@@ -68,7 +68,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(new FakeCapture());
         var clock = new TimerAwareTimeProvider();
         IFrameSource source = new CameraFrameSource(descriptor, descriptor.Characteristics[0]);
-        var run = source.Run(new()).RunExitAsync(new(clock), CancellationToken.None).AsTask();
+        var run = source.Run(new LatestFrameBuffer()).RunExitAsync(new(clock), CancellationToken.None).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
         // When
@@ -86,7 +86,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture();
         var clock = new TimerAwareTimeProvider();
         var descriptor = new FakeDescriptor(device);
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), cancellation.Token).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         Assert.Equal(["open", "start"], device.Events);
@@ -109,7 +109,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device);
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -125,7 +125,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device) { OpenFailure = new COMException("denied") };
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -145,7 +145,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture { StopFailure = stopFailure, DisposeFailure = alsoFailDispose ? disposeFailure : null };
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), cancellation.Token).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
@@ -170,7 +170,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device) { AfterOpen = cancellation.Cancel };
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), cancellation.Token);
 
         // Then
@@ -187,7 +187,7 @@ public sealed class CameraSessionTests
 
         // When
         var exit = await CameraSession.Run<PreviewEnvironment>(descriptor,
-            new(PixelFormats.Unknown, 1280, 720, 30), new())
+            new(PixelFormats.Unknown, 1280, 720, 30), new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -202,7 +202,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture();
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new())
+        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), CancellationToken.None).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
@@ -216,25 +216,24 @@ public sealed class CameraSessionTests
     }
 
     [Fact]
-    public async Task Run_FrameCallbackOrDecodeFails_DiesAndReleases()
+    public async Task Run_FrameCannotBeCopied_DiesWithoutWaitingForTheWatchdogAndReleases()
     {
         // Given
         var device = new FakeCapture();
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
         var frames = new LatestFrameBuffer();
-        var failure = new InvalidDataException("invalid image");
         var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], frames)
             .RunExitAsync(new(clock), CancellationToken.None).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
-        // When
-        frames.Fail(failure);
-        clock.Advance(TimeSpan.FromSeconds(1));
+        // When: FlashCap delivers a frame whose image cannot be extracted; the clock does not move.
+        descriptor.Arrive();
 
         // Then
         var die = Assert.IsType<Die>((await run.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken)).Value);
-        Assert.Same(failure, die.Exception);
+        Assert.IsType<InvalidOperationException>(die.Exception);
+        Assert.Equal(0, frames.Statistics.Received);
         Assert.Equal(["open", "start", "stop", "dispose"], device.Events);
     }
 
@@ -281,10 +280,15 @@ public sealed class CameraSessionTests
         public Action? AfterOpen { get; init; }
         public override object Identity => "test";
         public override DeviceTypes DeviceType => DeviceTypes.DirectShow;
+        private FrameProcessor? processor;
+
+        // Delivers one empty frame to the session's callback, as a capture thread would.
+        public void Arrive() => processor!.OnFrameArrived(capture, IntPtr.Zero, 0, 0, 0);
 
         protected override Task<CaptureDevice> OnOpenWithFrameProcessorAsync(VideoCharacteristics characteristics,
             TranscodeFormats transcodeFormat, FrameProcessor frameProcessor, CancellationToken ct)
         {
+            processor = frameProcessor;
             capture.Events.Add("open");
             if (OpenFailure is { } failure) throw failure;
             AfterOpen?.Invoke();
@@ -324,7 +328,7 @@ public sealed class CameraSessionTests
 
         protected override Task OnInitializeAsync(VideoCharacteristics characteristics,
             TranscodeFormats transcodeFormat, FrameProcessor frameProcessor, CancellationToken ct) => Task.CompletedTask;
-        protected override void OnCapture(IntPtr pData, int size, long timestampMicroseconds, long frameIndex, PixelBuffer buffer) =>
-            throw new InvalidOperationException("No native capture in unit tests.");
+        // No native capture in unit tests: the buffer stays empty.
+        protected override void OnCapture(IntPtr pData, int size, long timestampMicroseconds, long frameIndex, PixelBuffer buffer) { }
     }
 }

@@ -458,7 +458,7 @@ public sealed class TrackingPipelineTests
         public string? Failure { get; init; }
         public bool Released { get; private set; }
 
-        public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames) =>
+        public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
             Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
             {
                 scope.Defer(_ => Effect<PreviewEnvironment>.Sync(() => { Released = true; return Unit.Value; }));

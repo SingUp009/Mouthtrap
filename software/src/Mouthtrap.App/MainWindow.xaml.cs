@@ -28,6 +28,8 @@ public partial class MainWindow : Window
     private Task? enumerationTask;
     private Task? sessionTask;
     private CancellationTokenSource? sessionCancellation;
+    // A preview that failed to render stops the session, which then reports this defect rather than a stop.
+    private Exception? displayFailure;
     private LatestFrameBuffer? frames;
     private TrackingControl? control;
     private LatestFrameSink? display;
@@ -269,6 +271,7 @@ public partial class MainWindow : Window
         SaveSettings();
 
         sessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        displayFailure = null;
         frames = new LatestFrameBuffer();
         control = new TrackingControl(preprocessing);
         display = new LatestFrameSink();
@@ -324,6 +327,7 @@ public partial class MainWindow : Window
                 Err<TrackingError>(TrackingModelFailed(var error)) => ModelErrorText(error),
                 Err<TrackingError>(TrackingOutputFailed(var error)) => Strings.Format("OscFailed", error.Message),
                 Die die => ReportDefect(die),
+                Interrupted when displayFailure is { } failure => ReportDefect("DisplayFailure", failure, []),
                 Interrupted => Strings.Get("Stopped"),
             };
         }
@@ -385,9 +389,10 @@ public partial class MainWindow : Window
         }
         catch (Exception exception)
         {
-            buffer.Fail(exception);
+            displayFailure ??= exception;
             renderTimer.Stop();
             StatusText.Text = Strings.Get("DisplayFailed");
+            sessionCancellation?.Cancel();
         }
     }
 
@@ -730,15 +735,18 @@ public partial class MainWindow : Window
         SettingsWriteFailed(var path, var message) => Strings.Format("SettingsWriteFailed", path, message)
     };
 
-    private string ReportDefect(Die die)
+    private string ReportDefect(Die die) =>
+        ReportDefect("InputFailure", die.Exception, [.. die.Suppressed.Select(item => item.Case.Value?.ToString())]);
+
+    private string ReportDefect(string name, Exception exception, string?[] suppressed)
     {
         Trace.TraceError(JsonSerializer.Serialize(new
         {
-            Event = "InputFailure",
-            Exception = die.Exception.ToString(),
-            Suppressed = die.Suppressed.Select(item => item.Case.Value?.ToString()).ToArray()
+            Event = name,
+            Exception = exception.ToString(),
+            Suppressed = suppressed
         }));
-        return StatusText.Text = Strings.Format("Defect", die.Exception.Message);
+        return StatusText.Text = Strings.Format("Defect", exception.Message);
     }
 
     private async void Window_Closing(object? sender, CancelEventArgs e)

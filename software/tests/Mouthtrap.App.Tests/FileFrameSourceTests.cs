@@ -62,7 +62,7 @@ public sealed class FileFrameSourceTests
         IFrameSource source = video ? new VideoFileSource(path, Dispatcher.CurrentDispatcher) : new ImageFileSource(path);
 
         // When
-        var exit = await source.Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+        var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
         Assert.True(exit is Err<FrameSourceError>(InputUnavailable));
@@ -77,7 +77,7 @@ public sealed class FileFrameSourceTests
         try
         {
             // When
-            var exit = await new ImageFileSource(path).Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+            var exit = await new ImageFileSource(path).Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
             // Then
             Assert.True(exit is Err<FrameSourceError>(InputDataInvalid));
@@ -96,7 +96,7 @@ public sealed class FileFrameSourceTests
         try
         {
             // When
-            var exit = await new ImageFileSource(path).Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+            var exit = await new ImageFileSource(path).Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
             // Then
             Assert.True(exit is Err<FrameSourceError>(InputDataInvalid));
@@ -125,7 +125,7 @@ public sealed class FileFrameSourceTests
             var source = new VideoFileSource(path, Dispatcher.CurrentDispatcher);
 
             // When
-            var exit = await source.Run(new()).RunExitAsync(new(TimeProvider.System), CancellationToken.None)
+            var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), CancellationToken.None)
                 .AsTask().WaitAsync(TimeSpan.FromSeconds(15), TestContext.Current.CancellationToken);
 
             // Then
@@ -147,33 +147,10 @@ public sealed class FileFrameSourceTests
         IFrameSource source = video ? new VideoFileSource(path, Dispatcher.CurrentDispatcher) : new ImageFileSource(path);
 
         // When
-        var exit = await source.Run(new()).RunExitAsync(new(TimeProvider.System), cancellation.Token);
+        var exit = await source.Run(new LatestFrameBuffer()).RunExitAsync(new(TimeProvider.System), cancellation.Token);
 
         // Then
         Assert.True(exit is Interrupted);
-    });
-
-    [Fact]
-    public Task Run_ConsumerFailedOnStillImage_DiesWithConsumerFailure() => OnSta(async () =>
-    {
-        // Given
-        var path = Path.Combine(Path.GetTempPath(), $"mouthtrap-failure-{Guid.NewGuid():N}.bmp");
-        var encoder = new BmpBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(1, 1, 96, 96, PixelFormats.Rgb24, null, new byte[3], 3)));
-        using (var file = File.Create(path)) encoder.Save(file);
-        var frames = new LatestFrameBuffer();
-        var failure = new InvalidOperationException("consumer failed");
-        frames.Fail(failure);
-        try
-        {
-            // When
-            var exit = await new ImageFileSource(path).Run(frames).RunExitAsync(new(TimeProvider.System), CancellationToken.None)
-                .AsTask().WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-
-            // Then
-            Assert.Same(failure, Assert.IsType<Die>(exit.Value).Exception);
-        }
-        finally { File.Delete(path); }
     });
 
     [Fact]

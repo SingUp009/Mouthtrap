@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Net.Http.Headers;
-using System.Runtime.ExceptionServices;
 using Microsoft.AspNetCore.WebUtilities;
 using Moderato.Effects;
 using Moderato.Results;
@@ -13,7 +12,7 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
 {
     public const int MaxFrameBytes = 2 * 1024 * 1024;
 
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(LatestFrameBuffer frames) =>
+    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
@@ -27,16 +26,10 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
             while (true)
             {
                 scope.CancellationToken.ThrowIfCancellationRequested();
-                if (frames.Failure is { } failure) ExceptionDispatchInfo.Capture(failure).Throw();
-                // The read's error is looked at before it ends the block: a consumer that failed first explains a
-                // stalled or broken read better than the read does.
-                Effect<Result<Frame, FrameSourceError>, FrameSourceError, PreviewEnvironment> attempt = ReadFrame(reader, pendingBody).Attempt();
-                var read = await scope.Run(attempt);
-                if (read is Err<FrameSourceError> && frames.Failure is { } original) ExceptionDispatchInfo.Capture(original).Throw();
-                var frame = scope.Get(read);
+                var frame = await scope.Run(ReadFrame(reader, pendingBody));
                 if (frame.Image is null) return Unit.Value;
                 pendingBody = frame.PendingBody;
-                frames.Publish(frame.Image, clock.GetTimestamp());
+                frames.Publish(new EncodedFrameImage(frame.Image), clock.GetTimestamp());
             }
         }).OnThreadPool();
 

@@ -135,7 +135,7 @@ public sealed class MjpegSourceTests
         using var handler = new Handler(stream);
         using var client = new HttpClient(handler, false);
         using var cancellation = new CancellationTokenSource();
-        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new())
+        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), cancellation.Token).AsTask();
         await stream.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
@@ -157,7 +157,7 @@ public sealed class MjpegSourceTests
         using var handler = new Handler(stream) { StallHeaders = headers };
         using var client = new HttpClient(handler, false);
         var clock = new TimerAwareTimeProvider();
-        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new())
+        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new LatestFrameBuffer())
             .RunExitAsync(new(clock), CancellationToken.None).AsTask();
         // The header timeout (10 s) exists before the request is sent; the body timeout (5 s) before the stream is read.
         if (headers) await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -170,31 +170,6 @@ public sealed class MjpegSourceTests
         var exit = await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         Assert.True(headers ? exit is Err<FrameSourceError>(InputUnavailable) : exit is Err<FrameSourceError>(InputLost));
         if (!headers) Assert.True(stream.Disposed);
-    }
-
-    [Fact]
-    public async Task Run_ConsumerFailsDuringStalledRead_ReportsConsumerFailureNotTimeout()
-    {
-        // Given
-        var stream = new BlockingStream();
-        using var handler = new Handler(stream);
-        using var client = new HttpClient(handler, false);
-        var frames = new LatestFrameBuffer();
-        var failure = new InvalidOperationException("consumer failed");
-        var clock = new FakeTimeProvider();
-        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(frames)
-            .RunExitAsync(new(clock), CancellationToken.None).AsTask();
-        await stream.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-
-        // When
-        frames.Fail(failure);
-        // The stalled read only ends when its timeout fires; the consumer's failure must still win.
-        clock.Advance(TimeSpan.FromSeconds(5));
-
-        // Then
-        var exit = await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
-        Assert.Same(failure, Assert.IsType<Die>(exit.Value).Exception);
-        Assert.True(stream.Disposed);
     }
 
     [Fact]
@@ -305,7 +280,7 @@ public sealed class MjpegSourceTests
         using var cancellation = new CancellationTokenSource();
         using var handler = new Handler(new BlockingStream()) { StallHeaders = true };
         using var client = new HttpClient(handler, false);
-        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new())
+        var run = new MjpegFrameSource(new("http://camera/stream"), client).Run(new LatestFrameBuffer())
             .RunExitAsync(new(new FakeTimeProvider()), cancellation.Token).AsTask();
         await handler.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
