@@ -111,6 +111,16 @@
           "Mouthtrap.Outputs.VRChat": "[1.0.0, )"
         }
       }
+    },
+    "net11.0-windows7.0/win-x64": {
+      "Microsoft.ML.OnnxRuntime": {
+        "type": "Transitive",
+        "resolved": "1.32.0",
+        "contentHash": "3O3isLjl6ChjMvzZMt3in+uUymFxQK5+vd1UuSShmbUjHezHXgcze6KF5NquC/uPuL/++0CpI7qUBRrf+g1ezg==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.32.0"
+        }
+      }
     }
   }
 }

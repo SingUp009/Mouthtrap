@@ -3,6 +3,10 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net11.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <!-- The release is published self-contained for this runtime; restoring it keeps that publish locked. -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <!-- English is neutral; keep only the Japanese resources of the runtime and the packages. -->
+    <SatelliteResourceLanguages>ja</SatelliteResourceLanguages>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Mouthtrap.Core/Mouthtrap.Core.csproj" />
