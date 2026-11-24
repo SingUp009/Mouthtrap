@@ -72,10 +72,10 @@ public sealed class ExpressionMapTests
         // Given
         Assert.Equal(44, BabbleOutputs.Distinct().Count());
         Assert.All(BabbleOutputs, name => Assert.True(ArkitExpressionMap.IsKnown(name), name));
-        var estimate = new MouthEstimate(.25f, [.. BabbleOutputs.Select(name => new MouthExpression(name, .5f))]);
+        KeyValuePair<string, float>[] outputs = [new("JawOpen", .75f), .. BabbleOutputs.Select(name => new KeyValuePair<string, float>(name, .5f))];
 
         // When
-        var frame = ArkitExpressionMap.Map(estimate, .75f);
+        var frame = ArkitExpressionMap.Map(outputs);
 
         // Then
         Assert.Equal(55, frame.ProvidedCount);
@@ -94,13 +94,13 @@ public sealed class ExpressionMapTests
     }
 
     [Fact]
-    public void Map_OutOfRangeAndAbsentOutputs_ClampsAndLeavesAbsentUnprovided()
+    public void Map_ZeroAndAbsentOutputs_KeepsZeroProvidedAndLeavesAbsentUnprovided()
     {
         // Given
-        var estimate = new MouthEstimate(2f, [new MouthExpression("MouthSmileLeft", 1.4f), new MouthExpression("TongueOut", -.2f)]);
+        KeyValuePair<string, float>[] outputs = [new("JawOpen", 1f), new("MouthSmileLeft", 1f), new("TongueOut", 0f)];
 
         // When
-        var frame = ArkitExpressionMap.Map(estimate, estimate.JawOpen);
+        var frame = ArkitExpressionMap.Map(outputs);
 
         // Then
         Assert.Equal(1f, frame[JawOpen]);

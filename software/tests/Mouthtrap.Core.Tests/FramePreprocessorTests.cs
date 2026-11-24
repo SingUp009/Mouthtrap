@@ -155,7 +155,7 @@ public sealed class FramePreprocessorTests
         // Then
         Assert.Equal(2, latest.ReceivedAt);
         Assert.Equal(Gray([2]), Assert.IsType<Rgb24FrameImage>(latest.Image).Data);
-        Assert.Equal(new FrameStatistics(2, 1, 2), frames.Statistics);
+        Assert.Equal(new FrameStatistics(2, 1), frames.Statistics);
         Assert.Null(frames.Take());
     }
 

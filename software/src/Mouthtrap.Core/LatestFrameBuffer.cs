@@ -24,7 +24,7 @@ public sealed record Rgb24FrameImage : FrameImage
 }
 
 public sealed record PreviewFrame(FrameImage Image, long ReceivedAt);
-public readonly record struct FrameStatistics(long Received, long Replaced, long LastReceivedAt);
+public readonly record struct FrameStatistics(long Received, long Replaced);
 
 // Keeps only the newest frame: a slow consumer skips frames instead of falling behind.
 public sealed class LatestFrameBuffer : IFrameWriter
@@ -33,16 +33,9 @@ public sealed class LatestFrameBuffer : IFrameWriter
     private PreviewFrame? latest;
     private long received;
     private long replaced;
-    private long lastReceivedAt;
 
     // Raised after each publication, on the publishing thread, so a consumer can wake instead of polling.
     public event Action? Published;
-
-    public void Publish(byte[] ownedImage, long receivedAt)
-    {
-        ArgumentNullException.ThrowIfNull(ownedImage);
-        Publish(new EncodedFrameImage(ownedImage), receivedAt);
-    }
 
     // Publishing transfers ownership: the producer must not mutate the image afterwards.
     public void Publish(FrameImage ownedImage, long receivedAt)
@@ -54,7 +47,6 @@ public sealed class LatestFrameBuffer : IFrameWriter
             if (latest is not null) replaced++;
             latest = frame;
             received++;
-            lastReceivedAt = frame.ReceivedAt;
         }
         Published?.Invoke();
     }
@@ -71,6 +63,6 @@ public sealed class LatestFrameBuffer : IFrameWriter
 
     public FrameStatistics Statistics
     {
-        get { lock (gate) return new(received, replaced, lastReceivedAt); }
+        get { lock (gate) return new(received, replaced); }
     }
 }

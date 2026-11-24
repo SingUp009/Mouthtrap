@@ -18,13 +18,6 @@ public static class ArkitExpressionMap
         Targets.TryGetValue(name, out var targets) ? targets
             : throw new ArgumentException($"'{name}' is not an ARKit-style expression name.", nameof(name));
 
-    // jawOpen is the JawOpen value to send, calibrated or not; additional outputs are sent clamped.
-    public static ExpressionFrame Map(MouthEstimate estimate, float jawOpen)
-    {
-        ArgumentNullException.ThrowIfNull(estimate);
-        return Map([new("JawOpen", jawOpen), .. estimate.AdditionalExpressions.Select(item => new KeyValuePair<string, float>(item.Name, item.Value))]);
-    }
-
     // Maps output names (JawOpen included) and their 0..1 values; outputs left out stay unprovided.
     public static ExpressionFrame Map(IEnumerable<KeyValuePair<string, float>> outputs)
     {

@@ -56,5 +56,5 @@ public sealed class FrameReportTests
     private static TrackingFrame Frame(MouthEstimate? estimate, double? inferenceMs, CalibrationSnapshot? calibration,
         ExpressionFrame? expressions = null) =>
         new(estimate is null ? null : new(estimate, expressions ?? ExpressionFrame.Empty, calibration),
-            new(Source, 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, .5, inferenceMs, 12.5, 7, new FrameStatistics(9, 2, 0)));
+            new(Source, 0, new(PreprocessSettings.Default, 0), new byte[3], 1, 1, .5, inferenceMs, 12.5, 7, new FrameStatistics(9, 2)));
 }

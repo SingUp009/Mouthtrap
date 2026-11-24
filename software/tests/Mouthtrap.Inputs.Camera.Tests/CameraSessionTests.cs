@@ -242,8 +242,8 @@ public sealed class CameraSessionTests
     {
         // Given
         var frames = new LatestFrameBuffer();
-        frames.Publish([1], 0);
-        frames.Publish([2], 33);
+        frames.Publish(new EncodedFrameImage([1]), 0);
+        frames.Publish(new EncodedFrameImage([2]), 33);
 
         // When
         var frame = Assert.IsType<PreviewFrame>(frames.Take());
@@ -251,9 +251,9 @@ public sealed class CameraSessionTests
         // Then
         Assert.Equal([2], Assert.IsType<EncodedFrameImage>(frame.Image).Data);
         Assert.Equal(33, frame.ReceivedAt);
-        Assert.Equal(new FrameStatistics(2, 1, 33), frames.Statistics);
+        Assert.Equal(new FrameStatistics(2, 1), frames.Statistics);
         Assert.Null(frames.Take());
-        frames.Publish([3], 66);
+        frames.Publish(new EncodedFrameImage([3]), 66);
         Assert.Equal(1, frames.Statistics.Replaced);
     }
 
@@ -264,7 +264,7 @@ public sealed class CameraSessionTests
         var frames = new LatestFrameBuffer();
 
         // When
-        Parallel.For(0, 1000, _ => frames.Publish([1], 0));
+        Parallel.For(0, 1000, _ => frames.Publish(new EncodedFrameImage([1]), 0));
 
         // Then
         Assert.Equal(1000, frames.Statistics.Received);
