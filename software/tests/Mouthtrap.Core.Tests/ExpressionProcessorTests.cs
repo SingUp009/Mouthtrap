@@ -124,7 +124,7 @@ public sealed class ExpressionProcessorTests
     {
         // Given
         var estimate = new MouthEstimate(.5f, [new("TongueOut", .9f), new("MouthPucker", .6f)]);
-        var plain = new ExpressionOptions { AdaptiveCalibration = false, Smoothing = false, Deadzone = 0 };
+        var plain = new ExpressionOptions { AdaptiveCalibration = false, Smoothing = false, Deadzone = Deadzone.None };
 
         // When
         var withoutTongue = new ExpressionProcessor(plain).Process(estimate, Seconds(0)).Expressions;
@@ -164,7 +164,7 @@ public sealed class ExpressionProcessorTests
     public void Process_RestingBias_IsRemovedAndForgottenOnReset()
     {
         // Given
-        var processor = new ExpressionProcessor(new ExpressionOptions { Smoothing = false, Deadzone = 0 });
+        var processor = new ExpressionProcessor(new ExpressionOptions { Smoothing = false, Deadzone = Deadzone.None });
         var resting = new MouthEstimate(.1f, [new("MouthSmileLeft", .38f)]);
         for (var i = 0; i <= 40; i++) processor.Process(resting, Seconds(i * .1));
 
@@ -188,7 +188,7 @@ public sealed class ExpressionProcessorTests
     public void Process_LongSmile_DoesNotBecomeClosedMouthReference()
     {
         // Given: with this model a smile lowers JawOpen below a closed mouth (0.35 against 0.6 in the recorded session).
-        var processor = new ExpressionProcessor(new ExpressionOptions { Smoothing = false, Deadzone = 0 });
+        var processor = new ExpressionProcessor(new ExpressionOptions { Smoothing = false, Deadzone = Deadzone.None });
         var ungated = new AdaptiveJawCalibration();
         var t = 0.0;
         void Feed(float jaw, float smile, double seconds)
@@ -221,30 +221,13 @@ public sealed class ExpressionProcessorTests
     {
         // Given
         var processor = new ExpressionProcessor(new ExpressionOptions { AdaptiveCalibration = false, Smoothing = false });
-        Assert.Equal(.15f, processor.Options.Deadzone);
+        Assert.Equal(.15f, processor.Options.Deadzone.Value);
 
         // When
         var expressions = processor.Process(new MouthEstimate(jaw), Seconds(0)).Expressions;
 
         // Then
         Assert.Equal(expected, expressions[JawOpen]!.Value, 4);
-    }
-
-    [Theory]
-    [InlineData(-.01f)]
-    [InlineData(.5f)]
-    [InlineData(float.NaN)]
-    public void Validate_DeadzoneOutsideZeroToHalf_FailsAndProcessorRejectsIt(float deadzone)
-    {
-        // Given
-        var options = new ExpressionOptions { Deadzone = deadzone };
-
-        // When
-        var validated = options.Validate();
-
-        // Then
-        Assert.Equal("Deadzone", ResultAssert.Err(validated).Name);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ExpressionProcessor(options));
     }
 
     [Fact]

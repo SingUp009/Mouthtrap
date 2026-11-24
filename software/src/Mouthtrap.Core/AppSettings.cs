@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net;
 using Moderato.Results;
 
 namespace Mouthtrap.Core;
@@ -97,10 +96,12 @@ public sealed record ExpressionSettings
 {
     public bool AdaptiveCalibration { get; init; } = ExpressionOptions.Default.AdaptiveCalibration;
     public bool Smoothing { get; init; } = ExpressionOptions.Default.Smoothing;
-    public float Deadzone { get; init; } = ExpressionOptions.DefaultDeadzone;
+    public float Deadzone { get; init; } = Core.Deadzone.DefaultValue;
     public bool Tongue { get; init; } = ExpressionOptions.Default.Tongue;
 
-    public ExpressionOptions ToOptions() => new() { AdaptiveCalibration = AdaptiveCalibration, Smoothing = Smoothing, Deadzone = Deadzone, Tongue = Tongue };
+    // Settings that did not come through SettingsStore may hold a deadzone that cannot be used.
+    public Result<ExpressionOptions, InvalidValue> ToOptions() => Core.Deadzone.Create(Deadzone).Map(deadzone =>
+        new ExpressionOptions { AdaptiveCalibration = AdaptiveCalibration, Smoothing = Smoothing, Deadzone = deadzone, Tongue = Tongue });
 }
 
 public sealed record OscSettings
@@ -108,19 +109,4 @@ public sealed record OscSettings
     public const string DefaultEndpoint = "127.0.0.1:9000";
     public bool Enabled { get; init; }
     public string Endpoint { get; init; } = DefaultEndpoint;
-}
-
-public static class OscEndpoints
-{
-    // Only IP literals with an explicit, nonzero port, so nothing is resolved by name.
-    public static bool TryParse(string? text, out IPEndPoint endpoint)
-    {
-        if (text is not null && text.Contains(':', StringComparison.Ordinal) && IPEndPoint.TryParse(text, out var parsed) && parsed.Port != 0)
-        {
-            endpoint = parsed;
-            return true;
-        }
-        endpoint = null!;
-        return false;
-    }
 }

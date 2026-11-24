@@ -9,7 +9,7 @@ namespace Mouthtrap.Core.Tests;
 public sealed class TrackingStagesTests
 {
     private static readonly Rgb24FrameImage RedBlue = new([255, 0, 0, 0, 0, 255], 2, 1, 6);
-    private static readonly ExpressionOptions Raw = new() { AdaptiveCalibration = false, Smoothing = false, Deadzone = 0 };
+    private static readonly ExpressionOptions Raw = new() { AdaptiveCalibration = false, Smoothing = false, Deadzone = Deadzone.None };
 
     [Fact]
     public void Process_NoModel_PreprocessesAtUnmodeledSizeOnly()
@@ -83,7 +83,7 @@ public sealed class TrackingStagesTests
         var clock = new FakeTimeProvider();
         var startedAt = clock.GetTimestamp();
         var model = new Estimator();
-        var stages = new TrackingStages(model, new ExpressionOptions { Smoothing = false, Deadzone = 0 });
+        var stages = new TrackingStages(model, new ExpressionOptions { Smoothing = false, Deadzone = Deadzone.None });
         CalibrationSnapshot? learned = null;
         for (var i = 0; i <= 60; i++)
         {
@@ -101,14 +101,6 @@ public sealed class TrackingStagesTests
 
         // Then
         Assert.False(reset.Calibration!.Value.IsReady);
-    }
-
-    [Fact]
-    public void Constructor_OptionsThatSkippedValidation_Throws()
-    {
-        // When / Then
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new TrackingStages(null, new ExpressionOptions { Deadzone = float.NaN }));
     }
 
     private static FrameSelection Select(Rgb24FrameImage image, PreprocessSettings? settings = null) =>

@@ -43,7 +43,7 @@ public static class StreamTokenFile
 
 // An MJPEG stream that owns its HttpClient for each run, authenticating with the token in TokenFile, which is read
 // when the run starts. Handler replaces the network in tests and is borrowed, not disposed.
-public sealed record MjpegStreamInput(Uri Address, string? TokenFile, HttpMessageHandler? Handler = null) : IFrameSource
+public sealed record MjpegStreamInput(StreamUrl Address, string? TokenFile, HttpMessageHandler? Handler = null) : IFrameSource
 {
     public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
         Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
@@ -61,7 +61,7 @@ public sealed record MjpegStreamInput(Uri Address, string? TokenFile, HttpMessag
                 client.Dispose();
                 return Unit.Value;
             })));
-            await scope.Run(new MjpegFrameSource(Address, client).Run(frames));
+            await scope.Run(new MjpegFrameSource(Address.Address, client).Run(frames));
             return Unit.Value;
         });
 }

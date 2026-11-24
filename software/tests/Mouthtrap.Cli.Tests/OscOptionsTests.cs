@@ -28,7 +28,7 @@ public sealed class OscOptionsTests
 
         // Then
         Assert.False(target.IsDryRun);
-        Assert.Equal(new IPEndPoint(IPAddress.Parse(address), port), target.Endpoint);
+        Assert.Equal(new IPEndPoint(IPAddress.Parse(address), port), target.Endpoint!.Address);
     }
 
     [Fact]

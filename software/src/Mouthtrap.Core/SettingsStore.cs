@@ -151,10 +151,7 @@ public static class SettingsStore
         if (FilePath(input.TokenFilePath, "input.tokenFilePath") is { } token) return token;
         if (input.MjpegUrl is { } url)
         {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var address) || address.Scheme is not ("http" or "https"))
-                return new("input.mjpegUrl", "The stream URL must be an absolute HTTP(S) URL.");
-            // Credentials belong in the token file, not in a settings file that may be shared.
-            if (address.UserInfo.Length > 0) return new("input.mjpegUrl", "The stream URL must not contain a user name or password.");
+            if (StreamUrl.Create(url) is Err<InvalidValue>(var invalid)) return new("input.mjpegUrl", invalid.Message);
         }
 
         if (FilePath(settings.Model.DefinitionPath, "model.definitionPath") is { } model) return model;
@@ -166,11 +163,9 @@ public static class SettingsStore
         if (preprocessing.Rotation is not (0 or 90 or 180 or 270)) return new("preprocessing.rotation", "Rotation must be 0, 90, 180 or 270.");
 
         var expressions = settings.Expressions;
-        if (!float.IsFinite(expressions.Deadzone) || expressions.Deadzone is < 0f or >= .5f)
-            return new("expressions.deadzone", "The deadzone must be at least 0 and below 0.5.");
+        if (Deadzone.Create(expressions.Deadzone) is Err<InvalidValue>(var deadzone)) return new("expressions.deadzone", deadzone.Message);
 
-        if (!OscEndpoints.TryParse(settings.Osc.Endpoint, out _))
-            return new("osc.endpoint", "The OSC target must be an IP address and port, such as 127.0.0.1:9000.");
+        if (OscEndpoint.Create(settings.Osc.Endpoint) is Err<InvalidValue>(var endpoint)) return new("osc.endpoint", endpoint.Message);
         return null;
     }
 

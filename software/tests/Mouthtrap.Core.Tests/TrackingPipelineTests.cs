@@ -215,22 +215,6 @@ public sealed class TrackingPipelineTests
     }
 
     [Fact]
-    public async Task Run_OptionsThatSkippedValidation_DiesAndReleasesBothResources()
-    {
-        // Given
-        var source = new FakeSource { Image = Red, WaitForCancellation = true };
-        var model = new FakeEstimator();
-
-        // When
-        var exit = await Run(source, model, new Sink(), options: new() { Deadzone = .5f });
-
-        // Then
-        Assert.IsType<ArgumentOutOfRangeException>(Assert.IsType<Die>(exit.Value).Exception);
-        Assert.True(source.Released);
-        Assert.True(model.Disposed);
-    }
-
-    [Fact]
     public async Task Run_ModelLoadFails_DoesNotStartSource()
     {
         // Given
@@ -312,7 +296,7 @@ public sealed class TrackingPipelineTests
         var control = new TrackingControl();
         var sink = new Sink();
         var run = TrackingPipeline.Run(new FakeSource { WaitForCancellation = true }, frames, new PassThroughDecoder(),
-                Load(new FakeEstimator()), control, sink, new ExpressionOptions { Smoothing = false, Deadzone = 0 })
+                Load(new FakeEstimator()), control, sink, new ExpressionOptions { Smoothing = false, Deadzone = Deadzone.None })
             .RunExitAsync(new(clock), cancellation.Token).AsTask();
         for (var i = 0; i <= 60; i++)
         {

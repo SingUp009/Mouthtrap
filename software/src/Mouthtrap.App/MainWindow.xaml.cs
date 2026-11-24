@@ -188,8 +188,7 @@ public partial class MainWindow : Window
 
     private void MjpegUrl_TextChanged(object sender, TextChangedEventArgs e) => UpdateControls();
 
-    private Uri? MjpegAddress => Uri.TryCreate(MjpegUrl.Text.Trim(), UriKind.Absolute, out var address) &&
-        address.Scheme is "http" or "https" && address.UserInfo.Length == 0 ? address : null;
+    private StreamUrl? MjpegAddress => StreamUrl.Create(MjpegUrl.Text.Trim()) is Ok<StreamUrl>(var address) ? address : null;
 
     private void File_Click(object sender, RoutedEventArgs e)
     {
@@ -258,11 +257,15 @@ public partial class MainWindow : Window
             StatusText.Text = Strings.Get("DeadzoneInvalid");
             return;
         }
-        IPEndPoint? endpoint = null;
-        if (EnableTracking.IsChecked == true && OscEnabled.IsChecked == true && !OscEndpoints.TryParse(OscEndpoint.Text.Trim(), out endpoint))
+        Core.OscEndpoint? endpoint = null;
+        if (EnableTracking.IsChecked == true && OscEnabled.IsChecked == true)
         {
-            StatusText.Text = Strings.Get("OscEndpointInvalid");
-            return;
+            if (Core.OscEndpoint.Create(OscEndpoint.Text.Trim()) is not Ok<Core.OscEndpoint>(var parsed))
+            {
+                StatusText.Text = Strings.Get("OscEndpointInvalid");
+                return;
+            }
+            endpoint = parsed;
         }
         var created = TrackingSession.Create(new(source)
         {
@@ -271,13 +274,8 @@ public partial class MainWindow : Window
             Expressions = options,
             Osc = endpoint is null ? null : VrchatOscSession.Udp(endpoint)
         });
-        // OSC is offered only while tracking with a model is on, so that combination is a bug here.
-        if (created is Err<SessionSetupError>(OscRequiresModel)) throw new InvalidOperationException("OSC was enabled without a model.");
-        if (created is not Ok<TrackingSession>(var tracking))
-        {
-            StatusText.Text = Strings.Get("DeadzoneInvalid");
-            return;
-        }
+        // OSC is offered only while tracking with a model is on, so a setup error is a bug here.
+        if (created is not Ok<TrackingSession>(var tracking)) throw new InvalidOperationException("OSC was enabled without a model.");
         SaveSettings();
 
         sessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
@@ -304,15 +302,16 @@ public partial class MainWindow : Window
 
     private ExpressionOptions? ReadExpressionOptions()
     {
-        if (!float.TryParse(Deadzone.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out var deadzone)) return null;
-        var options = new ExpressionOptions
+        if (!float.TryParse(Deadzone.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out var value) ||
+            Core.Deadzone.Create(value) is not Ok<Core.Deadzone>(var deadzone))
+            return null;
+        return new ExpressionOptions
         {
             AdaptiveCalibration = AdaptiveCalibration.IsChecked == true,
             Smoothing = Smoothing.IsChecked == true,
             Tongue = Tongue.IsChecked == true,
             Deadzone = deadzone
         };
-        return options.Validate() is Ok<ExpressionOptions>(var valid) ? valid : null;
     }
 
     // With an OSC endpoint the session owns a UDP socket for its whole run and sends zeros to VRChat when it ends.
@@ -676,7 +675,7 @@ public partial class MainWindow : Window
         var url = MjpegUrl.Text.Trim();
         var check = AdaptiveCalibration.IsChecked == true;
         var expressions = ReadExpressionOptions() is { } options
-            ? new ExpressionSettings { AdaptiveCalibration = options.AdaptiveCalibration, Smoothing = options.Smoothing, Deadzone = options.Deadzone, Tongue = options.Tongue }
+            ? new ExpressionSettings { AdaptiveCalibration = options.AdaptiveCalibration, Smoothing = options.Smoothing, Deadzone = options.Deadzone.Value, Tongue = options.Tongue }
             : settings.Expressions with { AdaptiveCalibration = check, Smoothing = Smoothing.IsChecked == true, Tongue = Tongue.IsChecked == true };
         var endpoint = OscEndpoint.Text.Trim();
         return settings with
@@ -693,7 +692,7 @@ public partial class MainWindow : Window
             Model = new() { Enabled = EnableTracking.IsChecked == true, DefinitionPath = modelDefinitionPath },
             Preprocessing = savedPreprocessing,
             Expressions = expressions,
-            Osc = new() { Enabled = OscEnabled.IsChecked == true, Endpoint = OscEndpoints.TryParse(endpoint, out _) ? endpoint : settings.Osc.Endpoint },
+            Osc = new() { Enabled = OscEnabled.IsChecked == true, Endpoint = Core.OscEndpoint.Create(endpoint) is Ok<Core.OscEndpoint> ? endpoint : settings.Osc.Endpoint },
             Language = (AppLanguage)LanguageChoice.SelectedIndex
         };
     }

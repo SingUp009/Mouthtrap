@@ -45,7 +45,8 @@ public sealed class SettingsStoreTests : IDisposable
         // Then
         Assert.Equal(Daily, loaded);
         Assert.Equal(new PreprocessSettings(ResultAssert.Ok(CropRegion.Create(.24, .25, .48, .58)), QuarterTurn.HalfTurn, false), ResultAssert.Ok(loaded.Preprocessing.ToPreprocess()));
-        Assert.Equal(new ExpressionOptions { Smoothing = false, Deadzone = .1f, Tongue = true }, loaded.Expressions.ToOptions());
+        Assert.Equal(new ExpressionOptions { Smoothing = false, Deadzone = ResultAssert.Ok(Deadzone.Create(.1f)), Tongue = true },
+            ResultAssert.Ok(loaded.Expressions.ToOptions()));
     }
 
     [Fact]
@@ -81,7 +82,7 @@ public sealed class SettingsStoreTests : IDisposable
         // Then
         Assert.Equal(AppSettings.Default with { Preprocessing = new() { Rotation = 90 } }, Loaded(loaded));
         Assert.Equal(PreprocessSettings.Default, ResultAssert.Ok(AppSettings.Default.Preprocessing.ToPreprocess()));
-        Assert.Equal(ExpressionOptions.Default, AppSettings.Default.Expressions.ToOptions());
+        Assert.Equal(ExpressionOptions.Default, ResultAssert.Ok(AppSettings.Default.Expressions.ToOptions()));
     }
 
     [Fact]
@@ -244,23 +245,6 @@ public sealed class SettingsStoreTests : IDisposable
         // Then
         Assert.Equal([File], Directory.GetFiles(directory));
         Assert.Equal(AppSettings.Default, Loaded(SettingsStore.Load(File)));
-    }
-
-    [Theory]
-    [InlineData("127.0.0.1:9000", true)]
-    [InlineData("[::1]:9000", true)]
-    [InlineData("127.0.0.1:0", false)]
-    [InlineData("127.0.0.1:70000", false)]
-    [InlineData("localhost:9000", false)]
-    [InlineData("9000", false)]
-    [InlineData(null, false)]
-    public void TryParse_Endpoint_AcceptsOnlyIpLiteralsWithPort(string? text, bool valid)
-    {
-        // When
-        var parsed = OscEndpoints.TryParse(text, out _);
-
-        // Then
-        Assert.Equal(valid, parsed);
     }
 
     private static AppSettings Loaded(Result<AppSettings, SettingsError> result) =>

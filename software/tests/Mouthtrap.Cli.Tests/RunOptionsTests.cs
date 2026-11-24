@@ -30,7 +30,7 @@ public sealed class RunOptionsTests
 
         // Then
         Assert.Equal(new RunOptions(InputKind.Camera, null, null, null, null, 0, 0, 100, 100, 0, false,
-            CalibrationMode.Adaptive, SmoothingMode.OneEuro, false, ExpressionOptions.DefaultDeadzone, null, false, null), options);
+            CalibrationMode.Adaptive, SmoothingMode.OneEuro, false, Deadzone.DefaultValue, null, false, null), options);
     }
 
     [Fact]

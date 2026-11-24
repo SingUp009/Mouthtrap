@@ -12,6 +12,7 @@ namespace Mouthtrap.Inputs.Network.Tests;
 
 public sealed class MjpegStreamInputTests : IDisposable
 {
+    private static readonly StreamUrl Camera = ResultAssert.Ok(StreamUrl.Create("http://camera/stream"));
     private const string Token = "abcdefghijklmnop-_0123";
     private static readonly byte[] Jpeg = [0xff, 0xd8, 1, 0xff, 0xd9];
     private readonly string directory = Directory.CreateTempSubdirectory("mouthtrap-token-").FullName;
@@ -26,7 +27,7 @@ public sealed class MjpegStreamInputTests : IDisposable
         var frames = new LatestFrameBuffer();
 
         // When
-        var exit = await Run(new(new("http://camera/stream"), TokenFile($"  {Token}\r\n"), handler), frames);
+        var exit = await Run(new(Camera, TokenFile($"  {Token}\r\n"), handler), frames);
 
         // Then
         Assert.True(exit is Ok<Unit>);
@@ -42,7 +43,7 @@ public sealed class MjpegStreamInputTests : IDisposable
         using var handler = new Handler();
 
         // When
-        var exit = await Run(new(new("http://camera/stream"), null, handler));
+        var exit = await Run(new(Camera, null, handler));
 
         // Then
         Assert.True(exit is Ok<Unit>);
@@ -57,7 +58,7 @@ public sealed class MjpegStreamInputTests : IDisposable
         using var handler = new Handler();
 
         // When
-        var exit = await Run(new(new("http://camera/stream"), Path.Combine(directory, "missing.txt"), handler));
+        var exit = await Run(new(Camera, Path.Combine(directory, "missing.txt"), handler));
 
         // Then
         Assert.True(exit is Err<FrameSourceError>(InputSettingsInvalid));
@@ -74,7 +75,7 @@ public sealed class MjpegStreamInputTests : IDisposable
         using var handler = new Handler();
 
         // When
-        var exit = await Run(new(new("http://camera/stream"), TokenFile(content), handler));
+        var exit = await Run(new(Camera, TokenFile(content), handler));
 
         // Then
         Assert.True(exit is Err<FrameSourceError>(InputSettingsInvalid(var message)) && !message.Contains(content, StringComparison.Ordinal));
@@ -108,7 +109,7 @@ public sealed class MjpegStreamInputTests : IDisposable
         using var handler = new Handler { Status = HttpStatusCode.Unauthorized };
 
         // When
-        var exit = await Run(new(new("http://camera/stream"), TokenFile(Token), handler));
+        var exit = await Run(new(Camera, TokenFile(Token), handler));
 
         // Then
         Assert.True(exit is Err<FrameSourceError>(InputUnavailable(_, 401)));

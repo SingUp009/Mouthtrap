@@ -12,19 +12,9 @@ public sealed record ExpressionOptions
     // Tongue outputs react to an open mouth with the Babble model and a front camera,
     // so they are left unprovided unless asked for.
     public bool Tongue { get; init; }
-    // Values at or below this, after calibration and smoothing, are sent as 0 and the rest is stretched back to 0..1,
-    // so small resting residuals do not leave the mouth slightly open. It must be at least 0 and below 0.5; hosts
-    // check what the user typed with Validate.
-    public float Deadzone { get; init; } = DefaultDeadzone;
+    public Deadzone Deadzone { get; init; } = Deadzone.Default;
 
-    // Chosen on two recorded sessions: 0.15 took resting residuals from about 0.15 to 0.01 while talking kept its
-    // movement and smiles and pucker lost about a tenth.
-    public const float DefaultDeadzone = .15f;
     public static ExpressionOptions Default { get; } = new();
-
-    public Result<ExpressionOptions, InvalidValue> Validate() =>
-        float.IsFinite(Deadzone) && Deadzone is >= 0f and < .5f ? new Ok<ExpressionOptions>(this)
-            : new Err<InvalidValue>(new(nameof(Deadzone), "The deadzone must be at least 0 and below 0.5."));
 }
 
 public readonly record struct ExpressionResult(ExpressionFrame Expressions, CalibrationSnapshot? JawOpen);
@@ -47,13 +37,7 @@ public sealed class ExpressionProcessor(ExpressionOptions options)
     private readonly List<KeyValuePair<string, float>> values = [];
     private readonly AdaptiveJawCalibration jaw = new();
 
-    // Options must have passed Validate; the host checks user input before it starts a session.
-    public ExpressionOptions Options { get; } = options?.Validate() switch
-    {
-        null => throw new ArgumentNullException(nameof(options)),
-        Ok<ExpressionOptions>(var valid) => valid,
-        Err<InvalidValue>(var invalid) => throw new ArgumentOutOfRangeException(nameof(options), invalid.Message)
-    };
+    public ExpressionOptions Options { get; } = options ?? throw new ArgumentNullException(nameof(options));
 
     public void Reset()
     {
@@ -88,12 +72,9 @@ public sealed class ExpressionProcessor(ExpressionOptions options)
             : null;
         values.Add(new("JawOpen", snapshot?.JawOpen ?? estimate.JawOpen));
         for (var i = 0; i < values.Count; i++)
-            values[i] = new(values[i].Key, Deaden(Smooth(values[i].Key, values[i].Value, now)));
+            values[i] = new(values[i].Key, Options.Deadzone.Apply(Smooth(values[i].Key, values[i].Value, now)));
         return new(ArkitExpressionMap.Map(values), snapshot);
     }
-
-    private float Deaden(float value) =>
-        Options.Deadzone == 0f ? value : Math.Max(0f, (value - Options.Deadzone) / (1f - Options.Deadzone));
 
     private float Smooth(string name, float value, TimeSpan now)
     {

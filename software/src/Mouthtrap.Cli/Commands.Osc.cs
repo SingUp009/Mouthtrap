@@ -8,7 +8,7 @@ using Mouthtrap.Outputs;
 namespace Mouthtrap.Cli;
 
 // Where OSC goes: a UDP endpoint, or standard output for a dry run.
-public sealed record OscTarget(IPEndPoint? Endpoint)
+public sealed record OscTarget(OscEndpoint? Endpoint)
 {
     public bool IsDryRun => Endpoint is null;
 }
@@ -22,7 +22,7 @@ public static class OscOptions
         if (dryRun && endpoint is not null) return new Err<string>("Use either --osc or the OSC dry run, not both.");
         if (dryRun) return new Ok<OscTarget?>(new(null));
         if (endpoint is null) return new Ok<OscTarget?>(null);
-        return OscEndpoints.TryParse(endpoint, out var parsed) ? new Ok<OscTarget?>(new(parsed))
+        return OscEndpoint.Create(endpoint) is Ok<OscEndpoint>(var parsed) ? new Ok<OscTarget?>(new(parsed))
             : new Err<string>("--osc must be an IP address and port, such as 127.0.0.1:9000.");
     }
 

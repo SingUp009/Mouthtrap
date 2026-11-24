@@ -10,7 +10,7 @@ namespace Mouthtrap.Sessions;
 public sealed record OscRequiresModel;
 
 [Error]
-public partial union SessionSetupError(InvalidValue, OscRequiresModel);
+public partial union SessionSetupError(OscRequiresModel);
 
 // What a host picked for one session. The host builds the input and the OSC transport; Model is the model
 // definition JSON, or null to check capture and preprocessing only.
@@ -46,7 +46,6 @@ public sealed class TrackingSession
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.Input);
-        if (request.Expressions.Validate() is Err<InvalidValue>(var invalid)) return new Err<SessionSetupError>(invalid);
         if (request.Osc is not null && request.Model is null) return new Err<SessionSetupError>(new OscRequiresModel());
         return new Ok<TrackingSession>(new(request));
     }

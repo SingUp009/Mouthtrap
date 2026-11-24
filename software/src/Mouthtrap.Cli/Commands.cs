@@ -140,12 +140,14 @@ public sealed partial class Commands
         return StaDispatcher.Run(async dispatcher =>
         {
             using var http = source == InputKind.Mjpeg ? new System.Net.Http.HttpClient { Timeout = Timeout.InfiniteTimeSpan } : null;
+            var parsedDeadzone = Deadzone.Create(deadzone);
+            if (parsedDeadzone is Err<InvalidValue>(var invalidDeadzone)) return Usage(invalidDeadzone.Message);
             var expressionOptions = new ExpressionOptions
             {
                 AdaptiveCalibration = calibration == CalibrationMode.Adaptive,
                 Smoothing = smoothing == SmoothingMode.OneEuro,
                 Tongue = tongue,
-                Deadzone = deadzone
+                Deadzone = parsedDeadzone.UnwrapOr(Deadzone.Default)
             };
             var parsedOsc = OscOptions.Parse(osc, oscDryRun);
             if (parsedOsc is Err<string>(var oscError)) return Usage(oscError);
@@ -175,8 +177,8 @@ public sealed partial class Commands
             }
             else if (source == InputKind.Mjpeg)
             {
-                if (!Uri.TryCreate(url, UriKind.Absolute, out var address) || address.Scheme is not ("http" or "https"))
-                    return Usage("Mjpeg requires an absolute HTTP(S) --url.");
+                if (StreamUrl.Create(url) is not Ok<StreamUrl>(var address))
+                    return Usage("Mjpeg requires an absolute HTTP(S) --url without a user name or password.");
                 if (tokenFile is not null)
                 {
                     switch (StreamTokenFile.Read(tokenFile))
@@ -185,7 +187,7 @@ public sealed partial class Commands
                         case Err<InputSettingsInvalid>(var invalid): Error("token_file", invalid.Message); return 2;
                     }
                 }
-                input = new MjpegFrameSource(address, http!);
+                input = new MjpegFrameSource(address.Address, http!);
             }
             else if (string.IsNullOrWhiteSpace(path)) return Usage("Image and Video require --path.");
             else if (source == InputKind.Image) input = new ImageFileSource(path);
@@ -285,7 +287,6 @@ public sealed partial class Commands
     };
     private static string SetupErrorMessage(SessionSetupError error) => error switch
     {
-        InvalidValue(_, var message) => message,
         OscRequiresModel => "OSC output requires --model."
     };
     private static int Usage(string message) { Error("arguments", message); return 2; }

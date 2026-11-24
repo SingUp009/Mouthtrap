@@ -13,19 +13,6 @@ public sealed class TrackingSessionTests
     private static readonly Rgb24FrameImage Pixel = new([10, 20, 30], 1, 1, 3);
 
     [Fact]
-    public void Create_InvalidDeadzone_FailsWithInvalidValue()
-    {
-        // Given
-        var request = new SessionRequest(new OneFrameSource(Pixel)) { Expressions = new() { Deadzone = .5f } };
-
-        // When
-        var created = TrackingSession.Create(request);
-
-        // Then
-        Assert.True(created is Err<SessionSetupError>(InvalidValue(nameof(ExpressionOptions.Deadzone), _)));
-    }
-
-    [Fact]
     public void Create_OscWithoutModel_FailsBeforeOpeningTheTransport()
     {
         // Given

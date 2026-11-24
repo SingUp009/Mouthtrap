@@ -1,4 +1,3 @@
-using System.Net;
 using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
@@ -8,8 +7,8 @@ namespace Mouthtrap.Outputs;
 public static class VrchatOscSession
 {
     // A UDP socket to VRChat's OSC input, as a transport resource for Run.
-    public static Resource<IOscTransport, OutputFailed, PreviewEnvironment> Udp(IPEndPoint endpoint) =>
-        UdpOscTransport.Open<PreviewEnvironment>(endpoint).Map<IOscTransport>(transport => transport);
+    public static Resource<IOscTransport, OutputFailed, PreviewEnvironment> Udp(OscEndpoint endpoint) =>
+        UdpOscTransport.Open<PreviewEnvironment>(endpoint.Address).Map<IOscTransport>(transport => transport);
 
     // Runs a session with VRChat output added after the host's sink. The transport is a resource of the session,
     // and an all-zero packet is sent once when the session ends however it ends, before the transport is released,
