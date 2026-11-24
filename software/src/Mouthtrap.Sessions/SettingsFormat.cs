@@ -2,8 +2,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Moderato.Effects;
 using Moderato.Results;
+using Mouthtrap.Core;
 
-namespace Mouthtrap.Core;
+namespace Mouthtrap.Sessions;
 
 // No settings file exists yet; the caller decides whether that means the defaults.
 public sealed record SettingsFileMissing(string Path);
@@ -23,7 +24,7 @@ public partial union SettingsError(SettingsFileMissing, SettingsFileUnreadable, 
     SettingsVersionUnsupported, SettingsValueInvalid, SettingsWriteFailed);
 
 // The settings JSON format: parsing, validation and serialization, without touching files. Where the file lives and
-// how it is read and replaced belongs to SettingsStore in Mouthtrap.Sessions.
+// how it is read and replaced belongs to SettingsStore.
 public static class SettingsFormat
 {
     private const int MaxPathLength = 4096;

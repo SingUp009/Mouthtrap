@@ -1,10 +1,11 @@
 using System.Text;
 using Moderato.Results;
 using Mouthtrap.Core;
+using Mouthtrap.Sessions;
 using Mouthtrap.Tests;
 using Xunit;
 
-namespace Mouthtrap.Core.Tests;
+namespace Mouthtrap.Sessions.Tests;
 
 public sealed class SettingsFormatTests
 {
@@ -163,6 +164,16 @@ public sealed class SettingsFormatTests
 
         // Then
         Assert.True(result is Err<SettingsError>(SettingsValueInvalid(var name, _)) && name == field);
+    }
+
+    [Fact]
+    public void ToOptions_SettingsWithInvalidDeadzone_Fails()
+    {
+        // Given
+        var settings = new ExpressionSettings { Deadzone = .7f };
+
+        // When / Then
+        Assert.Equal(nameof(Deadzone), ResultAssert.Err(settings.ToOptions()).Name);
     }
 
     private static AppSettings Loaded(Result<AppSettings, SettingsError> result) =>

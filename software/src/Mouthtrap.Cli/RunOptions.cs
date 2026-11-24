@@ -1,4 +1,5 @@
 using Mouthtrap.Core;
+using Mouthtrap.Sessions;
 
 namespace Mouthtrap.Cli;
 

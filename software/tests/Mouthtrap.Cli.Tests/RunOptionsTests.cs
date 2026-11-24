@@ -1,5 +1,6 @@
 using Mouthtrap.Cli;
 using Mouthtrap.Core;
+using Mouthtrap.Sessions;
 using Xunit;
 
 namespace Mouthtrap.Cli.Tests;

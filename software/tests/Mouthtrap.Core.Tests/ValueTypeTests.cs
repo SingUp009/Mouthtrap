@@ -49,16 +49,6 @@ public sealed class DeadzoneTests
         // When / Then
         Assert.Equal(.01f, Deadzone.None.Apply(.01f));
     }
-
-    [Fact]
-    public void ToOptions_SettingsWithInvalidDeadzone_Fails()
-    {
-        // Given
-        var settings = new ExpressionSettings { Deadzone = .7f };
-
-        // When / Then
-        Assert.Equal(nameof(Deadzone), ResultAssert.Err(settings.ToOptions()).Name);
-    }
 }
 
 public sealed class StreamUrlTests

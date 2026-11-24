@@ -1,7 +1,8 @@
 using System.Globalization;
 using Moderato.Results;
+using Mouthtrap.Core;
 
-namespace Mouthtrap.Core;
+namespace Mouthtrap.Sessions;
 
 public enum InputSourceKind { Camera, Image, Video, Mjpeg }
 
