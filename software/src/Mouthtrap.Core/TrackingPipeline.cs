@@ -20,10 +20,10 @@ public sealed record TrackingResult(MouthEstimate Estimate, ExpressionFrame Expr
 
 // How one frame went through the pipeline, for previews and reports. Source is shared with the input and Pixels
 // (the preprocessed, packed RGB24) belongs to the receivers; neither may be mutated. InferenceMilliseconds is null
-// without a model.
+// without a model. Undecodable counts the frames skipped so far because they could not be decoded.
 public sealed record FrameDiagnostics(Rgb24FrameImage Source, long ReceivedAt, TrackingControlState Settings,
     byte[] Pixels, int PixelWidth, int PixelHeight, double PreprocessMilliseconds, double? InferenceMilliseconds,
-    double FrameAgeMilliseconds, long Processed, FrameStatistics Statistics);
+    double FrameAgeMilliseconds, long Processed, FrameStatistics Statistics, long Undecodable = 0);
 
 // One processed frame. Result is null without a model. Outputs that send results read Result; Diagnostics is for
 // hosts that show or report how the frame was processed.
@@ -53,6 +53,10 @@ public static class TrackingPipeline
 {
     // Preprocessing output size when no model is loaded (capture and preprocessing check).
     public const int UnmodeledOutputSize = TrackingStages.UnmodeledOutputSize;
+
+    // A stream can deliver an occasional broken frame, such as a JPEG damaged over Wi-Fi; it is skipped. This many
+    // in a row means the input does not deliver readable frames, and the session ends with the decode error.
+    public const int MaxUndecodableInARow = 10;
 
     // Owns the model; runs the input and the decode → preprocess → infer → calibrate loop until either ends.
     public static Effect<Unit, TrackingError, PreviewEnvironment> Run(IFrameSource input, LatestFrameBuffer frames,
@@ -92,6 +96,8 @@ public static class TrackingPipeline
                 var stages = new TrackingStages(estimator, expressionOptions ?? ExpressionOptions.Default);
                 var selector = new FrameSelector();
                 long processed = 0;
+                long undecodable = 0;
+                var undecodableInARow = 0;
                 while (true)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -102,8 +108,18 @@ public static class TrackingPipeline
                     long receivedAt = 0;
                     if (frames.Take() is { } frame)
                     {
-                        arrived = consumer.Get(decoder.ToRgb24(frame.Image).MapErr(error => new TrackingInputFailed(error)));
-                        receivedAt = frame.ReceivedAt;
+                        switch (decoder.ToRgb24(frame.Image))
+                        {
+                            case Ok<Rgb24FrameImage>(var image):
+                                arrived = image;
+                                receivedAt = frame.ReceivedAt;
+                                undecodableInARow = 0;
+                                break;
+                            case Err<InputDataInvalid>(var invalid):
+                                undecodable++;
+                                if (++undecodableInARow >= MaxUndecodableInARow) throw consumer.Fail(new TrackingInputFailed(invalid));
+                                break;
+                        }
                     }
                     if (selector.Select(arrived, receivedAt, settings) is not { } selected)
                     {
@@ -116,7 +132,7 @@ public static class TrackingPipeline
                         .MapErr(error => new TrackingModelFailed(error)));
                     var diagnostics = new FrameDiagnostics(selected.Image, selected.ReceivedAt, selected.Settings, result.Pixels,
                         result.PixelWidth, result.PixelHeight, result.PreprocessMilliseconds, result.InferenceMilliseconds,
-                        clock.GetElapsedTime(selected.ReceivedAt).TotalMilliseconds, ++processed, frames.Statistics);
+                        clock.GetElapsedTime(selected.ReceivedAt).TotalMilliseconds, ++processed, frames.Statistics, undecodable);
                     consumer.Get(sink.Publish(new(result.Result, diagnostics)).MapErr(error => new TrackingOutputFailed(error)));
                 }
                 return Unit.Value;

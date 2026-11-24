@@ -197,19 +197,59 @@ public sealed class TrackingPipelineTests
     }
 
     [Fact]
-    public async Task Run_FrameCannotBeDecoded_FailsWithInputDataErrorAndReleasesSource()
+    public async Task Run_UndecodableFramesInARow_FailsWithTheDecodeErrorAndReleasesSource()
     {
         // Given
-        var source = new FakeSource { Image = new EncodedFrameImage([1, 2, 3]), WaitForCancellation = true };
+        var source = new FakeSource { WaitForCancellation = true };
+        var frames = new LatestFrameBuffer();
+        var decoder = new EncodedFailsDecoder();
+        var run = TrackingPipeline.Run(source, frames, decoder, null, new(), new Sink())
+            .RunExitAsync(new(TimeProvider.System), TestContext.Current.CancellationToken).AsTask();
 
         // When
-        var exit = await TrackingPipeline.Run(source, new(), new FailingDecoder(), null, new(), new Sink())
-            .RunExitAsync(new(TimeProvider.System), TestContext.Current.CancellationToken).AsTask()
-            .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        for (var i = 1; i < TrackingPipeline.MaxUndecodableInARow; i++) await Undecodable(frames, decoder);
+        Assert.False(run.IsCompleted);
+        frames.Publish(Broken, 0);
 
         // Then
+        var exit = await run.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         Assert.True(exit is Err<TrackingError>(TrackingInputFailed(InputDataInvalid("not an image"))));
         Assert.True(source.Released);
+    }
+
+    [Fact]
+    public async Task Run_UndecodableFramesBetweenReadableOnes_SkipsAndCountsThem()
+    {
+        // Given
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var frames = new LatestFrameBuffer();
+        var decoder = new EncodedFailsDecoder();
+        var sink = new Sink();
+        var run = TrackingPipeline.Run(new FakeSource { WaitForCancellation = true }, frames, decoder, null, new(), sink)
+            .RunExitAsync(new(TimeProvider.System), cancellation.Token).AsTask();
+
+        // When: one short of the limit, a readable frame, then one short of the limit again.
+        for (var i = 1; i < TrackingPipeline.MaxUndecodableInARow; i++) await Undecodable(frames, decoder);
+        frames.Publish(Red, 0);
+        await sink.WaitFor(frame => frame.Diagnostics.Processed == 1, cancellation.Token);
+        for (var i = 1; i < TrackingPipeline.MaxUndecodableInARow; i++) await Undecodable(frames, decoder);
+        frames.Publish(Red, 0);
+
+        // Then
+        var last = await sink.WaitFor(frame => frame.Diagnostics.Processed == 2, cancellation.Token);
+        cancellation.Cancel();
+        Assert.True(await run.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken) is Interrupted);
+        Assert.Equal(2L * (TrackingPipeline.MaxUndecodableInARow - 1), last.Diagnostics.Undecodable);
+    }
+
+    private static readonly EncodedFrameImage Broken = new([1, 2, 3]);
+
+    // Publishes a frame the decoder rejects and waits until the pipeline has tried it.
+    private static async Task Undecodable(LatestFrameBuffer frames, EncodedFailsDecoder decoder)
+    {
+        var decoded = decoder.NextDecode();
+        frames.Publish(Broken, 0);
+        await decoded.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -382,9 +422,26 @@ public sealed class TrackingPipelineTests
         Effect<PreviewEnvironment>.Sync<IMouthEstimator>(() => model);
 
 
-    private sealed class FailingDecoder : IFrameDecoder
+    // Passes RGB images through and rejects encoded ones, signalling each attempt.
+    private sealed class EncodedFailsDecoder : IFrameDecoder
     {
-        public Result<Rgb24FrameImage, InputDataInvalid> ToRgb24(FrameImage image) => new Err<InputDataInvalid>(new("not an image"));
+        private volatile TaskCompletionSource? next;
+
+        // Completes when the next frame has been tried; call it before publishing that frame.
+        public Task NextDecode()
+        {
+            var attempt = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            next = attempt;
+            return attempt.Task;
+        }
+
+        public Result<Rgb24FrameImage, InputDataInvalid> ToRgb24(FrameImage image)
+        {
+            Result<Rgb24FrameImage, InputDataInvalid> result = image is Rgb24FrameImage rgb
+                ? new Ok<Rgb24FrameImage>(rgb) : new Err<InputDataInvalid>(new("not an image"));
+            next?.TrySetResult();
+            return result;
+        }
     }
 
     private sealed class PassThroughDecoder : IFrameDecoder
