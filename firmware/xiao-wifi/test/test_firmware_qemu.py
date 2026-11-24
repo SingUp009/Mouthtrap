@@ -83,7 +83,7 @@ class FirmwareStartTests(unittest.TestCase):
         # When
         text = self.boot(image, r"with provision\.py, then reset")
         # Then
-        self.assertIn("The stored settings are invalid.", text)
+        self.assertIn("The stored settings are invalid: the password must be 8-63 bytes.", text)
         self.assertNotIn("wifi:", text)
 
     def test_start_validSettings_startsWifi(self):
