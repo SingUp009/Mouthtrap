@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Windows;
 using Moderato.Results;
 using Mouthtrap.Core;
+using Mouthtrap.Sessions;
 
 namespace Mouthtrap.App;
 

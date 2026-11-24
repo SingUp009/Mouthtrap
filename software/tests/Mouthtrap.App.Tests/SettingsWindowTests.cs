@@ -6,6 +6,7 @@ using System.Windows.Threading;
 using Moderato.Results;
 using Mouthtrap.App;
 using Mouthtrap.Core;
+using Mouthtrap.Sessions;
 using Mouthtrap.Tests;
 using Xunit;
 

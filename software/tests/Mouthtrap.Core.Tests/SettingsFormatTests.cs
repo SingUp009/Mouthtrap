@@ -6,16 +6,8 @@ using Xunit;
 
 namespace Mouthtrap.Core.Tests;
 
-public sealed class SettingsStoreTests : IDisposable
+public sealed class SettingsFormatTests
 {
-    private readonly string directory = Path.Combine(Path.GetTempPath(), "mouthtrap-settings-" + Guid.NewGuid().ToString("N"));
-    private string File => Path.Combine(directory, "settings.json");
-
-    public void Dispose()
-    {
-        if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
-    }
-
     private static AppSettings Daily => new()
     {
         Input = new()
@@ -34,43 +26,29 @@ public sealed class SettingsStoreTests : IDisposable
     };
 
     [Fact]
-    public void Load_SavedSettings_ReturnsEqualSettings()
+    public void Parse_SerializedSettings_ReturnsEqualSettings()
     {
         // Given
-        Assert.True(SettingsStore.Save(File, Daily) is Ok<Unit>);
+        var json = ResultAssert.Ok(SettingsFormat.Serialize(Daily));
 
         // When
-        var loaded = Loaded(SettingsStore.Load(File));
+        var parsed = Loaded(SettingsFormat.Parse("settings.json", json));
 
         // Then
-        Assert.Equal(Daily, loaded);
-        Assert.Equal(new PreprocessSettings(ResultAssert.Ok(CropRegion.Create(.24, .25, .48, .58)), QuarterTurn.HalfTurn, false), ResultAssert.Ok(loaded.Preprocessing.ToPreprocess()));
+        Assert.Equal(Daily, parsed);
+        Assert.Equal(new PreprocessSettings(ResultAssert.Ok(CropRegion.Create(.24, .25, .48, .58)), QuarterTurn.HalfTurn, false), ResultAssert.Ok(parsed.Preprocessing.ToPreprocess()));
         Assert.Equal(new ExpressionOptions { Smoothing = false, Deadzone = ResultAssert.Ok(Deadzone.Create(.1f)), Tongue = true },
-            ResultAssert.Ok(loaded.Expressions.ToOptions()));
+            ResultAssert.Ok(parsed.Expressions.ToOptions()));
     }
 
     [Fact]
-    public void Save_ExistingFile_ReplacesItWithoutLeavingTemporaryFile()
-    {
-        // Given
-        Assert.True(SettingsStore.Save(File, AppSettings.Default) is Ok<Unit>);
-
-        // When
-        Assert.True(SettingsStore.Save(File, Daily) is Ok<Unit>);
-
-        // Then
-        Assert.Equal([File], Directory.GetFiles(directory));
-        Assert.Equal(Daily, Loaded(SettingsStore.Load(File)));
-    }
-
-    [Fact]
-    public void Load_MissingFile_FailsWithMissingFile()
+    public void Serialize_InvalidSettings_FailsNamingField()
     {
         // When
-        var result = SettingsStore.Load(File);
+        var result = SettingsFormat.Serialize(Daily with { Preprocessing = new() { Rotation = 45 } });
 
         // Then
-        Assert.True(result is Err<SettingsError>(SettingsFileMissing(var path)) && path == File);
+        Assert.True(result is Err<SettingsError>(SettingsValueInvalid("preprocessing.rotation", _)));
     }
 
     [Fact]
@@ -122,17 +100,17 @@ public sealed class SettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Save_Language_WritesNameAndDefaultsToSystem()
+    public void Serialize_Language_WritesNameAndDefaultsToSystem()
     {
         // Given
         Assert.Equal(AppLanguage.System, AppSettings.Default.Language);
         Assert.Equal(AppLanguage.English, Loaded(Parse("""{ "version": 1, "language": "English" }""")).Language);
 
         // When
-        Assert.True(SettingsStore.Save(File, Daily) is Ok<Unit>);
+        var json = Encoding.UTF8.GetString(ResultAssert.Ok(SettingsFormat.Serialize(Daily)));
 
         // Then
-        Assert.Contains("\"language\": \"Japanese\"", System.IO.File.ReadAllText(File), StringComparison.Ordinal);
+        Assert.Contains("\"language\": \"Japanese\"", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -142,7 +120,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Null(AppLanguages.Culture(AppLanguage.System));
         Assert.Equal("en", AppLanguages.Culture(AppLanguage.English)!.Name);
         Assert.Equal("ja", AppLanguages.Culture(AppLanguage.Japanese)!.Name);
-        Assert.True(SettingsStore.Validate(AppSettings.Default with { Language = (AppLanguage)9 }) is Err<SettingsError>(SettingsValueInvalid("language", _)));
+        Assert.True(SettingsFormat.Validate(AppSettings.Default with { Language = (AppLanguage)9 }) is Err<SettingsError>(SettingsValueInvalid("language", _)));
     }
 
     [Fact]
@@ -187,68 +165,8 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.True(result is Err<SettingsError>(SettingsValueInvalid(var name, _)) && name == field);
     }
 
-    [Fact]
-    public void Save_InvalidSettings_WritesNothing()
-    {
-        // Given
-        var invalid = Daily with { Preprocessing = new() { Rotation = 45 } };
-
-        // When
-        var result = SettingsStore.Save(File, invalid);
-
-        // Then
-        Assert.True(result is Err<SettingsError>(SettingsValueInvalid));
-        Assert.False(Directory.Exists(directory));
-    }
-
-    [Fact]
-    public void Load_CorruptFile_FailsAndLeavesFileInPlace()
-    {
-        // Given
-        Directory.CreateDirectory(directory);
-        System.IO.File.WriteAllText(File, """{ "version": 1, "input": """);
-
-        // When
-        var result = SettingsStore.Load(File);
-
-        // Then
-        Assert.True(result is Err<SettingsError>(SettingsFileCorrupt));
-        Assert.Equal("""{ "version": 1, "input": """, System.IO.File.ReadAllText(File));
-    }
-
-    [Fact]
-    public void Load_OversizedFile_FailsAsUnreadable()
-    {
-        // Given
-        Directory.CreateDirectory(directory);
-        System.IO.File.WriteAllText(File, """{ "version": 1 }""" + new string(' ', SettingsStore.MaxFileBytes));
-
-        // When
-        var result = SettingsStore.Load(File);
-
-        // Then
-        Assert.True(result is Err<SettingsError>(SettingsFileUnreadable));
-    }
-
-    [Fact]
-    public void LoadAndSave_LockedFile_FailAndKeepFile()
-    {
-        // Given
-        Assert.True(SettingsStore.Save(File, AppSettings.Default) is Ok<Unit>);
-        using (new FileStream(File, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-        {
-            // When / Then
-            Assert.True(SettingsStore.Load(File) is Err<SettingsError>(SettingsFileUnreadable));
-            Assert.True(SettingsStore.Save(File, Daily) is Err<SettingsError>(SettingsWriteFailed));
-        }
-
-        // Then
-        Assert.Equal([File], Directory.GetFiles(directory));
-        Assert.Equal(AppSettings.Default, Loaded(SettingsStore.Load(File)));
-    }
-
     private static AppSettings Loaded(Result<AppSettings, SettingsError> result) =>
         result is Ok<AppSettings>(var settings) ? settings : throw new Xunit.Sdk.XunitException($"Expected settings, got {result}.");
 
-    private static Result<AppSettings, SettingsError> Parse(string json) => SettingsStore.Parse("settings.json", Encoding.UTF8.GetBytes(json));
+    private static Result<AppSettings, SettingsError> Parse(string json) => SettingsFormat.Parse("settings.json", Encoding.UTF8.GetBytes(json));
 }

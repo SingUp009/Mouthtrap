@@ -22,9 +22,10 @@ public sealed record SettingsWriteFailed(string Path, string Message);
 public partial union SettingsError(SettingsFileMissing, SettingsFileUnreadable, SettingsFileCorrupt,
     SettingsVersionUnsupported, SettingsValueInvalid, SettingsWriteFailed);
 
-public static class SettingsStore
+// The settings JSON format: parsing, validation and serialization, without touching files. Where the file lives and
+// how it is read and replaced belongs to SettingsStore in Mouthtrap.Sessions.
+public static class SettingsFormat
 {
-    public const int MaxFileBytes = 64 * 1024;
     private const int MaxPathLength = 4096;
 
     private static readonly JsonSerializerOptions Options = new()
@@ -36,29 +37,6 @@ public static class SettingsStore
         RespectRequiredConstructorParameters = true,
         WriteIndented = true
     };
-
-    // %APPDATA%\Mouthtrap\settings.json, shared by the GUI and the CLI's --saved-settings.
-    public static string DefaultPath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Mouthtrap", "settings.json");
-
-    public static Result<AppSettings, SettingsError> Load(string path)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(path);
-        byte[] bytes;
-        try
-        {
-            using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-            if (file.Length > MaxFileBytes)
-                return Fail(new SettingsFileUnreadable(path, $"The settings file is larger than {MaxFileBytes} bytes."));
-            bytes = new byte[file.Length];
-            file.ReadExactly(bytes);
-        }
-        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
-        { return Fail(new SettingsFileMissing(path)); }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        { return Fail(new SettingsFileUnreadable(path, exception.Message)); }
-        return Parse(path, bytes);
-    }
 
     // Path names the source in errors only.
     public static Result<AppSettings, SettingsError> Parse(string path, ReadOnlySpan<byte> json)
@@ -90,38 +68,9 @@ public static class SettingsStore
         return new Ok<AppSettings>(settings);
     }
 
-    // Writes a temporary file next to the target and moves it over the target, so a crash or a full disk leaves
-    // either the old file or the new one, never a partial file.
-    public static Result<Unit, SettingsError> Save(string path, AppSettings settings)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(path);
-        if (Validate(settings) is Err<SettingsError>(var invalid)) return new Err<SettingsError>(invalid);
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, Options);
-        string? temporary = null;
-        try
-        {
-            var full = Path.GetFullPath(path);
-            var directory = Path.GetDirectoryName(full)!;
-            Directory.CreateDirectory(directory);
-            temporary = Path.Combine(directory, $".{Path.GetFileName(full)}.{Guid.NewGuid():N}.tmp");
-            using (var file = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            {
-                file.Write(bytes);
-                file.Flush(flushToDisk: true);
-            }
-            File.Move(temporary, full, overwrite: true);
-            temporary = null;
-            return new Ok<Unit>(Unit.Value);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
-        { return new Err<SettingsError>(new SettingsWriteFailed(path, exception.Message)); }
-        finally
-        {
-            if (temporary is not null)
-                try { File.Delete(temporary); }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { }
-        }
-    }
+    // The settings as indented JSON, once they pass Validate.
+    public static Result<byte[], SettingsError> Serialize(AppSettings settings) =>
+        Validate(settings).Map(valid => JsonSerializer.SerializeToUtf8Bytes(valid, Options));
 
     private static Err<SettingsError> Fail(SettingsError error) => new(error);
 
