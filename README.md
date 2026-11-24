@@ -6,17 +6,22 @@ It is built around a Seeed Studio XIAO ESP32S3 Sense (OV3660) streaming over Wi-
 
 ## Requirements
 
-- Windows 11
-- [.NET SDK 11.0.100](https://dotnet.microsoft.com/download)
+- Windows 11 (x64)
 - A camera pointed at your mouth: a webcam, or a XIAO with the [Wi-Fi firmware](firmware/xiao-wifi/README.md)
 - An ONNX face model (not included, see below)
 - VRChat with OSC enabled (**Action Menu → Options → OSC → Enabled**) and an avatar with face tracking
 
 ## Setup
 
-1. Get `faceModel.onnx` from [Baballonia](https://github.com/Project-Babble/Baballonia) (commit `3f85119`).
-2. Copy [`software/examples/models/babble45.json`](software/examples/models/babble45.json) next to the model.
-3. Build and start the app:
+1. Download `mouthtrap-<version>-win-x64.zip` from the [releases](https://github.com/SingUp009/Mouthtrap/releases), extract it and start `Mouthtrap.App.exe`. It includes .NET, so nothing else needs to be installed.
+2. Get `faceModel.onnx` from [Baballonia](https://github.com/Project-Babble/Baballonia) (commit `3f85119`).
+3. Copy `examples/models/babble45.json` from the zip (or [`software/examples/models/babble45.json`](software/examples/models/babble45.json)) next to the model.
+
+Each release lists SHA-256 checksums and a build provenance attestation; check a download with `gh attestation verify <file> --repo SingUp009/Mouthtrap`.
+
+### Build from source
+
+With the [.NET SDK 11.0.100](https://dotnet.microsoft.com/download):
 
 ```powershell
 dotnet build software/Mouthtrap.slnx -c Release
