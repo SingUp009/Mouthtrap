@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text.Json;
 using ConsoleAppFramework;
@@ -121,6 +122,13 @@ public sealed partial class Commands
         return Run(options, camera, mode, seconds, cancellationToken);
     }
 
+    // Why a run that ended without an error processed no frame. limitSeconds is the --seconds limit when that limit
+    // ended the run, which includes starting the input: a connection still being set up is ended by it too.
+    public static string NoFramesMessage(double? limitSeconds) => limitSeconds is { } limit
+        ? string.Create(CultureInfo.InvariantCulture,
+            $"No frame was processed within the {limit:0.###} s limit; the input may still have been starting. Try a longer --seconds.")
+        : "The input ended without a frame being processed.";
+
     public static string SettingsErrorMessage(SettingsError error) => error switch
     {
         SettingsFileMissing(var path) => $"No settings file at {path}.",
@@ -224,7 +232,12 @@ public sealed partial class Commands
                 Err<TrackingError>(var error) => ExpectedError(error),
                 Die die => Defect(die)
             };
-            if (code == 0 && last is null) { Error("no_frames", "The session ended without processing a frame."); code = 1; }
+            if (code == 0 && last is null)
+            {
+                // Only --seconds interrupts a run that the user did not cancel.
+                Error("no_frames", NoFramesMessage(exit is Interrupted ? seconds : null));
+                code = 1;
+            }
             var elapsed = clock.GetElapsedTime(startedAt).TotalSeconds;
             var statistics = tracking.Frames.Statistics;
             Write(Console.Out, new

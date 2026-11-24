@@ -136,6 +136,23 @@ public sealed class RunOptionsTests
     }
 
     [Fact]
+    public void NoFramesMessage_TimeLimitEndedRun_NamesTheLimit()
+    {
+        // When
+        var message = Commands.NoFramesMessage(2);
+
+        // Then
+        Assert.Equal("No frame was processed within the 2 s limit; the input may still have been starting. Try a longer --seconds.", message);
+    }
+
+    [Fact]
+    public void NoFramesMessage_InputEnded_SaysTheInputEnded()
+    {
+        // When / Then
+        Assert.Equal("The input ended without a frame being processed.", Commands.NoFramesMessage(null));
+    }
+
+    [Fact]
     public void SettingsErrorMessage_EveryError_HasMessage()
     {
         // Given
