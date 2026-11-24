@@ -44,7 +44,7 @@ public sealed class CompositeTrackingSink(params ITrackingSink[] sinks) : ITrack
 public static class TrackingPipeline
 {
     // Preprocessing output size when no model is loaded (capture and preprocessing check).
-    public const int UnmodeledOutputSize = 128;
+    public const int UnmodeledOutputSize = TrackingStages.UnmodeledOutputSize;
 
     // Owns the model; runs the input and the decode → preprocess → infer → calibrate loop until either ends.
     public static Effect<Unit, TrackingError, PreviewEnvironment> Run(IFrameSource input, LatestFrameBuffer frames,
@@ -63,18 +63,15 @@ public static class TrackingPipeline
             var sourceEnded = 0;
             var source = input.Run(frames).MapErr<TrackingError>(error => new TrackingInputFailed(error))
                 .Map(value => { Volatile.Write(ref sourceEnded, 1); return value; });
+            // The loop takes and decodes frames, waits, publishes and lifts each stage's error into TrackingError;
+            // the selector and the stages decide what is processed and how.
             var consume = Scope<TrackingError, PreviewEnvironment>.Gen(async consumer =>
             {
                 var cancellationToken = consumer.CancellationToken;
                 var clock = consumer.Env.Resolve<TimeProvider>();
                 var startedAt = clock.GetTimestamp();
-                var options = expressionOptions ?? ExpressionOptions.Default;
-                var processor = new ExpressionProcessor(options);
-                var width = estimator?.InputWidth ?? UnmodeledOutputSize;
-                var height = estimator?.InputHeight ?? UnmodeledOutputSize;
-                Rgb24FrameImage? held = null;
-                long heldReceivedAt = 0;
-                int? revision = null;
+                var stages = new TrackingStages(estimator, expressionOptions ?? ExpressionOptions.Default);
+                var selector = new FrameSelector();
                 long processed = 0;
                 while (true)
                 {
@@ -82,53 +79,28 @@ public static class TrackingPipeline
                     // Observe EOF before taking the slot so a final publication cannot be missed.
                     var ended = Volatile.Read(ref sourceEnded) != 0;
                     var settings = control.Current;
-                    Rgb24FrameImage image;
+                    Rgb24FrameImage? arrived = null;
+                    long receivedAt = 0;
                     if (frames.Take() is { } frame)
                     {
-                        image = held = consumer.Get(decoder.ToRgb24(frame.Image).MapErr(error => new TrackingInputFailed(error)));
-                        heldReceivedAt = frame.ReceivedAt;
+                        arrived = consumer.Get(decoder.ToRgb24(frame.Image).MapErr(error => new TrackingInputFailed(error)));
+                        receivedAt = frame.ReceivedAt;
                     }
-                    // A settings change reprocesses the held frame, so a still image follows it as well.
-                    else if (held is not null && settings.Revision != revision) image = held;
-                    else if (ended) break;
-                    else
+                    if (selector.Select(arrived, receivedAt, settings) is not { } selected)
                     {
+                        if (ended) break;
                         await Task.Delay(TimeSpan.FromMilliseconds(5), clock, cancellationToken).ConfigureAwait(false);
                         continue;
                     }
-                    if (settings.Revision != revision)
-                    {
-                        processor.Reset();
-                        revision = settings.Revision;
-                    }
 
-                    var preprocessAt = clock.GetTimestamp();
-                    var pixels = new byte[checked(width * height * 3)];
-                    var preprocessing = settings.Preprocessing;
-                    FramePreprocessor.Process(image.Data, image.Width, image.Height, image.Stride, preprocessing.Crop,
-                        preprocessing.Rotation, preprocessing.Mirror, pixels, width, height);
-                    var preprocessMs = clock.GetElapsedTime(preprocessAt).TotalMilliseconds;
-
-                    MouthEstimate? estimate = null;
-                    double? inferenceMs = null;
-                    CalibrationSnapshot? calibrated = null;
-                    ExpressionFrame? expressions = null;
-                    if (estimator is not null)
-                    {
-                        var inferenceAt = clock.GetTimestamp();
-                        estimate = estimator.Estimate(pixels, cancellationToken) switch
-                        {
-                            Ok<MouthEstimate>(var value) => value,
-                            Err<ModelInferenceFailed>(var error) => throw consumer.Fail(new TrackingModelFailed(error))
-                        };
-                        inferenceMs = clock.GetElapsedTime(inferenceAt).TotalMilliseconds;
-                        cancellationToken.ThrowIfCancellationRequested();
-                        (expressions, calibrated) = processor.Process(estimate, clock.GetElapsedTime(startedAt));
-                    }
-                    var published = sink.Publish(new(image, heldReceivedAt, settings, pixels, width, height, preprocessMs,
-                        estimate, inferenceMs, calibrated, clock.GetElapsedTime(heldReceivedAt).TotalMilliseconds,
-                        ++processed, frames.Statistics, expressions));
-                    if (published is Err<OutputFailed>(var failure)) throw consumer.Fail(new TrackingOutputFailed(failure));
+                    var result = consumer.Get(stages.Process(selected, startedAt, clock, cancellationToken)
+                        .MapErr(error => new TrackingModelFailed(error)));
+                    consumer.Get(sink.Publish(new(selected.Image, selected.ReceivedAt, selected.Settings, result.Pixels,
+                            result.PixelWidth, result.PixelHeight, result.PreprocessMilliseconds, result.Estimate,
+                            result.InferenceMilliseconds, result.Calibration,
+                            clock.GetElapsedTime(selected.ReceivedAt).TotalMilliseconds, ++processed, frames.Statistics,
+                            result.Expressions))
+                        .MapErr(error => new TrackingOutputFailed(error)));
                 }
                 return Unit.Value;
             }).OnThreadPool();
