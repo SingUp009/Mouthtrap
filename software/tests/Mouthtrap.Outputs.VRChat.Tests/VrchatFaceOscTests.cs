@@ -133,7 +133,7 @@ public sealed class VrchatFaceOscTests
         using var listener = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
         var endpoint = (IPEndPoint)listener.Client.LocalEndPoint!;
         UdpOscTransport? opened = null;
-        var program = UdpOscTransport.Open<PreviewEnvironment>(endpoint).Use(transport => Effect<PreviewEnvironment>.Sync(() =>
+        var program = UdpOscTransport.Open<TrackingEnvironment>(endpoint).Use(transport => Effect<TrackingEnvironment>.Sync(() =>
         {
             opened = transport;
             return new VrchatFaceOutput(transport).Send(ExpressionFrame.Create([new(UnifiedExpression.JawOpen, 1f)]));
@@ -155,9 +155,9 @@ public sealed class VrchatFaceOscTests
         // Given: VRChat may be closed while Mouthtrap runs; UDP sends must not start failing after a port-unreachable reply.
         IPEndPoint closed;
         using (var probe = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0))) closed = (IPEndPoint)probe.Client.LocalEndPoint!;
-        var program = Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        var program = Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
         {
-            var transport = await scope.Acquire(UdpOscTransport.Open<PreviewEnvironment>(closed)
+            var transport = await scope.Acquire(UdpOscTransport.Open<TrackingEnvironment>(closed)
                 .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
             var clock = scope.Env.Resolve<TimeProvider>();
             var output = new VrchatFaceOutput(transport);

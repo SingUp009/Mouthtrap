@@ -45,18 +45,18 @@ public static class StreamTokenFile
 // when the run starts. Handler replaces the network in tests and is borrowed, not disposed.
 public sealed record MjpegStreamInput(StreamUrl Address, string? TokenFile, HttpMessageHandler? Handler = null) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-        Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+    public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+        Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
         {
             var token = TokenFile is { } path ? scope.Get(StreamTokenFile.Read(path)) : null;
-            var open = Effect<PreviewEnvironment>.Sync(() =>
+            var open = Effect<TrackingEnvironment>.Sync(() =>
             {
                 var client = Handler is null ? new HttpClient() : new HttpClient(Handler, disposeHandler: false);
                 client.Timeout = Timeout.InfiniteTimeSpan;
                 if (token is not null) client.DefaultRequestHeaders.Authorization = new("Bearer", token);
                 return client;
             });
-            var client = await scope.Acquire<HttpClient>(Resource.Make(open, (client, _) => Effect<PreviewEnvironment>.Sync(() =>
+            var client = await scope.Acquire<HttpClient>(Resource.Make(open, (client, _) => Effect<TrackingEnvironment>.Sync(() =>
             {
                 client.Dispose();
                 return Unit.Value;

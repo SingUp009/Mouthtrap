@@ -16,8 +16,9 @@ public sealed record InputDataInvalid(string Message);
 [Error]
 public partial union FrameSourceError(InputSettingsInvalid, InputUnavailable, InputLost, InputDataInvalid);
 
+// What every tracking session runs with, in the GUI and the CLI alike: the clock for timestamps, timeouts and waits.
 [Moderato.Effects.Environment]
-public sealed partial record PreviewEnvironment(TimeProvider Clock);
+public sealed partial record TrackingEnvironment(TimeProvider Clock);
 
 // Where an input publishes what it captures. Publishing transfers ownership: the input must not mutate the image
 // afterwards. Safe to call from any thread; what is kept and for how long is the pipeline's choice.
@@ -29,5 +30,5 @@ public interface IFrameWriter
 public interface IFrameSource
 {
     // Publishes owned images until the input ends; cancellation must await input release.
-    Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames);
+    Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames);
 }

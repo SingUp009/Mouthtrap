@@ -19,7 +19,7 @@ public sealed record SessionRequest(IFrameSource Input)
     public PreprocessSettings Preprocessing { get; init; } = PreprocessSettings.Default;
     public string? Model { get; init; }
     public ExpressionOptions Expressions { get; init; } = ExpressionOptions.Default;
-    public Resource<IOscTransport, OutputFailed, PreviewEnvironment>? Osc { get; init; }
+    public Resource<IOscTransport, OutputFailed, TrackingEnvironment>? Osc { get; init; }
 }
 
 // One tracking session as the GUI and the CLI run it: the input, an optional model and optional VRChat output around
@@ -55,14 +55,14 @@ public sealed class TrackingSession
 
     // Publishes every processed frame to sink, then to VRChat when OSC is used. VRChat output is a resource of the
     // session: it is opened before the model loads and gets zeros before it is released, however the session ends.
-    public Effect<Unit, TrackingError, PreviewEnvironment> Run(ITrackingSink sink)
+    public Effect<Unit, TrackingError, TrackingEnvironment> Run(ITrackingSink sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
-        Effect<Unit, TrackingError, PreviewEnvironment> Pipeline(ITrackingSink output) => TrackingPipeline.Run(request.Input,
+        Effect<Unit, TrackingError, TrackingEnvironment> Pipeline(ITrackingSink output) => TrackingPipeline.Run(request.Input,
             Frames, FrameImageDecoder.Instance, request.Model is { } model ? OnnxMouthEstimator.Load(model) : null, Control,
             output, request.Expressions);
         if (request.Osc is not { } transport) return Pipeline(sink);
-        return Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        return Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
         {
             var osc = await scope.Acquire(VrchatOscSession.Output(transport, oscPackets)
                 .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));

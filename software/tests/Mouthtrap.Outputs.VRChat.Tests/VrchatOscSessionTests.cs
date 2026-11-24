@@ -20,7 +20,7 @@ public sealed class VrchatOscSessionTests
 
         // When
         var exit = await VrchatOscSession.Output(transport.Resource(), count)
-            .Use(output => Effect<PreviewEnvironment>.FromResult(output.Publish(Frame(Open))))
+            .Use(output => Effect<TrackingEnvironment>.FromResult(output.Publish(Frame(Open))))
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -37,7 +37,7 @@ public sealed class VrchatOscSessionTests
 
         // When
         var exit = await VrchatOscSession.Output(transport.Resource())
-            .Use(_ => Scope<OutputFailed, PreviewEnvironment>.Gen<Unit>(async scope =>
+            .Use(_ => Scope<OutputFailed, TrackingEnvironment>.Gen<Unit>(async scope =>
             {
                 await Task.Yield();
                 throw scope.Fail(new OutputFailed("gone"));
@@ -58,7 +58,7 @@ public sealed class VrchatOscSessionTests
 
         // When
         var exit = await VrchatOscSession.Output(transport.Resource())
-            .Use(_ => Effect<PreviewEnvironment>.Async(async token =>
+            .Use(_ => Effect<TrackingEnvironment>.Async(async token =>
             {
                 await cancellation.CancelAsync();
                 await new TaskCompletionSource().Task.WaitAsync(token);
@@ -79,7 +79,7 @@ public sealed class VrchatOscSessionTests
 
         // When
         var exit = await VrchatOscSession.Output(transport.Resource())
-            .Use(output => Effect<PreviewEnvironment>.FromResult(output.Publish(Frame(Open))))
+            .Use(output => Effect<TrackingEnvironment>.FromResult(output.Publish(Frame(Open))))
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -92,13 +92,13 @@ public sealed class VrchatOscSessionTests
     {
         // Given
         var ran = false;
-        var failing = Resource.Make(Effect<PreviewEnvironment>.Try<SocketLikeException, IOscTransport, OutputFailed>(
+        var failing = Resource.Make(Effect<TrackingEnvironment>.Try<SocketLikeException, IOscTransport, OutputFailed>(
                 () => throw new SocketLikeException(), _ => new OutputFailed("no socket", 10013)),
-            (_, _) => Effect<PreviewEnvironment>.Sync(() => Unit.Value));
+            (_, _) => Effect<TrackingEnvironment>.Sync(() => Unit.Value));
 
         // When
         var exit = await VrchatOscSession.Output(failing)
-            .Use(_ => Effect<PreviewEnvironment>.Sync(() => { ran = true; return Unit.Value; }))
+            .Use(_ => Effect<TrackingEnvironment>.Sync(() => { ran = true; return Unit.Value; }))
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -118,9 +118,9 @@ public sealed class VrchatOscSessionTests
         public List<string> Events { get; } = [];
         public bool Failing { get; init; }
 
-        public Resource<IOscTransport, OutputFailed, PreviewEnvironment> Resource() =>
-            Moderato.Effects.Resource.Make(Effect<PreviewEnvironment>.Sync<IOscTransport>(() => this),
-                (_, _) => Effect<PreviewEnvironment>.Sync(() => { Events.Add("release"); return Unit.Value; }));
+        public Resource<IOscTransport, OutputFailed, TrackingEnvironment> Resource() =>
+            Moderato.Effects.Resource.Make(Effect<TrackingEnvironment>.Sync<IOscTransport>(() => this),
+                (_, _) => Effect<TrackingEnvironment>.Sync(() => { Events.Add("release"); return Unit.Value; }));
 
         public Result<Unit, OutputFailed> Send(ReadOnlySpan<byte> packet)
         {

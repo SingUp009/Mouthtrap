@@ -76,7 +76,7 @@ public sealed partial class Commands
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (seconds > 0) stop.CancelAfter(TimeSpan.FromSeconds(seconds));
         var sent = new OscPacketCount();
-        var program = Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        var program = Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
         {
             var output = await scope.Acquire(VrchatOscSession.Output(OscTransport(target), sent)
                 .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
@@ -114,10 +114,10 @@ public sealed partial class Commands
     }
 
     // A UDP socket to the endpoint, or standard output for a dry run.
-    private static Resource<IOscTransport, OutputFailed, PreviewEnvironment> OscTransport(OscTarget target) =>
+    private static Resource<IOscTransport, OutputFailed, TrackingEnvironment> OscTransport(OscTarget target) =>
         target.Endpoint is { } endpoint ? VrchatOscSession.Udp(endpoint)
-            : Resource.Make(Effect<PreviewEnvironment>.Sync<IOscTransport>(() => new DryRunTransport()),
-                (_, _) => Effect<PreviewEnvironment>.Sync(() => Unit.Value));
+            : Resource.Make(Effect<TrackingEnvironment>.Sync<IOscTransport>(() => new DryRunTransport()),
+                (_, _) => Effect<TrackingEnvironment>.Sync(() => Unit.Value));
 
     // Prints what would be sent: the packet length and every nonzero byte by its VRChat key.
     private sealed class DryRunTransport : IOscTransport

@@ -11,8 +11,8 @@ namespace Mouthtrap.Inputs;
 
 public sealed record ImageFileSource(string Path) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-        Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+    public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+        Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
             var image = scope.Get(MediaFiles.Open(Path).AndThen(Decode));
@@ -43,8 +43,8 @@ public sealed record ImageFileSource(string Path) : IFrameSource
 
 public sealed record VideoFileSource(string Path, Dispatcher Dispatcher) : IFrameSource
 {
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-        Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+    public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+        Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
             var fullPath = scope.Get(MediaFiles.Open(Path).Map(file =>
@@ -53,9 +53,9 @@ public sealed record VideoFileSource(string Path, Dispatcher Dispatcher) : IFram
                 using (file) return file.Name;
             }));
             var clock = scope.Env.Resolve<TimeProvider>();
-            var resource = Resource.Make(Effect<PreviewEnvironment>.Async(async ct =>
+            var resource = Resource.Make(Effect<TrackingEnvironment>.Async(async ct =>
                 await Dispatcher.InvokeAsync(() => new VideoPlayback(frames, clock), DispatcherPriority.Normal, ct)),
-                (playback, _) => Effect<PreviewEnvironment>.Async(async ct =>
+                (playback, _) => Effect<TrackingEnvironment>.Async(async ct =>
                 {
                     await Dispatcher.InvokeAsync(playback.Dispose, DispatcherPriority.Normal, ct);
                     return Unit.Value;

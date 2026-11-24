@@ -86,7 +86,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture();
         var clock = new TimerAwareTimeProvider();
         var descriptor = new FakeDescriptor(device);
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var run = CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), cancellation.Token).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
         Assert.Equal(["open", "start"], device.Events);
@@ -109,7 +109,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device);
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var exit = await CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -125,7 +125,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device) { OpenFailure = new COMException("denied") };
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var exit = await CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
@@ -145,7 +145,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture { StopFailure = stopFailure, DisposeFailure = alsoFailDispose ? disposeFailure : null };
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var run = CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), cancellation.Token).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
@@ -170,7 +170,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device) { AfterOpen = cancellation.Cancel };
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var exit = await CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), cancellation.Token);
 
         // Then
@@ -186,7 +186,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device);
 
         // When
-        var exit = await CameraSession.Run<PreviewEnvironment>(descriptor,
+        var exit = await CameraSession.Run<TrackingEnvironment>(descriptor,
             new(PixelFormats.Unknown, 1280, 720, 30), new LatestFrameBuffer())
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
@@ -202,7 +202,7 @@ public sealed class CameraSessionTests
         var device = new FakeCapture();
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
+        var run = CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], new LatestFrameBuffer())
             .RunExitAsync(new(clock), CancellationToken.None).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
@@ -223,7 +223,7 @@ public sealed class CameraSessionTests
         var descriptor = new FakeDescriptor(device);
         var clock = new TimerAwareTimeProvider();
         var frames = new LatestFrameBuffer();
-        var run = CameraSession.Run<PreviewEnvironment>(descriptor, descriptor.Characteristics[0], frames)
+        var run = CameraSession.Run<TrackingEnvironment>(descriptor, descriptor.Characteristics[0], frames)
             .RunExitAsync(new(clock), CancellationToken.None).AsTask();
         await clock.TimerCreated.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 

@@ -86,8 +86,8 @@ public sealed class TrackingSessionTests
     {
         public bool Started { get; private set; }
 
-        public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-            Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+        public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+            Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
             {
                 Started = true;
                 await Task.Yield();
@@ -111,9 +111,9 @@ public sealed class TrackingSessionTests
     {
         public List<string> Events { get; } = [];
 
-        public Resource<IOscTransport, OutputFailed, PreviewEnvironment> Resource() =>
-            Moderato.Effects.Resource.Make(Effect<PreviewEnvironment>.Sync<IOscTransport>(() => { Events.Add("open"); return this; }),
-                (_, _) => Effect<PreviewEnvironment>.Sync(() => { Events.Add("release"); return Unit.Value; }));
+        public Resource<IOscTransport, OutputFailed, TrackingEnvironment> Resource() =>
+            Moderato.Effects.Resource.Make(Effect<TrackingEnvironment>.Sync<IOscTransport>(() => { Events.Add("open"); return this; }),
+                (_, _) => Effect<TrackingEnvironment>.Sync(() => { Events.Add("release"); return Unit.Value; }));
 
         public Result<Unit, OutputFailed> Send(ReadOnlySpan<byte> packet)
         {

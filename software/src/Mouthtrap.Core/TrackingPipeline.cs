@@ -59,16 +59,16 @@ public static class TrackingPipeline
     public const int MaxUndecodableInARow = 10;
 
     // Owns the model; runs the input and the decode → preprocess → infer → calibrate loop until either ends.
-    public static Effect<Unit, TrackingError, PreviewEnvironment> Run(IFrameSource input, LatestFrameBuffer frames,
-        IFrameDecoder decoder, Effect<IMouthEstimator, ModelError, PreviewEnvironment>? loadModel, TrackingControl control,
+    public static Effect<Unit, TrackingError, TrackingEnvironment> Run(IFrameSource input, LatestFrameBuffer frames,
+        IFrameDecoder decoder, Effect<IMouthEstimator, ModelError, TrackingEnvironment>? loadModel, TrackingControl control,
         ITrackingSink sink, ExpressionOptions? expressionOptions = null) =>
-        Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
         {
             IMouthEstimator? estimator = null;
             if (loadModel is { } load)
             {
                 var resource = Resource.Make(load.MapErr<TrackingError>(error => new TrackingModelFailed(error)),
-                    (model, _) => Effect<PreviewEnvironment>.Sync(() => { model.Dispose(); return Unit.Value; }));
+                    (model, _) => Effect<TrackingEnvironment>.Sync(() => { model.Dispose(); return Unit.Value; }));
                 estimator = await scope.Acquire(resource);
             }
             scope.CancellationToken.ThrowIfCancellationRequested();
@@ -77,7 +77,7 @@ public static class TrackingPipeline
             Action notify = wake.Set;
             frames.Published += notify;
             control.Changed += notify;
-            scope.Defer(_ => Effect<PreviewEnvironment>.Sync(() =>
+            scope.Defer(_ => Effect<TrackingEnvironment>.Sync(() =>
             {
                 frames.Published -= notify;
                 control.Changed -= notify;
@@ -88,7 +88,7 @@ public static class TrackingPipeline
                 .Map(value => { Volatile.Write(ref sourceEnded, 1); wake.Set(); return value; });
             // The loop takes and decodes frames, waits, publishes and lifts each stage's error into TrackingError;
             // the selector and the stages decide what is processed and how.
-            var consume = Scope<TrackingError, PreviewEnvironment>.Gen(async consumer =>
+            var consume = Scope<TrackingError, TrackingEnvironment>.Gen(async consumer =>
             {
                 var cancellationToken = consumer.CancellationToken;
                 var clock = consumer.Env.Resolve<TimeProvider>();

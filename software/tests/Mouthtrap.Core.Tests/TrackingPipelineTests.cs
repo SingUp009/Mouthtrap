@@ -257,7 +257,7 @@ public sealed class TrackingPipelineTests
     {
         // Given
         var source = new FakeSource { Image = Red };
-        var load = Effect<PreviewEnvironment>.Fail<ModelError>(new ModelFileMissing("missing"));
+        var load = Effect<TrackingEnvironment>.Fail<ModelError>(new ModelFileMissing("missing"));
 
         // When
         var exit = await TrackingPipeline.Run(source, new(), new PassThroughDecoder(), load, new(), new Sink())
@@ -418,8 +418,8 @@ public sealed class TrackingPipelineTests
             .RunExitAsync(new(TimeProvider.System), cancellationToken ?? TestContext.Current.CancellationToken).AsTask()
             .WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 
-    private static Effect<IMouthEstimator, ModelError, PreviewEnvironment> Load(FakeEstimator model) =>
-        Effect<PreviewEnvironment>.Sync<IMouthEstimator>(() => model);
+    private static Effect<IMouthEstimator, ModelError, TrackingEnvironment> Load(FakeEstimator model) =>
+        Effect<TrackingEnvironment>.Sync<IMouthEstimator>(() => model);
 
 
     // Passes RGB images through and rejects encoded ones, signalling each attempt.
@@ -525,10 +525,10 @@ public sealed class TrackingPipelineTests
         public string? Failure { get; init; }
         public bool Released { get; private set; }
 
-        public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-            Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+        public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+            Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
             {
-                scope.Defer(_ => Effect<PreviewEnvironment>.Sync(() => { Released = true; return Unit.Value; }));
+                scope.Defer(_ => Effect<TrackingEnvironment>.Sync(() => { Released = true; return Unit.Value; }));
                 Entered.TrySetResult();
                 if (Failure is { } failure) throw scope.Fail(new InputUnavailable(failure));
                 var clock = scope.Env.Resolve<TimeProvider>();

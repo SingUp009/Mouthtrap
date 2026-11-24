@@ -12,8 +12,8 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
 {
     public const int MaxFrameBytes = 2 * 1024 * 1024;
 
-    public Effect<Unit, FrameSourceError, PreviewEnvironment> Run(IFrameWriter frames) =>
-        Scope<FrameSourceError, PreviewEnvironment>.Gen(async scope =>
+    public Effect<Unit, FrameSourceError, TrackingEnvironment> Run(IFrameWriter frames) =>
+        Scope<FrameSourceError, TrackingEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
             if (!Address.IsAbsoluteUri || Address.Scheme is not ("http" or "https"))
@@ -38,9 +38,9 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
     private readonly record struct Frame(byte[]? Image, Stream? PendingBody);
 
     // The response, owned by the run and released however it ends, including when cancellation races its arrival.
-    private Resource<HttpResponseMessage, FrameSourceError, PreviewEnvironment> Response(TimeProvider clock) =>
-        Resource.Make(Effect<PreviewEnvironment>.FromResultAsync(cancellationToken => Request(clock, cancellationToken)),
-            (response, _) => Effect<PreviewEnvironment>.Sync(() =>
+    private Resource<HttpResponseMessage, FrameSourceError, TrackingEnvironment> Response(TimeProvider clock) =>
+        Resource.Make(Effect<TrackingEnvironment>.FromResultAsync(cancellationToken => Request(clock, cancellationToken)),
+            (response, _) => Effect<TrackingEnvironment>.Sync(() =>
             {
                 response.Dispose();
                 return Unit.Value;
@@ -84,8 +84,8 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
     }
 
     // Opening the body of a response whose headers arrived fails only when the connection does.
-    private static Effect<MultipartReader, FrameSourceError, PreviewEnvironment> OpenReader(HttpResponseMessage response, string boundary) =>
-        Effect<PreviewEnvironment>.FromResultAsync<MultipartReader, FrameSourceError>(async cancellationToken =>
+    private static Effect<MultipartReader, FrameSourceError, TrackingEnvironment> OpenReader(HttpResponseMessage response, string boundary) =>
+        Effect<TrackingEnvironment>.FromResultAsync<MultipartReader, FrameSourceError>(async cancellationToken =>
         {
             try
             {
@@ -102,8 +102,8 @@ public sealed record MjpegFrameSource(Uri Address, HttpClient Client) : IFrameSo
         });
 
     // One frame within five seconds of the session clock; a stalled read is a lost input.
-    private static Effect<Frame, FrameSourceError, PreviewEnvironment> ReadFrame(MultipartReader reader, Stream? pendingBody) =>
-        Effect<PreviewEnvironment>.FromResultAsync(cancellationToken => ReadFrame(reader, pendingBody, cancellationToken))
+    private static Effect<Frame, FrameSourceError, TrackingEnvironment> ReadFrame(MultipartReader reader, Stream? pendingBody) =>
+        Effect<TrackingEnvironment>.FromResultAsync(cancellationToken => ReadFrame(reader, pendingBody, cancellationToken))
             .Timeout(TimeSpan.FromSeconds(5), _ => new InputLost("A complete MJPEG frame did not arrive within five seconds."));
 
     // The one place reading converts exceptions: MultipartReader reports malformed multipart and oversized headers or

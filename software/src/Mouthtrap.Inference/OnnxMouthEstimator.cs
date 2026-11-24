@@ -35,19 +35,19 @@ public sealed class OnnxMouthEstimator : IMouthEstimator
     // Expected failures are typed: a missing file, a file that cannot be read, a definition or model that does not fit
     // the contract, and a runtime that cannot load the model. Caller cancellation is Interrupted; anything else is a
     // defect.
-    public static Effect<IMouthEstimator, ModelError, PreviewEnvironment> Load(string definitionPath) =>
-        Scope<ModelError, PreviewEnvironment>.Gen(async scope =>
+    public static Effect<IMouthEstimator, ModelError, TrackingEnvironment> Load(string definitionPath) =>
+        Scope<ModelError, TrackingEnvironment>.Gen(async scope =>
         {
             scope.CancellationToken.ThrowIfCancellationRequested();
-            var (config, fullPath) = await scope.Run(Effect<PreviewEnvironment>.FromResultAsync(cancellationToken =>
+            var (config, fullPath) = await scope.Run(Effect<TrackingEnvironment>.FromResultAsync(cancellationToken =>
                 ReadFile(definitionPath, null, 65536, cancellationToken)));
             if (config is null) throw scope.Fail(new ModelContractMismatch(ModelMessages.Get("DefinitionTooLarge")));
-            var definition = await scope.Run(Effect<PreviewEnvironment>.Try<JsonException, ModelDefinition?, ModelError>(
+            var definition = await scope.Run(Effect<TrackingEnvironment>.Try<JsonException, ModelDefinition?, ModelError>(
                     () => JsonSerializer.Deserialize<ModelDefinition>(config, JsonOptions),
                     exception => new ModelContractMismatch(exception.Message)))
                 ?? throw scope.Fail(new ModelContractMismatch(ModelMessages.Get("DefinitionEmpty")));
             if (definition.Validate() is { } invalid) throw scope.Fail(new ModelContractMismatch(invalid));
-            var (data, _) = await scope.Run(Effect<PreviewEnvironment>.FromResultAsync(cancellationToken =>
+            var (data, _) = await scope.Run(Effect<TrackingEnvironment>.FromResultAsync(cancellationToken =>
                 ReadFile(definition.ModelPath, Path.GetDirectoryName(fullPath)!, 512L * 1024 * 1024, cancellationToken)));
             if (data is null) throw scope.Fail(new ModelContractMismatch(ModelMessages.Get("ModelTooLarge")));
             if (definition.Sha256 is { } expected && !Convert.ToHexString(SHA256.HashData(data)).Equals(expected, StringComparison.OrdinalIgnoreCase))
