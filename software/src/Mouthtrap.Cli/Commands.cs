@@ -216,8 +216,7 @@ public sealed partial class Commands
                 Write(Console.Out, new { Type = "frame", Frame = report });
                 if (source == InputKind.Image) { imageCompleted = true; stop.Cancel(); }
             });
-            VrchatFaceOutput? output = null;
-            var exit = await tracking.Run(sink, opened => output = opened).RunExitAsync(new(clock), stop.Token);
+            var exit = await tracking.Run(sink).RunExitAsync(new(clock), stop.Token);
             var code = exit switch
             {
                 Ok<Unit> => 0,
@@ -238,7 +237,7 @@ public sealed partial class Commands
                 statistics.Replaced,
                 Processed = last?.Processed ?? 0,
                 CaptureFps = source == InputKind.Image ? (double?)null : statistics.Received / Math.Max(elapsed, double.Epsilon),
-                OscSent = output?.Sent
+                OscSent = tracking.UsesOsc ? tracking.OscSent : (long?)null
             });
             return code;
         });

@@ -48,7 +48,6 @@ public partial class MainWindow : Window
     private string FpsLabel => InputKind.SelectedIndex switch { 0 => Strings.Get("FpsCamera"), 3 => Strings.Get("FpsStream"), _ => Strings.Get("FpsVideo") };
     private string? modelDefinitionPath;
     private string? tokenFilePath;
-    private VrchatFaceOutput? oscOutput;
     private Point? dragStart;
 
     // Settings are saved on each change once they have been applied to the controls; restoring a selection
@@ -282,7 +281,6 @@ public partial class MainWindow : Window
         displayFailure = null;
         session = tracking;
         display = new LatestFrameSink();
-        Volatile.Write(ref oscOutput, null);
         OscStatusText.Text = tracking.UsesOsc ? Strings.Format("OscPreparing", endpoint) : Strings.Get("OscOff");
         displayed = renderedProcessed = fpsCount = processingCount = 0;
         processingFps = 0;
@@ -319,7 +317,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            var exit = await tracking.Run(sink, created => Volatile.Write(ref oscOutput, created)).RunExitAsync(new(clock), cancellationToken);
+            var exit = await tracking.Run(sink).RunExitAsync(new(clock), cancellationToken);
             StatusText.Text = exit switch
             {
                 Ok<Unit> => Strings.Get("Completed"),
@@ -335,8 +333,7 @@ public partial class MainWindow : Window
         {
             renderTimer.Stop();
             CaptureFpsText.Text = Strings.Get("InputFpsStopped");
-            OscStatusText.Text = tracking.UsesOsc && Volatile.Read(ref oscOutput) is { } output
-                ? Strings.Format("OscStopped", output.Sent) : Strings.Get("OscOff");
+            OscStatusText.Text = tracking.UsesOsc ? Strings.Format("OscStopped", tracking.OscSent) : Strings.Get("OscOff");
             session = null;
             display = null;
             ClearPreview();
@@ -381,7 +378,7 @@ public partial class MainWindow : Window
                 fpsCount = count;
                 processingCount = processed;
                 fpsAt = clock.GetTimestamp();
-                if (tracking.UsesOsc && Volatile.Read(ref oscOutput) is { } output) OscStatusText.Text = Strings.Format("OscSending", output.Sent);
+                if (tracking.UsesOsc) OscStatusText.Text = Strings.Format("OscSending", tracking.OscSent);
             }
         }
         catch (Exception exception)

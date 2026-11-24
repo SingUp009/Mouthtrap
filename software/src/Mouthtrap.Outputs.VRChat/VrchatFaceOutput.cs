@@ -14,13 +14,13 @@ public interface IOscTransport
 
 // Sends each frame's Unified Expressions as one /tracking/face/v1 packet. Frames without expressions (no model)
 // send nothing. Called serially, as ITrackingSink requires.
-public sealed class VrchatFaceOutput(IOscTransport transport) : ITrackingSink
+public sealed class VrchatFaceOutput(IOscTransport transport, OscPacketCount? count = null) : ITrackingSink
 {
     private readonly byte[] payload = new byte[VrchatFaceOsc.PayloadLength];
     private readonly byte[] packet = new byte[VrchatFaceOsc.PacketLength];
-    private long sent;
+    private readonly OscPacketCount count = count ?? new();
 
-    public long Sent => Interlocked.Read(ref sent);
+    public long Sent => count.Sent;
 
     public Result<Unit, OutputFailed> Publish(TrackingFrame frame) =>
         frame.Expressions is { } expressions ? Send(expressions) : new Ok<Unit>(Unit.Value);
@@ -30,7 +30,7 @@ public sealed class VrchatFaceOutput(IOscTransport transport) : ITrackingSink
         VrchatFaceOsc.EncodePayload(expressions, payload);
         VrchatFaceOsc.WritePacket(payload, packet);
         var result = transport.Send(packet);
-        if (result is Ok<Unit>) Interlocked.Increment(ref sent);
+        if (result is Ok<Unit>) count.Add();
         return result;
     }
 }

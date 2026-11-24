@@ -75,24 +75,25 @@ public sealed partial class Commands
 
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (seconds > 0) stop.CancelAfter(TimeSpan.FromSeconds(seconds));
-        VrchatFaceOutput? output = null;
-        var program = VrchatOscSession.Run(OscTransport(target), null, created => output = created, _ =>
-            Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        var sent = new OscPacketCount();
+        var program = Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        {
+            var output = await scope.Acquire(VrchatOscSession.Output(OscTransport(target), sent)
+                .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
+            var clock = scope.Env.Resolve<TimeProvider>();
+            var startedAt = clock.GetTimestamp();
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1 / rate), clock);
+            do
             {
-                var clock = scope.Env.Resolve<TimeProvider>();
-                var startedAt = clock.GetTimestamp();
-                using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1 / rate), clock);
-                do
-                {
-                    var value = OscOptions.Triangle(clock.GetElapsedTime(startedAt).TotalSeconds, period);
-                    // The keys were parsed once each and the wave stays within 0..1, as ExpressionFrame.Create requires.
-                    var frame = ExpressionFrame.Create(expressions.Select(item => new KeyValuePair<UnifiedExpression, float>(item, value)));
-                    if (output!.Send(frame) is Err<OutputFailed>(var failure))
-                        throw scope.Fail(new TrackingOutputFailed(failure));
-                }
-                while (await timer.WaitForNextTickAsync(scope.CancellationToken).ConfigureAwait(false));
-                return Unit.Value;
-            }));
+                var value = OscOptions.Triangle(clock.GetElapsedTime(startedAt).TotalSeconds, period);
+                // The keys were parsed once each and the wave stays within 0..1, as ExpressionFrame.Create requires.
+                var frame = ExpressionFrame.Create(expressions.Select(item => new KeyValuePair<UnifiedExpression, float>(item, value)));
+                if (output.Send(frame) is Err<OutputFailed>(var failure))
+                    throw scope.Fail(new TrackingOutputFailed(failure));
+            }
+            while (await timer.WaitForNextTickAsync(scope.CancellationToken).ConfigureAwait(false));
+            return Unit.Value;
+        });
         var exit = await program.RunExitAsync(new(TimeProvider.System), stop.Token);
         var code = exit switch
         {
@@ -107,7 +108,7 @@ public sealed partial class Commands
             ExitCode = code,
             Reason = code == 130 ? "cancelled" : code != 0 ? "failed" : "duration",
             Keys = expressions.Select(item => item.ToString()).ToArray(),
-            OscSent = output?.Sent ?? 0
+            OscSent = sent.Sent
         });
         return code;
     }

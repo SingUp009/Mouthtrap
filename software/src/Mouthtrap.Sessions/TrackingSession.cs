@@ -27,6 +27,7 @@ public sealed record SessionRequest(IFrameSource Input)
 public sealed class TrackingSession
 {
     private readonly SessionRequest request;
+    private readonly OscPacketCount oscPackets = new();
 
     private TrackingSession(SessionRequest request)
     {
@@ -35,8 +36,10 @@ public sealed class TrackingSession
         Control = new TrackingControl(request.Preprocessing);
     }
 
-    // What the host shows while the session runs: capture statistics, and settings changed while it runs.
+    // What the host shows while the session runs: capture statistics, packets sent to VRChat, and settings changed
+    // while it runs.
     public LatestFrameBuffer Frames { get; }
+    public long OscSent => oscPackets.Sent;
     public TrackingControl Control { get; }
     public bool UsesModel => request.Model is not null;
     public bool UsesOsc => request.Osc is not null;
@@ -50,14 +53,21 @@ public sealed class TrackingSession
         return new Ok<TrackingSession>(new(request));
     }
 
-    // Publishes every processed frame to sink, then to VRChat when OSC is used. oscCreated receives the VRChat output
-    // once its transport is open, so the host can show how many packets were sent.
-    public Effect<Unit, TrackingError, PreviewEnvironment> Run(ITrackingSink sink, Action<VrchatFaceOutput>? oscCreated = null)
+    // Publishes every processed frame to sink, then to VRChat when OSC is used. VRChat output is a resource of the
+    // session: it is opened before the model loads and gets zeros before it is released, however the session ends.
+    public Effect<Unit, TrackingError, PreviewEnvironment> Run(ITrackingSink sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
         Effect<Unit, TrackingError, PreviewEnvironment> Pipeline(ITrackingSink output) => TrackingPipeline.Run(request.Input,
             Frames, FrameImageDecoder.Instance, request.Model is { } model ? OnnxMouthEstimator.Load(model) : null, Control,
             output, request.Expressions);
-        return request.Osc is { } transport ? VrchatOscSession.Run(transport, sink, oscCreated ?? (_ => { }), Pipeline) : Pipeline(sink);
+        if (request.Osc is not { } transport) return Pipeline(sink);
+        return Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
+        {
+            var osc = await scope.Acquire(VrchatOscSession.Output(transport, oscPackets)
+                .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
+            await scope.Run(Pipeline(new CompositeTrackingSink(sink, osc)));
+            return Unit.Value;
+        });
     }
 }

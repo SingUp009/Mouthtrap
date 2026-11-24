@@ -68,10 +68,9 @@ public sealed class TrackingSessionTests
         var source = new OneFrameSource(Pixel);
         var missing = Path.Combine(Path.GetTempPath(), $"mouthtrap-missing-{Guid.NewGuid():N}.json");
         var session = ResultAssert.Ok(TrackingSession.Create(new(source) { Model = missing, Osc = transport.Resource() }));
-        VrchatFaceOutput? output = null;
 
         // When
-        var exit = await session.Run(new RecordingSink(), created => output = created)
+        var exit = await session.Run(new RecordingSink())
             .RunExitAsync(new(TimeProvider.System), TestContext.Current.CancellationToken);
 
         // Then
@@ -79,7 +78,7 @@ public sealed class TrackingSessionTests
         Assert.True(session.UsesModel);
         Assert.False(source.Started);
         Assert.Equal(["open", "send zeros", "release"], transport.Events);
-        Assert.Equal(1, output!.Sent);
+        Assert.Equal(1, session.OscSent);
     }
 
     // Publishes one frame and ends, as a still image would without waiting.

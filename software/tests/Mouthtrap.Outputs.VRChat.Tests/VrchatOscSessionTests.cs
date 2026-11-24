@@ -12,62 +12,59 @@ public sealed class VrchatOscSessionTests
     private static readonly ExpressionFrame Open = ExpressionFrame.Create([new(UnifiedExpression.JawOpen, 1f)]);
 
     [Fact]
-    public async Task Run_SessionPublishesFrame_ReachesHostThenVrchatAndSendsZerosBeforeRelease()
+    public async Task Output_FramePublished_SendsItThenZerosBeforeReleaseAndCountsBoth()
     {
         // Given
         var transport = new RecordingTransport();
-        var host = new CountingSink();
-        VrchatFaceOutput? output = null;
+        var count = new OscPacketCount();
 
         // When
-        var exit = await VrchatOscSession.Run(transport.Resource(), host, created => output = created, sink =>
-            Effect<PreviewEnvironment>.Sync(() =>
-            {
-                Assert.True(sink.Publish(Frame(Open)) is Ok<Unit>);
-                return Unit.Value;
-            })).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+        var exit = await VrchatOscSession.Output(transport.Resource(), count)
+            .Use(output => Effect<PreviewEnvironment>.FromResult(output.Publish(Frame(Open))))
+            .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
         Assert.True(exit is Ok<Unit>);
-        Assert.Equal(1, host.Count);
         Assert.Equal(["send 36=255", "send zeros", "release"], transport.Events);
-        Assert.Equal(2, output!.Sent);
+        Assert.Equal(2, count.Sent);
     }
 
     [Fact]
-    public async Task Run_SessionFails_SendsZerosAndKeepsError()
+    public async Task Output_UseFails_SendsZerosAndKeepsError()
     {
         // Given
         var transport = new RecordingTransport();
 
         // When
-        var exit = await VrchatOscSession.Run(transport.Resource(), new CountingSink(), _ => { }, _ =>
-            Scope<TrackingError, PreviewEnvironment>.Gen<Unit>(async scope =>
+        var exit = await VrchatOscSession.Output(transport.Resource())
+            .Use(_ => Scope<OutputFailed, PreviewEnvironment>.Gen<Unit>(async scope =>
             {
                 await Task.Yield();
-                throw scope.Fail(new TrackingInputFailed(new InputLost("gone")));
-            })).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+                throw scope.Fail(new OutputFailed("gone"));
+            }))
+            .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
-        Assert.True(exit is Err<TrackingError>(TrackingInputFailed(InputLost)));
+        Assert.True(exit is Err<OutputFailed>(OutputFailed("gone", _)));
         Assert.Equal(["send zeros", "release"], transport.Events);
     }
 
     [Fact]
-    public async Task Run_SessionCancelled_SendsZeros()
+    public async Task Output_UseCancelled_SendsZeros()
     {
         // Given
         var transport = new RecordingTransport();
         using var cancellation = new CancellationTokenSource();
 
         // When
-        var exit = await VrchatOscSession.Run(transport.Resource(), null, _ => { }, _ =>
-            Effect<PreviewEnvironment>.Async(async token =>
+        var exit = await VrchatOscSession.Output(transport.Resource())
+            .Use(_ => Effect<PreviewEnvironment>.Async(async token =>
             {
                 await cancellation.CancelAsync();
                 await new TaskCompletionSource().Task.WaitAsync(token);
                 return Unit.Value;
-            })).RunExitAsync(new(TimeProvider.System), cancellation.Token);
+            }))
+            .RunExitAsync(new(TimeProvider.System), cancellation.Token);
 
         // Then
         Assert.True(exit is Interrupted);
@@ -75,27 +72,23 @@ public sealed class VrchatOscSessionTests
     }
 
     [Fact]
-    public async Task Run_SendFails_EndsWithOutputError()
+    public async Task Output_SendFails_ReturnsTheOutputErrorAndReleases()
     {
         // Given
         var transport = new RecordingTransport { Failing = true };
 
         // When
-        var exit = await VrchatOscSession.Run(transport.Resource(), new CountingSink(), _ => { }, sink =>
-            Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
-            {
-                await Task.Yield();
-                if (sink.Publish(Frame(Open)) is Err<OutputFailed>(var failure)) throw scope.Fail(new TrackingOutputFailed(failure));
-                return Unit.Value;
-            })).RunExitAsync(new(TimeProvider.System), CancellationToken.None);
+        var exit = await VrchatOscSession.Output(transport.Resource())
+            .Use(output => Effect<PreviewEnvironment>.FromResult(output.Publish(Frame(Open))))
+            .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
-        Assert.True(exit is Err<TrackingError>(TrackingOutputFailed(OutputFailed(var message, _))) && message == "unreachable");
+        Assert.True(exit is Err<OutputFailed>(OutputFailed("unreachable", _)));
         Assert.Equal(["release"], transport.Events);
     }
 
     [Fact]
-    public async Task Run_TransportCannotOpen_SkipsSession()
+    public async Task Output_TransportCannotOpen_SkipsUse()
     {
         // Given
         var ran = false;
@@ -104,12 +97,12 @@ public sealed class VrchatOscSessionTests
             (_, _) => Effect<PreviewEnvironment>.Sync(() => Unit.Value));
 
         // When
-        var exit = await VrchatOscSession.Run(failing, new CountingSink(), _ => { }, _ =>
-            Effect<PreviewEnvironment>.Sync(() => { ran = true; return Unit.Value; }))
+        var exit = await VrchatOscSession.Output(failing)
+            .Use(_ => Effect<PreviewEnvironment>.Sync(() => { ran = true; return Unit.Value; }))
             .RunExitAsync(new(TimeProvider.System), CancellationToken.None);
 
         // Then
-        Assert.True(exit is Err<TrackingError>(TrackingOutputFailed(OutputFailed(_, 10013))));
+        Assert.True(exit is Err<OutputFailed>(OutputFailed(_, 10013)));
         Assert.False(ran);
     }
 
@@ -118,12 +111,6 @@ public sealed class VrchatOscSessionTests
             new(1, 0, 0), expressions);
 
     private sealed class SocketLikeException : Exception;
-
-    private sealed class CountingSink : ITrackingSink
-    {
-        public int Count { get; private set; }
-        public Result<Unit, OutputFailed> Publish(TrackingFrame frame) { Count++; return new Ok<Unit>(Unit.Value); }
-    }
 
     private sealed class RecordingTransport : IOscTransport
     {
