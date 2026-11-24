@@ -10,7 +10,7 @@ using Mouthtrap.Core;
 using Mouthtrap.Tests;
 using Xunit;
 
-namespace Mouthtrap.App.Tests;
+namespace Mouthtrap.Inputs.Windows.Tests;
 
 public sealed class FileFrameSourceTests
 {

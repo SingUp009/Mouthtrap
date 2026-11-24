@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net11.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Mouthtrap.Inputs.Windows/Mouthtrap.Inputs.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../Shared/ResourceAssert.cs" Link="ResourceAssert.cs" />
+  </ItemGroup>
+</Project>

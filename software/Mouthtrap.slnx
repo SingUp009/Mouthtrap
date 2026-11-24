@@ -20,5 +20,7 @@
     <Project Path="tests/Mouthtrap.Inputs.Network.Tests/Mouthtrap.Inputs.Network.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Outputs.VRChat.Tests/Mouthtrap.Outputs.VRChat.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Sessions.Tests/Mouthtrap.Sessions.Tests.csproj" />
+    <Project Path="tests/Mouthtrap.Inputs.Windows.Tests/Mouthtrap.Inputs.Windows.Tests.csproj" />
+    <Project Path="tests/Mouthtrap.Diagnostics.Tests/Mouthtrap.Diagnostics.Tests.csproj" />
   </Folder>
 </Solution>

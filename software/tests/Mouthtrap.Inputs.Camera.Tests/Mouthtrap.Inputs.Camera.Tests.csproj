@@ -2,7 +2,6 @@
   <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
-    <ProjectReference Include="../../src/Mouthtrap.Diagnostics/Mouthtrap.Diagnostics.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="../Shared/ResourceAssert.cs" Link="ResourceAssert.cs" />
