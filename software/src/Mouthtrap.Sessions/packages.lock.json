@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net11.0-windows7.0": {
+      "FlashCap": {
+        "type": "Transitive",
+        "resolved": "1.13.0",
+        "contentHash": "JWQfmGqo7mNxXxaWRemSbdmUGQ995ykjVvdKKJt91aPdKaQjUxCspWGtutmh6m3mUwjQiMJGUp8W+AvPq4SEjQ==",
+        "dependencies": {
+          "FlashCap.Core": "1.13.0"
+        }
+      },
+      "FlashCap.Core": {
+        "type": "Transitive",
+        "resolved": "1.13.0",
+        "contentHash": "BwlGr96lEib6nwdhgADjdFAaMFd1+aFmZZT1V2xxjRwRKuLbww/UsH3uFaNPWe9r5qgnR/L2/KDnma+jvMd+Fg=="
+      },
+      "Microsoft.ML.OnnxRuntime": {
+        "type": "Transitive",
+        "resolved": "1.32.0",
+        "contentHash": "3O3isLjl6ChjMvzZMt3in+uUymFxQK5+vd1UuSShmbUjHezHXgcze6KF5NquC/uPuL/++0CpI7qUBRrf+g1ezg==",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime.Managed": "1.32.0"
+        }
+      },
+      "Microsoft.ML.OnnxRuntime.Managed": {
+        "type": "Transitive",
+        "resolved": "1.32.0",
+        "contentHash": "ApCfJdeUnrO4v+9KWtxnm/Uk3UlzdbNqGb64uBXh85RToxYbW1COJM/avDj3INNTwfEE6LUIWaJIxov0YWNa1g==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "Moderato.Effects": {
+        "type": "Transitive",
+        "resolved": "0.1.0-preview.6",
+        "contentHash": "awKqwLS9YcFns1ZIYvQ7+d4EhhyEf6UR88lJHkDtKWACOLZ0cW8g+2oukt5Yoj1xaICDZPOC/j29vfD7SEqk1A==",
+        "dependencies": {
+          "Moderato.Results": "0.1.0-preview.4"
+        }
+      },
+      "Moderato.Results": {
+        "type": "Transitive",
+        "resolved": "0.1.0-preview.4",
+        "contentHash": "1jgyDzsyFIGhfwTIXfZ/AUbYWhkvN3cJUcBereaIiuBwvnwAYaSiK4w7yj75Pn6OFbCcDObkq/vUCPrVAudhqw=="
+      },
+      "System.Numerics.Tensors": {
+        "type": "Transitive",
+        "resolved": "9.0.0",
+        "contentHash": "hyJB4UlpAi19Xr9AXzu2NuagKC4lPfHObNMEAA0HmqFz2rX7wKgzeYzO/jM/eBHDhnUGFFEjk5cOoJaxqg5J4A=="
+      },
+      "mouthtrap.core": {
+        "type": "Project",
+        "dependencies": {
+          "Moderato.Effects": "[0.1.0-preview.6, 0.1.0-preview.6]"
+        }
+      },
+      "mouthtrap.inference": {
+        "type": "Project",
+        "dependencies": {
+          "Microsoft.ML.OnnxRuntime": "[1.32.0, 1.32.0]",
+          "Mouthtrap.Core": "[1.0.0, )"
+        }
+      },
+      "mouthtrap.inputs.camera": {
+        "type": "Project",
+        "dependencies": {
+          "FlashCap": "[1.13.0, 1.13.0]",
+          "Mouthtrap.Core": "[1.0.0, )"
+        }
+      },
+      "mouthtrap.inputs.windows": {
+        "type": "Project",
+        "dependencies": {
+          "Mouthtrap.Core": "[1.0.0, )"
+        }
+      },
+      "mouthtrap.outputs.vrchat": {
+        "type": "Project",
+        "dependencies": {
+          "Mouthtrap.Core": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

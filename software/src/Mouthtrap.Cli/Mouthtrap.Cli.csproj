@@ -5,7 +5,7 @@
     <ProjectReference Include="../Mouthtrap.Inputs.Camera/Mouthtrap.Inputs.Camera.csproj" />
     <ProjectReference Include="../Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
     <ProjectReference Include="../Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
-    <ProjectReference Include="../Mouthtrap.Inference/Mouthtrap.Inference.csproj" />
+    <ProjectReference Include="../Mouthtrap.Sessions/Mouthtrap.Sessions.csproj" />
     <PackageReference Include="ConsoleAppFramework" Version="[5.8.1]" PrivateAssets="all" />
   </ItemGroup>
 </Project>

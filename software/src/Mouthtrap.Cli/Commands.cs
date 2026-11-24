@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using ConsoleAppFramework;
@@ -5,9 +6,9 @@ using FlashCap;
 using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
-using Mouthtrap.Inference;
 using Mouthtrap.Inputs;
 using Mouthtrap.Outputs;
+using Mouthtrap.Sessions;
 
 namespace Mouthtrap.Cli;
 
@@ -146,11 +147,9 @@ public sealed partial class Commands
                 Tongue = tongue,
                 Deadzone = deadzone
             };
-            if (expressionOptions.Validate() is Err<InvalidValue>(var invalidOptions)) return Usage(invalidOptions.Message);
             var parsedOsc = OscOptions.Parse(osc, oscDryRun);
             if (parsedOsc is Err<string>(var oscError)) return Usage(oscError);
             var oscTarget = parsedOsc.UnwrapOr(null);
-            if (oscTarget is not null && model is null) return Usage("OSC output requires --model.");
             if (!double.IsFinite(seconds) || seconds < 0 || seconds > 86400) return Usage("seconds must be between 0 and 86400.");
             var preprocessed = CropRegion.Create(cropLeft / 100, cropTop / 100, cropWidth / 100, cropHeight / 100)
                 .AndThen(crop => PreprocessingSettings.RotationToTurn(rotation).Map(turn => new PreprocessSettings(crop, turn, mirror)));
@@ -166,8 +165,7 @@ public sealed partial class Commands
                     camera = Array.FindIndex(devices, device => device.Identity.ToString() == saved.Identity);
                     if (camera < 0) return Usage($"The saved camera '{saved.Name}' is not connected; select --camera from cameras.");
                     if (mode < 0 && saved.Mode is { } savedMode)
-                        mode = Array.FindIndex(devices[camera].Characteristics, item => item.Width == savedMode.Width && item.Height == savedMode.Height &&
-                            item.PixelFormat.ToString() == savedMode.PixelFormat && Math.Abs((double)item.FramesPerSecond - savedMode.Fps) <= 0.05);
+                        mode = Array.FindIndex(devices[camera].Characteristics, item => SavedCamera.Matches(item, savedMode));
                 }
                 if (camera < 0 || camera >= devices.Length) return Usage("Select --camera from cameras.");
                 var descriptor = devices[camera];
@@ -194,11 +192,20 @@ public sealed partial class Commands
             else if (source == InputKind.Video) input = new VideoFileSource(path, dispatcher);
             else return Usage("Unsupported source.");
 
+            var created = TrackingSession.Create(new(input)
+            {
+                Preprocessing = preprocessing,
+                Model = model,
+                Expressions = expressionOptions,
+                Osc = oscTarget is null ? null : OscTransport(oscTarget)
+            });
+            if (created is Err<SessionSetupError>(var setupError)) return Usage(SetupErrorMessage(setupError));
+            if (created is not Ok<TrackingSession>(var tracking)) throw new UnreachableException();
+
             using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             if (seconds > 0) stop.CancelAfter(TimeSpan.FromSeconds(seconds));
             var clock = TimeProvider.System;
             var startedAt = clock.GetTimestamp();
-            var frames = new LatestFrameBuffer();
             FrameReport? last = null;
             var imageCompleted = false;
             var sink = new ReportSink(report =>
@@ -208,10 +215,7 @@ public sealed partial class Commands
                 if (source == InputKind.Image) { imageCompleted = true; stop.Cancel(); }
             });
             VrchatFaceOutput? output = null;
-            var session = WithOsc(oscTarget, sink, created => output = created, publish => TrackingPipeline.Run(input, frames,
-                FrameImageDecoder.Instance, model is null ? null : OnnxMouthEstimator.Load(model),
-                new TrackingControl(preprocessing), publish, expressionOptions));
-            var exit = await session.RunExitAsync(new(clock), stop.Token);
+            var exit = await tracking.Run(sink, opened => output = opened).RunExitAsync(new(clock), stop.Token);
             var code = exit switch
             {
                 Ok<Unit> => 0,
@@ -221,7 +225,7 @@ public sealed partial class Commands
             };
             if (code == 0 && last is null) { Error("no_frames", "The session ended without processing a frame."); code = 1; }
             var elapsed = clock.GetElapsedTime(startedAt).TotalSeconds;
-            var statistics = frames.Statistics;
+            var statistics = tracking.Frames.Statistics;
             Write(Console.Out, new
             {
                 Type = "summary",
@@ -278,6 +282,11 @@ public sealed partial class Commands
             ModelInferenceFailed(var message) => Failure("model_inference", message)
         },
         TrackingOutputFailed(var output) => Failure("output", output.Message, output.Code)
+    };
+    private static string SetupErrorMessage(SessionSetupError error) => error switch
+    {
+        InvalidValue(_, var message) => message,
+        OscRequiresModel => "OSC output requires --model."
     };
     private static int Usage(string message) { Error("arguments", message); return 2; }
     private static int Failure(string kind, string message, int? hResult = null) { Error(kind, message, hResult); return 1; }

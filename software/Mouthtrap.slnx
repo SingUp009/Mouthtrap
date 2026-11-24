@@ -9,6 +9,7 @@
     <Project Path="src/Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
     <Project Path="src/Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
     <Project Path="src/Mouthtrap.Cli/Mouthtrap.Cli.csproj" />
+    <Project Path="src/Mouthtrap.Sessions/Mouthtrap.Sessions.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Mouthtrap.Core.Tests/Mouthtrap.Core.Tests.csproj" />
@@ -18,5 +19,6 @@
     <Project Path="tests/Mouthtrap.Inputs.Camera.Tests/Mouthtrap.Inputs.Camera.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Inputs.Network.Tests/Mouthtrap.Inputs.Network.Tests.csproj" />
     <Project Path="tests/Mouthtrap.Outputs.VRChat.Tests/Mouthtrap.Outputs.VRChat.Tests.csproj" />
+    <Project Path="tests/Mouthtrap.Sessions.Tests/Mouthtrap.Sessions.Tests.csproj" />
   </Folder>
 </Solution>

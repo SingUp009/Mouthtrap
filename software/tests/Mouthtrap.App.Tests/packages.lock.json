@@ -193,11 +193,11 @@
         "type": "Project",
         "dependencies": {
           "Mouthtrap.Core": "[1.0.0, )",
-          "Mouthtrap.Inference": "[1.0.0, )",
           "Mouthtrap.Inputs.Camera": "[1.0.0, )",
           "Mouthtrap.Inputs.Network": "[1.0.0, )",
           "Mouthtrap.Inputs.Windows": "[1.0.0, )",
-          "Mouthtrap.Outputs.VRChat": "[1.0.0, )"
+          "Mouthtrap.Outputs.VRChat": "[1.0.0, )",
+          "Mouthtrap.Sessions": "[1.0.0, )"
         }
       },
       "mouthtrap.core": {
@@ -237,6 +237,16 @@
         "type": "Project",
         "dependencies": {
           "Mouthtrap.Core": "[1.0.0, )"
+        }
+      },
+      "mouthtrap.sessions": {
+        "type": "Project",
+        "dependencies": {
+          "Mouthtrap.Core": "[1.0.0, )",
+          "Mouthtrap.Inference": "[1.0.0, )",
+          "Mouthtrap.Inputs.Camera": "[1.0.0, )",
+          "Mouthtrap.Inputs.Windows": "[1.0.0, )",
+          "Mouthtrap.Outputs.VRChat": "[1.0.0, )"
         }
       }
     }

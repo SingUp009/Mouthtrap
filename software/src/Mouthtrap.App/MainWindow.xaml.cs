@@ -13,8 +13,8 @@ using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
 using Mouthtrap.Inputs;
-using Mouthtrap.Inference;
 using Mouthtrap.Outputs;
+using Mouthtrap.Sessions;
 using Microsoft.Win32;
 using PixelFormats = System.Windows.Media.PixelFormats;
 
@@ -30,10 +30,8 @@ public partial class MainWindow : Window
     private CancellationTokenSource? sessionCancellation;
     // A preview that failed to render stops the session, which then reports this defect rather than a stop.
     private Exception? displayFailure;
-    private LatestFrameBuffer? frames;
-    private TrackingControl? control;
+    private TrackingSession? session;
     private LatestFrameSink? display;
-    private bool usesModel;
     private bool refreshing;
     private bool closing;
     private bool allowClose;
@@ -51,7 +49,6 @@ public partial class MainWindow : Window
     private string? modelDefinitionPath;
     private string? tokenFilePath;
     private VrchatFaceOutput? oscOutput;
-    private bool usesOsc;
     private Point? dragStart;
 
     // Settings are saved on each change once they have been applied to the controls; restoring a selection
@@ -152,8 +149,7 @@ public partial class MainWindow : Window
             {
                 Modes.ItemsSource = modes;
                 var saved = settings.Input.Camera is { } camera && camera.Identity == descriptor.Identity.ToString() ? camera.Mode : null;
-                Modes.SelectedItem = modes.FirstOrDefault(mode => saved is not null && mode.Width == saved.Width && mode.Height == saved.Height &&
-                        mode.PixelFormat.ToString() == saved.PixelFormat && Math.Abs((double)mode.FramesPerSecond - saved.Fps) <= 0.05)
+                Modes.SelectedItem = modes.FirstOrDefault(mode => saved is not null && SavedCamera.Matches(mode, saved))
                     ?? modes.FirstOrDefault(mode => mode.Width == 1280 && mode.Height == 720 &&
                         mode.PixelFormat == FlashCap.PixelFormats.JPEG && Math.Abs((double)mode.FramesPerSecond - 30) <= 0.05);
             }
@@ -268,17 +264,28 @@ public partial class MainWindow : Window
             StatusText.Text = Strings.Get("OscEndpointInvalid");
             return;
         }
+        var created = TrackingSession.Create(new(source)
+        {
+            Preprocessing = preprocessing,
+            Model = EnableTracking.IsChecked == true ? modelDefinitionPath : null,
+            Expressions = options,
+            Osc = endpoint is null ? null : VrchatOscSession.Udp(endpoint)
+        });
+        // OSC is offered only while tracking with a model is on, so that combination is a bug here.
+        if (created is Err<SessionSetupError>(OscRequiresModel)) throw new InvalidOperationException("OSC was enabled without a model.");
+        if (created is not Ok<TrackingSession>(var tracking))
+        {
+            StatusText.Text = Strings.Get("DeadzoneInvalid");
+            return;
+        }
         SaveSettings();
 
         sessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         displayFailure = null;
-        frames = new LatestFrameBuffer();
-        control = new TrackingControl(preprocessing);
+        session = tracking;
         display = new LatestFrameSink();
-        usesModel = EnableTracking.IsChecked == true;
-        usesOsc = endpoint is not null;
         Volatile.Write(ref oscOutput, null);
-        OscStatusText.Text = usesOsc ? Strings.Format("OscPreparing", endpoint) : Strings.Get("OscOff");
+        OscStatusText.Text = tracking.UsesOsc ? Strings.Format("OscPreparing", endpoint) : Strings.Get("OscOff");
         displayed = renderedProcessed = fpsCount = processingCount = 0;
         processingFps = 0;
         fpsAt = clock.GetTimestamp();
@@ -288,11 +295,10 @@ public partial class MainWindow : Window
         FrameStatsText.Text = Strings.Get("FrameStatsStart");
         StatusText.Text = Strings.Get("StartingInput");
         InvalidateTracking();
-        TrackingStatsText.Text = usesModel ? Strings.Get("ModelLoading") : Strings.Get("TrackingOff");
+        TrackingStatsText.Text = tracking.UsesModel ? Strings.Get("ModelLoading") : Strings.Get("TrackingOff");
         UpdateControls();
         renderTimer.Start();
-        sessionTask = RunSessionAsync(source, frames, control, display, usesModel ? modelDefinitionPath : null,
-            options, endpoint, sessionCancellation.Token);
+        sessionTask = RunSessionAsync(tracking, display, sessionCancellation.Token);
         await sessionTask;
     }
 
@@ -310,16 +316,11 @@ public partial class MainWindow : Window
     }
 
     // With an OSC endpoint the session owns a UDP socket for its whole run and sends zeros to VRChat when it ends.
-    private async Task RunSessionAsync(IFrameSource source, LatestFrameBuffer buffer, TrackingControl settings,
-        ITrackingSink sink, string? definitionPath, ExpressionOptions options, IPEndPoint? endpoint, CancellationToken cancellationToken)
+    private async Task RunSessionAsync(TrackingSession tracking, ITrackingSink sink, CancellationToken cancellationToken)
     {
         try
         {
-            Effect<Unit, TrackingError, PreviewEnvironment> Session(ITrackingSink output) => TrackingPipeline.Run(source, buffer,
-                FrameImageDecoder.Instance, definitionPath is null ? null : OnnxMouthEstimator.Load(definitionPath), settings, output, options);
-            var program = endpoint is null ? Session(sink)
-                : VrchatOscSession.Run(VrchatOscSession.Udp(endpoint), sink, created => Volatile.Write(ref oscOutput, created), Session);
-            var exit = await program.RunExitAsync(new(clock), cancellationToken);
+            var exit = await tracking.Run(sink, created => Volatile.Write(ref oscOutput, created)).RunExitAsync(new(clock), cancellationToken);
             StatusText.Text = exit switch
             {
                 Ok<Unit> => Strings.Get("Completed"),
@@ -335,13 +336,10 @@ public partial class MainWindow : Window
         {
             renderTimer.Stop();
             CaptureFpsText.Text = Strings.Get("InputFpsStopped");
-            frames = null;
-            control = null;
-            display = null;
-            usesModel = false;
-            OscStatusText.Text = usesOsc && Volatile.Read(ref oscOutput) is { } output
+            OscStatusText.Text = tracking.UsesOsc && Volatile.Read(ref oscOutput) is { } output
                 ? Strings.Format("OscStopped", output.Sent) : Strings.Get("OscOff");
-            usesOsc = false;
+            session = null;
+            display = null;
             ClearPreview();
             InvalidateTracking();
             TrackingStatsText.Text = Strings.Get("TrackingStopped");
@@ -364,7 +362,7 @@ public partial class MainWindow : Window
 
     private void RenderFrame(object? sender, EventArgs e)
     {
-        if (frames is not { } buffer || display is not { } sink) return;
+        if (session is not { } tracking || display is not { } sink) return;
         try
         {
             var frame = sink.Latest;
@@ -376,7 +374,7 @@ public partial class MainWindow : Window
             var elapsed = clock.GetElapsedTime(fpsAt);
             if (elapsed >= TimeSpan.FromSeconds(1))
             {
-                var count = buffer.Statistics.Received;
+                var count = tracking.Frames.Statistics.Received;
                 CaptureFpsText.Text = InputKind.SelectedIndex == 1 ? Strings.Get("StillHolding")
                     : string.Create(CultureInfo.CurrentCulture, $"{FpsLabel}: {(count - fpsCount) / elapsed.TotalSeconds:F1}");
                 var processed = frame?.Processed ?? 0;
@@ -384,7 +382,7 @@ public partial class MainWindow : Window
                 fpsCount = count;
                 processingCount = processed;
                 fpsAt = clock.GetTimestamp();
-                if (usesOsc && Volatile.Read(ref oscOutput) is { } output) OscStatusText.Text = Strings.Format("OscSending", output.Sent);
+                if (tracking.UsesOsc && Volatile.Read(ref oscOutput) is { } output) OscStatusText.Text = Strings.Format("OscSending", output.Sent);
             }
         }
         catch (Exception exception)
@@ -427,7 +425,7 @@ public partial class MainWindow : Window
         if (sessionCancellation?.IsCancellationRequested == false)
             StatusText.Text = Strings.Get("Previewing");
         // Results computed with settings older than the last change are not shown.
-        if (usesModel && frame.Settings.Revision == control?.Current.Revision) RenderTracking(frame);
+        if (session is { UsesModel: true } tracking && frame.Settings.Revision == tracking.Control.Current.Revision) RenderTracking(frame);
     }
 
     private static WriteableBitmap Draw(WriteableBitmap? bitmap, int width, int height, byte[] rgb24, int stride)
@@ -475,7 +473,7 @@ public partial class MainWindow : Window
         OscEnabled.IsEnabled = modeled;
         OscEndpoint.IsEnabled = modeled && OscEnabled.IsChecked == true;
         ResetCalibrationButton.IsEnabled = !closing && sessionCancellation is { IsCancellationRequested: false }
-            && usesModel && AdaptiveCalibration.IsChecked == true;
+            && session is { UsesModel: true } && AdaptiveCalibration.IsChecked == true;
         StartButton.IsEnabled = idle && SelectedSource() is not null && (EnableTracking.IsChecked != true || modelDefinitionPath is not null);
         StopButton.IsEnabled = !closing && sessionCancellation is { IsCancellationRequested: false };
     }
@@ -499,7 +497,7 @@ public partial class MainWindow : Window
 
     private void ResetCalibration_Click(object sender, RoutedEventArgs e)
     {
-        control?.ResetCalibration();
+        session?.Control.ResetCalibration();
         InvalidateTracking();
     }
 
@@ -554,7 +552,7 @@ public partial class MainWindow : Window
             }
             : savedPreprocessing with { UseCrop = false };
         savedPreprocessing = savedPreprocessing with { Rotation = PreprocessingSettings.TurnToRotation(next.Rotation), Mirror = next.Mirror };
-        control?.Update(next);
+        session?.Control.Update(next);
         InvalidateTracking();
         PreprocessStatusText.Text = CropEnabled.IsChecked == true ? Strings.Get("CropApplied") : Strings.Get("CropFull");
         SaveSettings();

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Mouthtrap.Sessions/Mouthtrap.Sessions.csproj" />
+  </ItemGroup>
+</Project>

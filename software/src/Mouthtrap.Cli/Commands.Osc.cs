@@ -76,7 +76,7 @@ public sealed partial class Commands
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (seconds > 0) stop.CancelAfter(TimeSpan.FromSeconds(seconds));
         VrchatFaceOutput? output = null;
-        var program = WithOsc(target, NoSink.Instance, created => output = created, publish =>
+        var program = VrchatOscSession.Run(OscTransport(target), null, created => output = created, _ =>
             Scope<TrackingError, PreviewEnvironment>.Gen(async scope =>
             {
                 var clock = scope.Env.Resolve<TimeProvider>();
@@ -112,24 +112,11 @@ public sealed partial class Commands
         return code;
     }
 
-    // Runs a session with VRChat output added to its sink when a target is given (see VrchatOscSession.Run). Without
-    // a target the session publishes to sink alone.
-    private static Effect<Unit, TrackingError, PreviewEnvironment> WithOsc(OscTarget? target, ITrackingSink sink,
-        Action<VrchatFaceOutput> created, Func<ITrackingSink, Effect<Unit, TrackingError, PreviewEnvironment>> session)
-    {
-        if (target is null) return session(sink);
-        var transport = target.Endpoint is { } endpoint ? VrchatOscSession.Udp(endpoint)
+    // A UDP socket to the endpoint, or standard output for a dry run.
+    private static Resource<IOscTransport, OutputFailed, PreviewEnvironment> OscTransport(OscTarget target) =>
+        target.Endpoint is { } endpoint ? VrchatOscSession.Udp(endpoint)
             : Resource.Make(Effect<PreviewEnvironment>.Sync<IOscTransport>(() => new DryRunTransport()),
                 (_, _) => Effect<PreviewEnvironment>.Sync(() => Unit.Value));
-        return VrchatOscSession.Run(transport, sink, created, session);
-    }
-
-    // A sink that ignores frames, for sessions whose only output is VRChat.
-    private sealed class NoSink : ITrackingSink
-    {
-        public static NoSink Instance { get; } = new();
-        public Result<Unit, OutputFailed> Publish(TrackingFrame frame) => new Ok<Unit>(Unit.Value);
-    }
 
     // Prints what would be sent: the packet length and every nonzero byte by its VRChat key.
     private sealed class DryRunTransport : IOscTransport
