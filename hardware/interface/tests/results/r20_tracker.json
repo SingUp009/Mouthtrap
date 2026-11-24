@@ -1,0 +1,64 @@
+{
+  "mmi_version": "0.1",
+  "input": "R20 reference",
+  "conforms": true,
+  "checks": [
+    {
+      "id": "mesh.valid[0]",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "watertight": true,
+        "bodies": 1
+      },
+      "requirement": "closed single body"
+    },
+    {
+      "id": "mesh.valid[1]",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "watertight": true,
+        "bodies": 1
+      },
+      "requirement": "closed single body"
+    },
+    {
+      "id": "tkz.contained",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "volume_outside_mm3": 0.0
+      },
+      "requirement": "tracker inside the TKZ blocks at theta = 0 (0.01 mm numerical allowance)"
+    },
+    {
+      "id": "ear.faces",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "mating_face_x": 1.0,
+        "outer_face_x": 8.2
+      },
+      "requirement": "1.0 / 8.2 +/-0.05"
+    },
+    {
+      "id": "ear.pivot_bore",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "material_mm3": 0.0
+      },
+      "requirement": "free \u00d83.35"
+    },
+    {
+      "id": "ear.slot_travel",
+      "level": "required",
+      "status": "pass",
+      "measured": {
+        "blocked_at_deg": []
+      },
+      "requirement": "stop shank free over +/-15.0 deg"
+    }
+  ]
+}

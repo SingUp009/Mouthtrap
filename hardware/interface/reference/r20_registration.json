@@ -1,0 +1,96 @@
+{
+  "description": "Rigid transforms from the MMI frame to the print-oriented R20 STLs in hardware/stl. Derived from the R20 build script's export rotations and the STEP bounding boxes, then confirmed by surface distance (max 0.0041 mm near the hinge).",
+  "tracker_revision": "R20",
+  "parts": {
+    "CentralMount": {
+      "file": "stl/CentralMount.stl",
+      "sha256": "a02cb96a148412b9831d216bddbf7cdf93d8e8087abeaf6c5e065b8aefa84574",
+      "mmi_to_file": [
+        [
+          0.0,
+          0.0,
+          -1.0,
+          115.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          22.099430084
+        ],
+        [
+          1.0,
+          0.0,
+          0.0,
+          12.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "CameraCaseWithAdapter": {
+      "file": "stl/CameraCaseWithAdapter.stl",
+      "sha256": "a8a789e08692f80cbce352f0e695466fd338bdc3b5cda4ad7045d1dd435ae065",
+      "mmi_to_file": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          37.0
+        ],
+        [
+          0.0,
+          0.0,
+          -1.0,
+          7.713451385
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          7.599999905
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "CameraCover": {
+      "file": "stl/CameraCover.stl",
+      "sha256": "6166d2800b376b47fbb066e4abe17fed19bf8ac8c47adf042e26a82d35044107",
+      "mmi_to_file": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          18.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          37.0
+        ],
+        [
+          0.0,
+          -1.0,
+          0.0,
+          13.5
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "tkz_scad_vs_json": {
+    "scad_mm3": 88069.323,
+    "json_mm3": 88069.393,
+    "symmetric_difference_mm3": 0.1842,
+    "pass": true
+  },
+  "hmd_coupon_vs_mmi": {
+    "mesh.valid": "pass",
+    "pivot.bore": "pass",
+    "pivot.seat_and_face": "pass",
+    "pivot.nut_pocket": "pass",
+    "pivot.seat_fill": "pass",
+    "pivot.bearing_fill": "pass",
+    "pivot.pocket_wall": "pass",
+    "stop.bore": "pass",
+    "stop.seat_and_face": "pass",
+    "stop.nut_pocket": "pass",
+    "stop.seat_fill": "pass",
+    "stop.bearing_fill": "pass",
+    "stop.pocket_wall": "pass",
+    "washer_gap.empty": "pass",
+    "tkz.no_intersection": "pass",
+    "tkz.clearance": "warn",
+    "fastener_zone.pivot_shank": "pass",
+    "fastener_zone.pivot_head_and_tool": "pass",
+    "fastener_zone.pivot_washer": "pass",
+    "fastener_zone.stop_shank": "pass",
+    "fastener_zone.stop_head_and_tool": "pass",
+    "r20_tracker_sweep": "pass"
+  },
+  "tracker_coupon_vs_mmi": {
+    "mesh.valid[0]": "pass",
+    "tkz.contained": "pass",
+    "ear.faces": "pass",
+    "ear.pivot_bore": "pass",
+    "ear.slot_travel": "pass"
+  },
+  "coupon_pair": {
+    "max_intersection_mm3": 0.0,
+    "min_gap_mm": 0.4,
+    "pass": true
+  },
+  "tracker_coupon_vs_r20_mount": {
+    "max_intersection_mm3": 0.0,
+    "min_gap_mm": 0.4,
+    "pass": true
+  },
+  "coupon_pair_bolts_clear": {
+    "material_mm3": 0.0
+  },
+  "template_vs_mmi": {
+    "mesh.valid": "pass",
+    "pivot.bore": "pass",
+    "pivot.seat_and_face": "pass",
+    "pivot.nut_pocket": "pass",
+    "pivot.seat_fill": "pass",
+    "pivot.bearing_fill": "pass",
+    "pivot.pocket_wall": "pass",
+    "stop.bore": "pass",
+    "stop.seat_and_face": "pass",
+    "stop.nut_pocket": "pass",
+    "stop.seat_fill": "pass",
+    "stop.bearing_fill": "pass",
+    "stop.pocket_wall": "pass",
+    "washer_gap.empty": "pass",
+    "tkz.no_intersection": "pass",
+    "tkz.clearance": "pass",
+    "fastener_zone.pivot_shank": "pass",
+    "fastener_zone.pivot_head_and_tool": "pass",
+    "fastener_zone.pivot_washer": "pass",
+    "fastener_zone.stop_shank": "pass",
+    "fastener_zone.stop_head_and_tool": "pass",
+    "r20_tracker_sweep": "pass"
+  },
+  "template_measured": {
+    "pivot.pocket_wall": {
+      "min_wall": 2.6497
+    },
+    "stop.pocket_wall": {
+      "min_wall": 0.9408
+    },
+    "tkz.clearance": {
+      "min_gap_mm": 0.2999
+    }
+  },
+  "hmd_coupon_print": {
+    "bbox_mm": [
+      12.0,
+      19.4,
+      12.6
+    ],
+    "area_on_bed_mm2": 163.84,
+    "watertight": true
+  },
+  "tracker_coupon_print": {
+    "bbox_mm": [
+      16.714,
+      19.6,
+      7.2
+    ],
+    "area_on_bed_mm2": 244.94,
+    "watertight": true
+  },
+  "all_pass": true
+}

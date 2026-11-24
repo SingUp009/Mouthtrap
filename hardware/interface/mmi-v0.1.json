@@ -1,0 +1,88 @@
+{
+  "name": "Mouthtrap Mount Interface",
+  "version": "0.1",
+  "status": "provisional",
+  "units": "mm, degrees",
+  "frame": {
+    "origin": "pivot axis, on the tracker module's symmetry plane",
+    "x": "along the pivot axis, from the HMD lug towards the tracker ear",
+    "y": "camera viewing direction at theta = 0",
+    "z": "x cross y (up at nominal wear)",
+    "theta": "tracker rotation about +X, right-hand rule; +theta swings the lens towards +Y"
+  },
+  "axes": {
+    "pivot": [0.0, 0.0],
+    "stop": [9.0, 0.0],
+    "position_tolerance": 0.05
+  },
+  "hmd_side": {
+    "mating_face_x": 0.6,
+    "mating_face_tolerance": 0.05,
+    "nut_seat_x": -5.4,
+    "nut_seat_tolerance": 0.1,
+    "bore_diameter": 3.4,
+    "bore_diameter_min": 3.35,
+    "bore_diameter_max": 3.6,
+    "nut_pocket_af": 5.8,
+    "nut_pocket_af_min": 5.7,
+    "nut_pocket_af_max": 5.95,
+    "nut_pocket_min_depth": 4.3,
+    "bearing_radius_pivot": 5.0,
+    "bearing_radius_stop": 3.5,
+    "bearing_min_fill": 0.98,
+    "seat_min_fill": 0.95,
+    "min_pocket_wall": 0.85,
+    "recommended_tkz_clearance": 0.3
+  },
+  "tracker_side": {
+    "mating_face_x": 1.0,
+    "outer_face_x": 8.2,
+    "bore_diameter": 3.4,
+    "slot_inner_radius": 7.3,
+    "slot_outer_radius": 10.7,
+    "slot_end_angle": 15.0
+  },
+  "washer": {
+    "gap": 0.4,
+    "zone_radius": 5.5,
+    "material": "silicone, 0.5 mm sheet (R20 practice)"
+  },
+  "fasteners": {
+    "bolt": "M3 x 20 socket head cap screw, ISO 4762",
+    "nut": "M3 nylon-insert lock nut, DIN 985, 5.5 AF, h <= 4.0",
+    "bolt_head_seat_x": 8.2,
+    "bolt_tip_x": -11.8,
+    "shank_radius": 1.5,
+    "head_radius": 2.75,
+    "head_height": 3.0,
+    "nut_af": 5.5,
+    "nut_height": 4.0,
+    "tool_corridor_radius": 3.0,
+    "tool_corridor_length": 30.0,
+    "nut_corridor_x_min": -60.0
+  },
+  "hinge": {
+    "mechanical_limit_deg": 16.3,
+    "functional_range_deg": 15.0,
+    "note": "Slot end centres at +/-15 deg; an M3 shank (r 1.5) in a r 1.7 slot end reaches +/-16.27 deg."
+  },
+  "tkz": {
+    "description": "Tracker keep-out zone: reserved for every conforming tracker module. Each block is swept about the X axis over [-sweep_deg, +sweep_deg].",
+    "sweep_deg": 16.3,
+    "boxes": {
+      "body":    [-18.0, 18.0, -7.6, 13.5, -37.0, -7.0],
+      "front_fasteners": [-17.0, 17.0, 13.5, 15.8, -36.0, -8.0],
+      "antenna": [-37.0, -14.0, -7.6, 11.4, -49.0, 3.7],
+      "usb_cable": [18.0, 38.0, -6.0, 6.5, -31.0, -12.0]
+    },
+    "ear": {
+      "x": [1.0, 8.2],
+      "profile": "convex hull of (-7.6,-9), (12cos40,-9), arc r12 from -40 to +40 deg, (-7.6,4.0) in (y,z)",
+      "arc_radius": 12.0,
+      "arc_half_angle": 40.0,
+      "back_y": -7.6,
+      "bottom_z": -9.0,
+      "back_top_z": 4.0
+    }
+  }
+}
