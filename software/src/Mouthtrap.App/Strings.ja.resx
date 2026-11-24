@@ -90,7 +90,9 @@
   <data name="ProcessedIdle" xml:space="preserve"><value>前処理結果 · 未処理</value></data>
   <data name="ProcessedTitle" xml:space="preserve"><value>前処理結果 · {0}×{1} RGB</value></data>
   <data name="ProcessedName" xml:space="preserve"><value>前処理プレビュー</value></data>
-  <data name="AdditionalTitle" xml:space="preserve"><value>追加表情（未較正）</value></data>
+  <data name="AdditionalTitle" xml:space="preserve"><value>追加表情：出力値（モデルの生の値）</value></data>
+  <data name="ExpressionOutput" xml:space="preserve"><value>{0}: {1:F3}（生の値: {2:F4}）</value></data>
+  <data name="ExpressionNotSent" xml:space="preserve"><value>{0}: 送信しない（生の値: {1:F4}）</value></data>
   <data name="AdditionalName" xml:space="preserve"><value>追加表情の値</value></data>
   <data name="JawOpenNone" xml:space="preserve"><value>JawOpen: 未推論</value></data>
   <data name="JawOpenName" xml:space="preserve"><value>JawOpen推定値</value></data>

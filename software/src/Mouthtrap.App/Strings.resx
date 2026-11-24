@@ -90,7 +90,9 @@
   <data name="ProcessedIdle" xml:space="preserve"><value>Preprocessed · none yet</value></data>
   <data name="ProcessedTitle" xml:space="preserve"><value>Preprocessed · {0}×{1} RGB</value></data>
   <data name="ProcessedName" xml:space="preserve"><value>Preprocessed preview</value></data>
-  <data name="AdditionalTitle" xml:space="preserve"><value>Other expressions (uncalibrated)</value></data>
+  <data name="AdditionalTitle" xml:space="preserve"><value>Other expressions: output (model raw)</value></data>
+  <data name="ExpressionOutput" xml:space="preserve"><value>{0}: {1:F3}  (raw: {2:F4})</value></data>
+  <data name="ExpressionNotSent" xml:space="preserve"><value>{0}: not sent  (raw: {1:F4})</value></data>
   <data name="AdditionalName" xml:space="preserve"><value>Other expression values</value></data>
   <data name="JawOpenNone" xml:space="preserve"><value>JawOpen: not inferred</value></data>
   <data name="JawOpenName" xml:space="preserve"><value>JawOpen estimate</value></data>

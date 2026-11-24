@@ -506,14 +506,21 @@ public partial class MainWindow : Window
     {
         if (frame.Result is not { } result) return;
         var (estimate, calibration, diagnostics) = (result.Estimate, result.Calibration, frame.Diagnostics);
-        var value = calibration?.JawOpen ?? estimate.JawOpen;
+        // The values shown are the ones sent: after calibration, smoothing and the deadzone.
+        var sent = result.Expressions;
+        var value = sent[UnifiedExpression.JawOpen] ?? 0f;
         var label = Strings.Get(calibration is { IsReady: true } ? "CalibrationReady" : calibration is not null ? "CalibrationLearning" : "Uncalibrated");
         JawOpenText.Text = Strings.Format("JawOpenValue", value, label);
         JawOpenBar.Value = value;
         JawOpenBar.Visibility = Visibility.Visible;
         var additional = estimate.AdditionalExpressions;
         AdditionalExpressionPanel.Visibility = additional.IsEmpty ? Visibility.Collapsed : Visibility.Visible;
-        AdditionalExpressionText.Text = string.Join("\n", additional.Select(item => $"{item.Shape}: {item.Value:F3}  (raw: {item.Raw:F4})"));
+        // An output drives one or more keys with the same value, so its first key shows what is sent; tongue outputs
+        // that are turned off are not sent.
+        AdditionalExpressionText.Text = string.Join("\n", additional.Select(item =>
+            sent[ArkitExpressionMap.TargetsOf(item.Shape)[0]] is { } output
+                ? Strings.Format("ExpressionOutput", item.Shape, output, item.Raw)
+                : Strings.Format("ExpressionNotSent", item.Shape, item.Raw)));
         TrackingStatsText.Text = Strings.Format("TrackingStats", diagnostics.PixelWidth, diagnostics.PixelHeight, estimate.RawJawOpen,
                 diagnostics.InferenceMilliseconds, processingFps, diagnostics.FrameAgeMilliseconds, diagnostics.Processed) +
             (calibration is { IsReady: true } learned ? Strings.Format("LearnedRange", learned.Lower, learned.Upper) : "") +

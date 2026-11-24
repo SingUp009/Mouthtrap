@@ -6,6 +6,7 @@ using Moderato.Results;
 using Mouthtrap.App;
 using Mouthtrap.Core;
 using Mouthtrap.Sessions;
+using Mouthtrap.Tests;
 using Xunit;
 
 namespace Mouthtrap.App.Tests;
@@ -125,6 +126,43 @@ public sealed class MainWindowInteractionTests : IDisposable
     }
 
     [Fact]
+    public async Task Start_ModelWithOutputsTurnedOff_ShowsTheValuesThatAreSent()
+    {
+        // Given
+        var image = SolidImage(128, 64, 32);
+        File.WriteAllBytes(Path.Combine(directory, "identity.onnx"), Convert.FromBase64String(TestModels.Identity));
+        var definition = Path.Combine(directory, "model.json");
+        // The identity model outputs the normalized channels of the 2x1 input in NCHW order: red, red, green, green,
+        // blue, blue.
+        File.WriteAllText(definition, """
+            {"ModelPath":"identity.onnx","InputName":"image","OutputName":"jaw","Width":2,"Height":1,"Layout":"Nchw",
+             "Color":"Rgb","OutputCount":6,"JawOpenIndex":0,"ExpressionIndices":{"MouthSmileLeft":2,"TongueOut":4}}
+            """);
+        Save(StillImage() with
+        {
+            Input = new() { Kind = InputSourceKind.Image, ImagePath = image },
+            Model = new() { Enabled = true, DefinitionPath = definition },
+            Expressions = new() { AdaptiveCalibration = false, Smoothing = false, Deadzone = 0, Tongue = false }
+        });
+        float Channel(byte value) => value * (1f / 255f);
+
+        // When / Then
+        await WindowDriver.Run(SettingsFile, "en", async ui =>
+        {
+            await ui.Click("Start");
+            await ui.UntilText(ui.Window.AdditionalExpressionText, text => text.Length > 0);
+            Assert.Equal(Strings.Format("JawOpenValue", Channel(128), Strings.Get("Uncalibrated")), ui.Window.JawOpenText.Text);
+            Assert.Equal(
+                Strings.Format("ExpressionOutput", ArkitShape.MouthSmileLeft, Channel(64), Channel(64)) + "\n" +
+                Strings.Format("ExpressionNotSent", ArkitShape.TongueOut, Channel(32)),
+                ui.Window.AdditionalExpressionText.Text);
+
+            await ui.Click("Stop");
+            await ui.UntilText(ui.Window.StatusText, text => text == Strings.Get("Stopped"));
+        });
+    }
+
+    [Fact]
     public async Task Apply_CropRotationAndMirror_AppliesAndSavesThem()
     {
         // Given
@@ -201,4 +239,16 @@ public sealed class MainWindowInteractionTests : IDisposable
 
     private AppSettings Saved() => SettingsStore.Load(SettingsFile) is Ok<AppSettings>(var saved) ? saved
         : throw new Xunit.Sdk.XunitException("The settings file cannot be read.");
+
+    // A 2x2 PNG of one colour, so scaling it to the model input keeps the colour exact.
+    private string SolidImage(byte red, byte green, byte blue)
+    {
+        var path = Path.Combine(directory, "solid.png");
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(2, 2, 96, 96, PixelFormats.Rgb24, null,
+            new byte[] { red, green, blue, red, green, blue, red, green, blue, red, green, blue }, 6)));
+        using var file = File.Create(path);
+        encoder.Save(file);
+        return path;
+    }
 }
