@@ -16,9 +16,11 @@ Turns a Seeed Studio XIAO ESP32S3 Sense (OV3660) into a USB webcam (UVC) that yo
 
 Read the whole flash to a file outside the repository and check its size and hash. You can restore it later as shown in [Restore the backup](#restore-the-backup).
 
-## 2. Build
+## 2. Get the firmware
 
-Load the ESP-IDF environment, then run this in this folder:
+Download `mouthtrap-firmware-xiao-uvc-<version>.zip` (default) or `mouthtrap-firmware-xiao-uvc-multimode-<version>.zip` from the [releases](https://github.com/SingUp009/Mouthtrap/releases) and extract it. To flash it you need Python 3.10 or later and `python -m pip install -r requirements.txt`.
+
+Or build it yourself: load the ESP-IDF environment, then run this in this folder:
 
 ```powershell
 idf.py set-target esp32s3
@@ -34,7 +36,7 @@ idf.py -B build-quality -D SDKCONFIG=build-quality/sdkconfig -D "SDKCONFIG_DEFAU
 ## 3. Flash
 
 1. Put the board in download mode: hold **BOOT**, press and release **RESET**, then release **BOOT**.
-2. Flash it, replacing `COM3` with your port: `idf.py -p COM3 flash`. For the multi-mode build, use `build-quality/flash_args`.
+2. Flash it, replacing `COM3` with your port. From a release folder: `python -m esptool --chip esp32s3 --port COM3 write_flash "@flash_args"`. From your own build: `idf.py -p COM3 flash`; for the multi-mode build, use `build-quality/flash_args`.
 
 Once the board runs as a webcam, its serial port may disappear. Use download mode again for the next flash.
 
