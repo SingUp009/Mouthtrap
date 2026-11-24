@@ -1,7 +1,8 @@
 name: Release
 
-# Push a tag such as v1.2.0 to publish a release. The packages are built twice, on separate runners and
-# from different checkout folders, and are published only if both builds are identical byte for byte.
+# Push a tag such as v1.2.0 to prepare a release. The packages are built twice, on separate runners and
+# from different checkout folders, and are uploaded only if both builds are identical byte for byte.
+# The release stays a draft: a maintainer publishes it after checking these exact files on hardware.
 on:
   push:
     tags: ['v*']
@@ -99,4 +100,11 @@ jobs:
           Models are not included; see the README. Check a download with \`gh attestation verify <file> --repo ${GITHUB_REPOSITORY}\` or against \`SHA256SUMS\`.
           NOTES
           gh release create "$GITHUB_REF_NAME" packages/* --repo "$GITHUB_REPOSITORY" --verify-tag \
-            --title "Mouthtrap $GITHUB_REF_NAME" --notes-file notes.md --generate-notes "${prerelease[@]}"
+            --title "Mouthtrap $GITHUB_REF_NAME" --notes-file notes.md --generate-notes --draft "${prerelease[@]}"
+
+      - name: Explain the hardware check
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
+          The release is a **draft**. Download its files (not a CI artifact), check them on hardware as
+          described under Releases in AGENTS.md, and publish the draft only if every check passes.
+          SUMMARY
