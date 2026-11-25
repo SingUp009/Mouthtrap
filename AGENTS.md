@@ -9,6 +9,9 @@ These rules apply to everyone who changes this repository, human or AI agent. Th
 3. **Classify each failure before you handle it.** Moderato.Results and Moderato.Effects make the failure contract explicit; they are not a reason to replace every `throw` and `try`/`catch`. A failure the caller can expect, such as bad user input, a missing file or a lost connection, is a typed error: return `Result<T, E>`, give types whose values come from outside a `Create` or `Validate` method that returns one, and end a `Scope.Gen` block with `throw scope.Fail(error)`. A broken contract or invariant (an argument the caller should have checked, an unknown enum value, a misconfigured key list) stays an exception and becomes `Die`. Cancellation by the caller stays an `OperationCanceledException` and becomes `Interrupted`. Convert exceptions only where an operation is known to raise them, and only those types: a limited `try`/`catch` or `Effect.Try`/`Effect.TryAsync` with a typed exception at that boundary, never a catch-all that turns unknown exceptions, `ScopeFailure` or cancellation into input errors.
 4. **Keep the UI thin.** The GUI and the CLI only pick inputs and show results. Decoding, preprocessing, inference, calibration, smoothing and output all belong in `Mouthtrap.Core` and the input, inference and output projects.
 5. **Respect the replaceable boundaries.** Video input is abstracted by `IFrameSource`. Do not let camera, image, video or network details leak into preprocessing or inference. The same applies to `IMouthEstimator` for models and `ITrackingSink` for outputs.
+   - Setting a device up is a separate boundary, `IDeviceProvisioner`: writing firmware and storing settings, such as `XiaoProvisioner` for the ESP32-S3 in `Mouthtrap.Devices.Esp32`.
+   - An input assumes a device that already works, and a provisioner never captures video. Another device, such as an RP2350, gets its own provisioner project.
+   - A provisioner reports how video then arrives as a `ProvisionedInput` that names one transport, such as `MjpegStreamReady`. A new transport, such as UDP or a custom USB protocol, adds an `IFrameSource` and a `ProvisionedInput` case; preprocessing and inference do not change.
 6. **Change only what you need.** Keep existing, working code. Keep formatting changes out of behaviour changes.
 7. **Verify for real.** A change is done when it compiles, the tests pass, and the behaviour has been run. Do not describe hardware behaviour (camera, XIAO, VRChat) as verified unless you ran it on the hardware. Say what you could not check.
 8. **Reproduce before you work around.** When something fails, write down the type transitions and the scope of the change, and find the cause. If you suspect a library bug, prove it with a minimal reproduction before adding a workaround.
@@ -54,10 +57,10 @@ idf.py -C firmware/xiao-wifi/test/host -B "$PWD/.artifacts/build-host" build && 
 idf.py -C firmware/xiao-wifi -B "$PWD/.artifacts/build-qemu" -D SDKCONFIG="$PWD/.artifacts/build-qemu/sdkconfig" \
     -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
 MOUTHTRAP_QEMU_BUILD=.artifacts/build-qemu python -m unittest discover -s firmware/xiao-wifi/test -v
-MOUTHTRAP_QEMU_BUILD="$PWD/.artifacts/build-qemu" dotnet test --project software/tests/Mouthtrap.Firmware.Tests -c Release
+MOUTHTRAP_QEMU_BUILD="$PWD/.artifacts/build-qemu" dotnet test --project software/tests/Mouthtrap.Devices.Esp32.Tests -c Release
 ```
 
-The last line writes the QEMU build and its settings with the GUI's flasher (`Mouthtrap.Firmware`) through the ESP32-S3 ROM loader, as on a board.
+The last line writes the QEMU build and its settings with the GUI's flasher (`Mouthtrap.Devices.Esp32`) through the ESP32-S3 ROM loader, as on a board.
 
 Dependencies are locked with `packages.lock.json`. When you add or update a package, commit the updated lock files.
 
@@ -73,11 +76,11 @@ Publish the draft only after checking its files on hardware. Download them from 
 
 If a check fails, delete the draft and the tag, fix the problem, and tag again.
 
-The GUI's **Board firmware** card downloads the latest *published* release, so it cannot see a draft. After publishing, write each firmware once from that card. If writing fails, set the release back to draft, so that no user's GUI downloads it.
+To check a draft with the GUI, choose its zip file under **Board firmware** → **Zip file…**. GitHub does not show drafts, so the card's release list never offers them.
 
 How the packages are built:
 
-- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware or the GUI's flasher changes, and fails when an app does not fit its partition (`firmware/check-size.py`). It also runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, start-up tests in QEMU, and `Mouthtrap.Firmware.Tests` writing the QEMU build through the ROM loader. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
+- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware or the GUI's flasher changes, and fails when an app does not fit its partition (`firmware/check-size.py`). It also runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, start-up tests in QEMU, and `Mouthtrap.Devices.Esp32.Tests` writing the QEMU build through the ROM loader. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
 - The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
 - The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml` and `firmware.yml`; keep the two the same. Run the script in that image to reproduce a release's firmware byte for byte.
 - Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.

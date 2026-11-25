@@ -19,10 +19,15 @@ The firmware contains no Wi-Fi settings. You flash the same firmware on any netw
 The GUI does steps 1 and 2 in one go, without Python:
 
 1. Connect the board with USB.
-2. Under **Board firmware**, choose **XIAO Wi-Fi camera** and the board's serial port, and enter your 2.4 GHz network and password.
+2. Under **Board firmware**, choose:
+   - **XIAO Wi-Fi camera**;
+   - the version: the latest published release, one listed with **Find releases**, or a zip file such as this folder's release zip;
+   - the board's serial port.
+
+   Then enter your 2.4 GHz network and password.
 3. Press **Write to board**.
 
-The GUI downloads the firmware of the latest published release and checks it against the release's `SHA256SUMS`. It then writes the firmware and the settings, and restarts the board. Then it waits up to a minute for the board to report its URL, and sets up the Wi-Fi input with that URL and the token file. The token file is the one already chosen for the Wi-Fi input, or `stream-token.txt` next to the GUI's settings. If the board does not answer, put it in download mode (below) and try again.
+The GUI downloads the chosen release and checks it against the release's `SHA256SUMS`; it refuses a zip that holds another firmware. It then writes the firmware and the settings, and restarts the board. Then it waits up to a minute for the board to report its URL, and sets up the Wi-Fi input with that URL and the token file. The token file is the one already chosen for the Wi-Fi input, or `stream-token.txt` next to the GUI's settings. If the board does not answer, put it in download mode (below) and try again.
 
 The steps below do the same from the command line.
 

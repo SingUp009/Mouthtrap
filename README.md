@@ -18,10 +18,11 @@ It is built around a Seeed Studio XIAO ESP32S3 Sense (OV3660) streaming over Wi-
 3. Copy `examples/models/babble45.json` from the zip (or [`software/examples/models/babble45.json`](software/examples/models/babble45.json)) next to the model.
 4. For a XIAO, write its firmware from the GUI. Connect the board with USB, and under **Board firmware** choose:
    - the firmware;
+   - its version: the latest published release, a release listed with **Find releases**, or a zip file;
    - the board's serial port;
    - for the Wi-Fi camera, your 2.4 GHz network and password.
 
-   Then press **Write to board**. The GUI downloads the latest published release, checks it against the release's `SHA256SUMS`, and writes it. For the Wi-Fi camera, it also stores the network and a stream token on the board, and sets up the Wi-Fi input with the URL the board reports. See the [Wi-Fi firmware](firmware/xiao-wifi/README.md) and [USB webcam firmware](firmware/xiao-uvc/README.md) guides for the command-line way.
+   Then press **Write to board**. The GUI downloads the release you chose, checks it against the release's `SHA256SUMS`, and writes it. For the Wi-Fi camera, it also stores the network and a stream token on the board, and sets up the Wi-Fi input with the URL the board reports. See the [Wi-Fi firmware](firmware/xiao-wifi/README.md) and [USB webcam firmware](firmware/xiao-uvc/README.md) guides for the command-line way.
 
 Each release lists SHA-256 checksums and a build provenance attestation; check a download with `gh attestation verify <file> --repo SingUp009/Mouthtrap`.
 

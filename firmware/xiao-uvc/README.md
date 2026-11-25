@@ -18,7 +18,7 @@ Read the whole flash to a file outside the repository and check its size and has
 
 ## 2. Get the firmware
 
-The easiest way is the Mouthtrap GUI. Connect the board with USB, and under **Board firmware** choose **XIAO USB webcam** and the board's serial port. Then press **Write to board**. The GUI downloads the latest published release, checks it against `SHA256SUMS` and writes it; skip step 3. If the board does not answer, put it in download mode (step 3, first point) and try again.
+The easiest way is the Mouthtrap GUI. Connect the board with USB, and under **Board firmware** choose **XIAO USB webcam**, the version (a release, or a zip file) and the board's serial port. Then press **Write to board**. The GUI checks a release against its `SHA256SUMS` and writes it; skip step 3. If the board does not answer, put it in download mode (step 3, first point) and try again.
 
 To flash from the command line instead, download `mouthtrap-firmware-xiao-uvc-<version>.zip` (default) or `mouthtrap-firmware-xiao-uvc-multimode-<version>.zip` from the [releases](https://github.com/SingUp009/Mouthtrap/releases) and extract it. To flash it you need Python 3.10 or later and `python -m pip install -r requirements.txt`.
 
