@@ -22,7 +22,7 @@ It is built around a Seeed Studio XIAO ESP32S3 Sense (OV3660) streaming over Wi-
    - the board's serial port;
    - for the Wi-Fi camera, your 2.4 GHz network and password.
 
-   Then press **Write to board**. The GUI downloads the release you chose, checks it against the release's `SHA256SUMS`, and writes it. For the Wi-Fi camera, it also stores the network and a stream token on the board, and sets up the Wi-Fi input with the URL the board reports. See the [Wi-Fi firmware](firmware/xiao-wifi/README.md) and [USB webcam firmware](firmware/xiao-uvc/README.md) guides for the command-line way.
+   Then press **Write to board**. The GUI downloads the release you chose and checks it against the release's `SHA256SUMS`. It then shows the board's chip, flash, PSRAM and MAC address, and writes only after you confirm. For the Wi-Fi camera, it also stores the network and a stream token on the board, and sets up the Wi-Fi input with the URL the board reports. See the [Wi-Fi firmware](firmware/xiao-wifi/README.md) and [USB webcam firmware](firmware/xiao-uvc/README.md) guides for the command-line way.
 
 Each release lists SHA-256 checksums and a build provenance attestation; check a download with `gh attestation verify <file> --repo SingUp009/Mouthtrap`.
 

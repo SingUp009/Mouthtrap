@@ -27,7 +27,9 @@ The GUI does steps 1 and 2 in one go, without Python:
    Then enter your 2.4 GHz network and password.
 3. Press **Write to board**.
 
-The GUI downloads the chosen release and checks it against the release's `SHA256SUMS`; it refuses a zip that holds another firmware. It then writes the firmware and the settings, and restarts the board. Then it waits up to a minute for the board to report its URL, and sets up the Wi-Fi input with that URL and the token file. The token file is the one already chosen for the Wi-Fi input, or `stream-token.txt` next to the GUI's settings. If the board does not answer, put it in download mode (below) and try again.
+The GUI downloads the chosen release and checks it against the release's `SHA256SUMS`. It refuses a zip whose `manifest.json` names another board or firmware.
+
+Before writing, it connects to the board and shows what it reports: chip, flash size, PSRAM in the chip, and MAC address. It refuses a board with less flash than the firmware needs, or without the 8 MB of PSRAM that the XIAO's ESP32-S3R8 has. Software cannot tell a XIAO from another board with the same chip and memory, so you confirm that it is the right board. It then writes the firmware and the settings, and restarts the board. Then it waits up to a minute for the board to report its URL, and sets up the Wi-Fi input with that URL and the token file. The token file is the one already chosen for the Wi-Fi input, or `stream-token.txt` next to the GUI's settings. If the board does not answer, put it in download mode (below) and try again.
 
 The steps below do the same from the command line.
 

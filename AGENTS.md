@@ -83,7 +83,7 @@ How the packages are built:
 - `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware or the GUI's flasher changes, and fails when an app does not fit its partition (`firmware/check-size.py`). It also runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, start-up tests in QEMU, and `Mouthtrap.Devices.Esp32.Tests` writing the QEMU build through the ROM loader. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
 - The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
 - The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml` and `firmware.yml`; keep the two the same. Run the script in that image to reproduce a release's firmware byte for byte.
-- Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.
+- Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions. Each firmware zip holds a `manifest.json` (board, firmware variant, version) that the GUI requires and checks.
 - Keep the build inputs pinned: the SDK, the ESP-IDF image, the components in `dependencies.lock`, the packages in `packages.lock.json`, the Python version and the actions by commit. Firmware builds set `CONFIG_APP_REPRODUCIBLE_BUILD`, and the firmware takes no build-time secrets, so one build serves everyone.
 
 ## Commits
