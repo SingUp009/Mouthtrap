@@ -449,7 +449,7 @@ public partial class MainWindow : Window
     private void UpdateControls()
     {
         if (StartButton is null) return;
-        var idle = !closing && !refreshing && sessionCancellation is null && firmwareCancellation is null;
+        var idle = !closing && !refreshing && sessionCancellation is null && firmwareCancellation is null && avatarTestCancellation is null;
         var (state, brush) = closing ? ("StateClosing", "StoppingBrush")
             : sessionCancellation is { IsCancellationRequested: true } ? ("StateStopping", "StoppingBrush")
             : sessionCancellation is not null ? ("StateRunning", "RunningBrush")
@@ -476,6 +476,9 @@ public partial class MainWindow : Window
             && session is { UsesModel: true } && AdaptiveCalibration.IsChecked == true;
         StartButton.IsEnabled = idle && SelectedSource() is not null && (EnableTracking.IsChecked != true || modelDefinitionPath is not null);
         StopButton.IsEnabled = !closing && sessionCancellation is { IsCancellationRequested: false };
+        // The avatar test needs no model, so it is offered whenever nothing else runs, and stops itself when it runs.
+        AvatarTestButton.Content = Strings.Get(avatarTestCancellation is null ? "AvatarTestButton" : "AvatarTestStop");
+        AvatarTestButton.IsEnabled = avatarTestCancellation is { IsCancellationRequested: false } || idle;
         UpdateFirmwareControls();
     }
 
@@ -760,6 +763,8 @@ public partial class MainWindow : Window
         await StopAsync();
         firmwareCancellation?.Cancel();
         if (firmwareTask is not null) await firmwareTask;
+        avatarTestCancellation?.Cancel();
+        if (avatarTestTask is not null) await avatarTestTask;
         if (enumerationTask is not null) await enumerationTask;
         lifetime.Dispose();
         // Completed cleanup can resume inline while WPF is still raising Closing.

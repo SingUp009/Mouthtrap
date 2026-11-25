@@ -7,6 +7,7 @@ using Moderato.Results;
 using Mouthtrap.Core;
 using Mouthtrap.Devices;
 using Mouthtrap.Inputs;
+using Mouthtrap.Sessions;
 
 namespace Mouthtrap.App;
 
@@ -34,7 +35,7 @@ public partial class MainWindow
     };
 
     // The Wi-Fi input's token file when one is chosen; otherwise a new one next to the settings file.
-    private string FirmwareTokenPath => tokenFilePath ?? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(settingsPath))!, "stream-token.txt");
+    private string FirmwareTokenPath => ProvisionedSettings.TokenFile(settingsPath, tokenFilePath);
 
     private void FirmwareKind_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
@@ -117,6 +118,41 @@ public partial class MainWindow
         ShowFirmwareChoices(fileChoice);
     }
 
+    // Reads the board without writing it, as the CLI's board command does.
+    private async void FirmwareCheck_Click(object sender, RoutedEventArgs e)
+    {
+        if (firmwareCancellation is not null || closing || sessionCancellation is not null || FirmwarePort.SelectedItem is not string port) return;
+        firmwareCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
+        UpdateControls();
+        firmwareTask = CheckBoardAsync(port, firmwareCancellation.Token);
+        await firmwareTask;
+    }
+
+    private async Task CheckBoardAsync(string port, CancellationToken cancellationToken)
+    {
+        try
+        {
+            FirmwareStatusText.Text = Strings.Get("FirmwareConnecting");
+            var exit = await XiaoBoard.Inspect(port).RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken);
+            FirmwareStatusText.Text = exit switch
+            {
+                Ok<DeviceReport>(var report) => Strings.Format("FirmwareBoard", port, report.Chip, BoardConfirmation.Size(report.FlashBytes),
+                    BoardConfirmation.Size(report.MemoryBytes), report.Identity) + " " + (report.CanBeWritten
+                    ? Strings.Get("FirmwareBoardWritable")
+                    : Strings.Format("FirmwareBoardUnsuitable", string.Join(" ", report.Problems.Select(problem => problem.Message)))),
+                Err<ProvisioningError>(var error) => ProvisioningErrorText(error),
+                Die die => ReportDefect(die),
+                Interrupted => Strings.Get("FirmwareIdle"),
+            };
+        }
+        finally
+        {
+            firmwareCancellation?.Dispose();
+            firmwareCancellation = null;
+            UpdateControls();
+        }
+    }
+
     private void ShowFirmwareHint() => FirmwareHint.Text = SelectedVariant == FirmwareVariant.XiaoWifi
         ? Strings.Format("FirmwareHintWifi", FirmwareTokenPath)
         : Strings.Get("FirmwareHintUvc");
@@ -125,7 +161,8 @@ public partial class MainWindow
     {
         if (FirmwareWriteButton is null) return;
         var running = firmwareCancellation is not null;
-        var idle = !closing && !running && sessionCancellation is null;
+        var idle = !closing && !running && sessionCancellation is null && avatarTestCancellation is null;
+        FirmwareCheckButton.IsEnabled = idle && FirmwarePort.SelectedItem is string;
         FirmwareKind.IsEnabled = FirmwareSource.IsEnabled = FirmwareReleasesButton.IsEnabled = FirmwareFileButton.IsEnabled = idle;
         FirmwarePort.IsEnabled = FirmwarePortsButton.IsEnabled = FirmwareWifiOptions.IsEnabled = idle;
         FirmwareWriteButton.Content = Strings.Get(running ? "FirmwareCancelButton" : "FirmwareWriteButton");
@@ -191,7 +228,7 @@ public partial class MainWindow
                 Strings.Get("FirmwareConfirmTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes,
                 System.Windows.Threading.DispatcherPriority.Normal, cancellationToken);
 
-        private static string Size(long? bytes) => bytes is { } value
+        public static string Size(long? bytes) => bytes is { } value
             ? Strings.Format("FirmwareMegabytes", value / 1024.0 / 1024)
             : Strings.Get("FirmwareNone");
     }

@@ -233,4 +233,14 @@ Mouthtrap cannot tell a XIAO ESP32S3 Sense from other boards with the same chip 
   <data name="FirmwareNone" xml:space="preserve"><value>none</value></data>
   <data name="FirmwareNotConfirmed" xml:space="preserve"><value>Nothing was written to the board.</value></data>
   <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>Firmware {0} is on the board as the webcam {1}, but it is not in the camera list yet. Click Refresh and choose it under Input.</value></data>
+  <data name="AvatarTestButton" xml:space="preserve"><value>Test avatar</value></data>
+  <data name="AvatarTestStop" xml:space="preserve"><value>Stop test</value></data>
+  <data name="AvatarTestTip" xml:space="preserve"><value>Opens and closes the avatar's mouth (JawOpen) for 10 seconds without a camera or a model, to check the OSC address and the avatar.</value></data>
+  <data name="AvatarTestRunning" xml:space="preserve"><value>Sending JawOpen to {0} for {1:0} seconds…</value></data>
+  <data name="AvatarTestDone" xml:space="preserve"><value>Sent {0} packets to {1}. If the avatar's mouth did not move, check that OSC is on in VRChat and that the avatar has JawOpen.</value></data>
+  <data name="FirmwareCheckButton" xml:space="preserve"><value>Check board</value></data>
+  <data name="FirmwareCheckTip" xml:space="preserve"><value>Reads the board's chip, flash, PSRAM and MAC address without writing anything.</value></data>
+  <data name="FirmwareBoard" xml:space="preserve"><value>{0}: {1}, flash {2}, PSRAM {3}, MAC {4}.</value></data>
+  <data name="FirmwareBoardWritable" xml:space="preserve"><value>The firmware can be written to it.</value></data>
+  <data name="FirmwareBoardUnsuitable" xml:space="preserve"><value>The firmware cannot be written to it: {0}</value></data>
 </root>

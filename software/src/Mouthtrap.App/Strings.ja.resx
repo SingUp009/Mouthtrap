@@ -233,4 +233,14 @@ Mouthtrapは、XIAO ESP32S3 Senseと、同じチップとメモリを持つほ�
   <data name="FirmwareNone" xml:space="preserve"><value>なし</value></data>
   <data name="FirmwareNotConfirmed" xml:space="preserve"><value>ボードには何も書き込んでいません。</value></data>
   <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>ファームウェア {0} を書き込み、ボードはウェブカメラ {1} になりましたが、まだカメラの一覧にありません。「再検出」を押して入力で選んでください。</value></data>
+  <data name="AvatarTestButton" xml:space="preserve"><value>アバターをテスト</value></data>
+  <data name="AvatarTestStop" xml:space="preserve"><value>テストを止める</value></data>
+  <data name="AvatarTestTip" xml:space="preserve"><value>カメラやモデルなしで、アバターの口（JawOpen）を10秒間開け閉めし、OSCの送信先とアバターを確認します。</value></data>
+  <data name="AvatarTestRunning" xml:space="preserve"><value>{0} にJawOpenを{1:0}秒間送っています…</value></data>
+  <data name="AvatarTestDone" xml:space="preserve"><value>{1} に{0}個のパケットを送りました。アバターの口が動かなければ、VRChatでOSCが有効か、アバターにJawOpenがあるかを確認してください。</value></data>
+  <data name="FirmwareCheckButton" xml:space="preserve"><value>ボードを確認</value></data>
+  <data name="FirmwareCheckTip" xml:space="preserve"><value>何も書き込まずに、ボードのチップ、フラッシュ、PSRAM、MACアドレスを読み取ります。</value></data>
+  <data name="FirmwareBoard" xml:space="preserve"><value>{0}: {1}、フラッシュ {2}、PSRAM {3}、MAC {4}。</value></data>
+  <data name="FirmwareBoardWritable" xml:space="preserve"><value>ファームウェアを書き込めます。</value></data>
+  <data name="FirmwareBoardUnsuitable" xml:space="preserve"><value>ファームウェアを書き込めません: {0}</value></data>
 </root>
