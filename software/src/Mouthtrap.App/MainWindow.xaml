@@ -112,6 +112,36 @@
             </Setter>
         </Style>
 
+        <!-- The Wi-Fi password field, drawn like the text fields. -->
+        <Style TargetType="PasswordBox">
+            <Setter Property="Background" Value="{StaticResource CardBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource FieldLineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="7,6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="PasswordBox">
+                        <Border x:Name="Field" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Field" Property="BorderBrush" Value="{StaticResource MutedBrush}" /></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Field" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Field" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Field" Property="Opacity" Value=".5" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Drop-downs drawn like the text fields. Only the non-editable form is used, so there is no PART_EditableTextBox.
              The built-in ComboBox keeps arrow keys, Alt+Down, typing to select and label access keys. -->
         <Style x:Key="ComboToggle" TargetType="ToggleButton">
@@ -538,6 +568,34 @@
                             <TextBox x:Name="OscEndpoint" Text="127.0.0.1:9000" AutomationProperties.Name="{app:Text OscEndpointName}"
                                      LostKeyboardFocus="Setting_LostFocus" />
                             <TextBlock x:Name="OscStatusText" Text="{app:Text OscOff}" Style="{StaticResource Hint}" Margin="0,8,0,0" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{app:Text FirmwareTitle}" Style="{StaticResource CardTitle}" />
+                            <Label Content="{app:Text FirmwareKindLabel}" Target="{Binding ElementName=FirmwareKind}" />
+                            <ComboBox x:Name="FirmwareKind" SelectedIndex="0" AutomationProperties.Name="{app:Text FirmwareKindName}"
+                                      SelectionChanged="FirmwareKind_SelectionChanged">
+                                <ComboBoxItem Content="{app:Text FirmwareWifi}" /><ComboBoxItem Content="{app:Text FirmwareUvc}" /><ComboBoxItem Content="{app:Text FirmwareUvcMultimode}" />
+                            </ComboBox>
+                            <Label Content="{app:Text FirmwarePortLabel}" Target="{Binding ElementName=FirmwarePort}" Margin="0,8,0,0" />
+                            <DockPanel>
+                                <Button x:Name="FirmwarePortsButton" Content="{app:Text FirmwarePortsButton}" Click="FirmwarePorts_Click" DockPanel.Dock="Right" Margin="8,0,0,0" />
+                                <ComboBox x:Name="FirmwarePort" AutomationProperties.Name="{app:Text FirmwarePortName}" SelectionChanged="FirmwarePort_SelectionChanged" />
+                            </DockPanel>
+                            <StackPanel x:Name="FirmwareWifiOptions">
+                                <Label Content="{app:Text FirmwareSsidLabel}" Target="{Binding ElementName=FirmwareSsid}" Margin="0,8,0,0" />
+                                <TextBox x:Name="FirmwareSsid" AutomationProperties.Name="{app:Text FirmwareSsidName}" TextChanged="FirmwareField_Changed" />
+                                <Label Content="{app:Text FirmwarePasswordLabel}" Target="{Binding ElementName=FirmwarePassword}" Margin="0,8,0,0" />
+                                <PasswordBox x:Name="FirmwarePassword" AutomationProperties.Name="{app:Text FirmwarePasswordName}" PasswordChanged="FirmwareField_Changed" />
+                            </StackPanel>
+                            <TextBlock x:Name="FirmwareHint" Text="{app:Text FirmwareHintWifi}" Style="{StaticResource Hint}" Margin="0,8,0,0" />
+                            <Button x:Name="FirmwareWriteButton" Content="{app:Text FirmwareWriteButton}" Click="FirmwareWrite_Click" Style="{StaticResource PrimaryButton}"
+                                    HorizontalAlignment="Left" Margin="0,10,0,0" IsEnabled="False" />
+                            <ProgressBar x:Name="FirmwareProgress" Minimum="0" Maximum="1" Height="8" Margin="0,10,0,0" Visibility="Collapsed"
+                                         AutomationProperties.Name="{app:Text FirmwareProgressName}" />
+                            <TextBlock x:Name="FirmwareStatusText" Text="{app:Text FirmwareIdle}" Style="{StaticResource Hint}" Margin="0,8,0,0"
+                                       AutomationProperties.LiveSetting="Polite" />
                         </StackPanel>
                     </Border>
                     <Border Style="{StaticResource Card}">
