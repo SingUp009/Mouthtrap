@@ -6,6 +6,7 @@
     <ProjectReference Include="../Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
     <ProjectReference Include="../Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
     <ProjectReference Include="../Mouthtrap.Sessions/Mouthtrap.Sessions.csproj" />
+    <ProjectReference Include="../Mouthtrap.Devices.Esp32/Mouthtrap.Devices.Esp32.csproj" />
     <PackageReference Include="ConsoleAppFramework" Version="[5.8.1]" PrivateAssets="all" />
   </ItemGroup>
 </Project>
