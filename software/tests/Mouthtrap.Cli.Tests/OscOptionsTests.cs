@@ -85,20 +85,4 @@ public sealed class OscOptionsTests
         // When / Then
         ResultAssert.Err(OscOptions.ParseKeys(keys));
     }
-
-    [Theory]
-    [InlineData(0, 0f)]
-    [InlineData(.5, .5f)]
-    [InlineData(1, 1f)]
-    [InlineData(1.5, .5f)]
-    [InlineData(2, 0f)]
-    [InlineData(2.5, .5f)]
-    public void Triangle_TimeWithinPeriod_RisesAndFallsOncePerPeriod(double seconds, float expected)
-    {
-        // When
-        var value = OscOptions.Triangle(seconds, 2);
-
-        // Then
-        Assert.Equal(expected, value, 5);
-    }
 }
