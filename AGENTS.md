@@ -54,7 +54,10 @@ idf.py -C firmware/xiao-wifi/test/host -B "$PWD/.artifacts/build-host" build && 
 idf.py -C firmware/xiao-wifi -B "$PWD/.artifacts/build-qemu" -D SDKCONFIG="$PWD/.artifacts/build-qemu/sdkconfig" \
     -D "SDKCONFIG_DEFAULTS=sdkconfig.defaults;test/sdkconfig.qemu" build
 MOUTHTRAP_QEMU_BUILD=.artifacts/build-qemu python -m unittest discover -s firmware/xiao-wifi/test -v
+MOUTHTRAP_QEMU_BUILD="$PWD/.artifacts/build-qemu" dotnet test --project software/tests/Mouthtrap.Firmware.Tests -c Release
 ```
+
+The last line writes the QEMU build and its settings with the GUI's flasher (`Mouthtrap.Firmware`) through the ESP32-S3 ROM loader, as on a board.
 
 Dependencies are locked with `packages.lock.json`. When you add or update a package, commit the updated lock files.
 
@@ -70,9 +73,11 @@ Publish the draft only after checking its files on hardware. Download them from 
 
 If a check fails, delete the draft and the tag, fix the problem, and tag again.
 
+The GUI's **Board firmware** card downloads the latest *published* release, so it cannot see a draft. After publishing, write each firmware once from that card. If writing fails, set the release back to draft, so that no user's GUI downloads it.
+
 How the packages are built:
 
-- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware changes, fails when an app does not fit its partition (`firmware/check-size.py`), and runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, and start-up tests in QEMU. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
+- `.github/workflows/firmware.yml` builds the three firmware variants as a matrix whenever the firmware or the GUI's flasher changes, and fails when an app does not fit its partition (`firmware/check-size.py`). It also runs the firmware tests: unit tests in `firmware/xiao-wifi/test/host`, tests for `provision.py`, start-up tests in QEMU, and `Mouthtrap.Firmware.Tests` writing the QEMU build through the ROM loader. Its artifacts hold the release zip, `flash_args`, `flasher_args.json`, and the ELF and map files. CI does not replace the hardware check.
 - The GUI is published by `tools/release/publish_app.py` (self-contained, `win-x64`) on `windows-2025` with the SDK in `global.json`.
 - The firmware is built by `firmware/build-release.sh` in the ESP-IDF image pinned by digest in `.github/workflows/build.yml` and `firmware.yml`; keep the two the same. Run the script in that image to reproduce a release's firmware byte for byte.
 - Zip files are written by `tools/release/pack.py`, which fixes entry order, timestamps and permissions.
