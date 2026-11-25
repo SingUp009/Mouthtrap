@@ -3,4 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />
+  </ItemGroup>
 </Project>

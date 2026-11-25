@@ -15,6 +15,7 @@
     <ProjectReference Include="../Mouthtrap.Inputs.Windows/Mouthtrap.Inputs.Windows.csproj" />
     <ProjectReference Include="../Mouthtrap.Inputs.Network/Mouthtrap.Inputs.Network.csproj" />
     <ProjectReference Include="../Mouthtrap.Outputs.VRChat/Mouthtrap.Outputs.VRChat.csproj" />
+    <ProjectReference Include="../Mouthtrap.Devices.Esp32/Mouthtrap.Devices.Esp32.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Mouthtrap.App.Tests" />

@@ -111,6 +111,117 @@
         "resolved": "0.1.0-preview.4",
         "contentHash": "1jgyDzsyFIGhfwTIXfZ/AUbYWhkvN3cJUcBereaIiuBwvnwAYaSiK4w7yj75Pn6OFbCcDObkq/vUCPrVAudhqw=="
       },
+      "runtime.android-arm.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "aMrKE4BqEaLEA8I8fPxaChEj7dYgJ/ULWcYkhNVUP7ltSD8QiUZJoMGSf9y29W3NqE6yIKW25f8g++JtKXazZw=="
+      },
+      "runtime.android-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "BHnX0iu5eOw10DIPKaPczZ901cQ+VwvW2dacqWIdeDdDr8bOzd2hS5J4jd/7X+k0KPyjI2KgXDU+BA8hx5OOVA=="
+      },
+      "runtime.android-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "sMhEVhL8wgIHJA82qXs/8E/UUGEhuZ2EipKPeg2NxNyD/k7NhiIdUjeXI3YvjgZQs16xYPIIKoAqwwjp3/ziZA=="
+      },
+      "runtime.android-x86.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "zQvkjBPYjYAERNMypb9x3sT9vSsWarcVA9pZ2UB1UWqJ2KyCZ3hQFe4x+wBww3w8eQEfCKpM+hKFrNpEOU66Gg=="
+      },
+      "runtime.linux-arm.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "B9va8RD6BDFB/6MMt/Ts96YhYjEnxFsTFyqGMCOE/0fje2taeH2SvsAyI2izhHFOirnQ5rpuYzp1J/rZ0dEtZw=="
+      },
+      "runtime.linux-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "wc3wn3QAxxU717DCxCRzwORBpXPc75KFM5aUIF44sfE++nG/hEmm7F1n++/4StsI+uqYOlwE509eBYHEWqPqcg=="
+      },
+      "runtime.linux-bionic-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "lLtYDYhoxOLgd71ROspfgtZj3kXbw1abtLxetvmDarhjY3yqzyOpU3f3r+Cv0PeA2dH9LdzRxg6IUCGts+5zxw=="
+      },
+      "runtime.linux-bionic-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "fanH4NE1J+lfA9t4CN/tULozUrW3LIAFTgX7aRNrCHCgZ4nhIiXYcKgi5ygL9+MDPhbHJ4oG8uhwMppK+c4V9w=="
+      },
+      "runtime.linux-musl-arm.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "DyNjD2RLgQkbgDcghK15/X2TxKauWbzQiZxVpfHJTyoeyzvGpI8LxWtx160zygKc+13ZMBfcsome/MEJ1lHp2Q=="
+      },
+      "runtime.linux-musl-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "ptdo9w+eALgDMdGXQmUiO+1LpNnnFsSLkkLcHXaTACrIyQ2hrgKEdn6bggzEKomTowcpu4xd1qOtfldDrOXlxg=="
+      },
+      "runtime.linux-musl-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "T1GwggWKhiW3DTWo/+HcEV745Z7mmQ/wvcoIZgytZH+olqXnI9D+nbIpeumAWmliGP1cJOgMRYQLeaKfVXz7uA=="
+      },
+      "runtime.linux-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "tEjWU2iWGcS8JK17pPLezRnrjn3wj9JPP0WwpTdiEJzSlmISUOw992bbdl7PqLHg38EaoJu7HGnbtgtePYd4xw=="
+      },
+      "runtime.maccatalyst-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "rvrUDIWDWoqUOKCMm496wMfTETKcKa9ZqhUIqYMbG8CCGcQSMDDV9Z58l4LXcXzKKVDpEcgd4wARr1uB5+1kRw=="
+      },
+      "runtime.maccatalyst-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "6Mvw+PWLiJzoV8POOYI6IchD2poRELN18hLHNAt1UYD0PSx/W3Z3oUixKkMO0c8ulqidv5TKNzoOhZDxTmChFg=="
+      },
+      "runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "M4EL2WOzPgwjOix9lPoubLmP45DHxDvK0RwMtqWxB2NU+VrcZBPqdBYQJGmUS8YlJixijJvqAHiybRQE+m0bHw==",
+        "dependencies": {
+          "runtime.android-arm.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.android-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.android-x64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.android-x86.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-arm.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-bionic-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-bionic-x64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-musl-arm.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-musl-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-musl-x64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.linux-x64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.maccatalyst-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.maccatalyst-x64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.osx-arm64.runtime.native.System.IO.Ports": "11.0.0",
+          "runtime.osx-x64.runtime.native.System.IO.Ports": "11.0.0"
+        }
+      },
+      "runtime.osx-arm64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "VXksruFfqc/0vYzggrcsYsFL9tkp0SyZWWgfmsNV92bVUih3Zrt7riXDDjOdZm9Ufxnc2Hte1zl99offecI1aA=="
+      },
+      "runtime.osx-x64.runtime.native.System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "agqYC3+kAEw/xeZsxguH4tNaguqHOx+hK7i7f83CkO6r5k6SO5IT5HqILRlrnce6esct+Qp1n/odduFLgunD5Q=="
+      },
+      "System.IO.Ports": {
+        "type": "Transitive",
+        "resolved": "11.0.0",
+        "contentHash": "r6Zd/Hlh8w3zM9Mwtc+r96B5lVHXcLTWXS1fiEn16R4jMzRwdz+b43o7MhafZkXZTPVjlMGxqEYo27SZY94dbw==",
+        "dependencies": {
+          "runtime.native.System.IO.Ports": "11.0.0"
+        }
+      },
       "System.Numerics.Tensors": {
         "type": "Transitive",
         "resolved": "9.0.0",
@@ -193,6 +304,7 @@
         "type": "Project",
         "dependencies": {
           "Mouthtrap.Core": "[1.0.0, )",
+          "Mouthtrap.Devices.Esp32": "[1.0.0, )",
           "Mouthtrap.Inputs.Camera": "[1.0.0, )",
           "Mouthtrap.Inputs.Network": "[1.0.0, )",
           "Mouthtrap.Inputs.Windows": "[1.0.0, )",
@@ -204,6 +316,13 @@
         "type": "Project",
         "dependencies": {
           "Moderato.Effects": "[0.1.0-preview.6, 0.1.0-preview.6]"
+        }
+      },
+      "mouthtrap.devices.esp32": {
+        "type": "Project",
+        "dependencies": {
+          "Mouthtrap.Core": "[1.0.0, )",
+          "System.IO.Ports": "[11.0.0, 11.0.0]"
         }
       },
       "mouthtrap.inference": {

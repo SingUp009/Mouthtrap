@@ -165,4 +165,82 @@ Preprocessing (excluding decoding): {6:F2} ms</value></data>
   <data name="SettingsStartingWithDefaults" xml:space="preserve"><value> Starting with the defaults.</value></data>
   <data name="SettingsNotSaved" xml:space="preserve"><value> Not saved.</value></data>
   <data name="Defect" xml:space="preserve"><value>Error: {0} (diagnostics written to Trace)</value></data>
+  <data name="FirmwareTitle" xml:space="preserve"><value>Board firmware</value></data>
+  <data name="FirmwareKindLabel" xml:space="preserve"><value>Firmware</value></data>
+  <data name="FirmwareKindName" xml:space="preserve"><value>Firmware to write</value></data>
+  <data name="FirmwareWifi" xml:space="preserve"><value>XIAO Wi-Fi camera</value></data>
+  <data name="FirmwareUvc" xml:space="preserve"><value>XIAO USB webcam (320×240)</value></data>
+  <data name="FirmwareUvcMultimode" xml:space="preserve"><value>XIAO USB webcam (several modes)</value></data>
+  <data name="FirmwarePortLabel" xml:space="preserve"><value>Serial port</value></data>
+  <data name="FirmwarePortName" xml:space="preserve"><value>Serial port of the board</value></data>
+  <data name="FirmwarePortsButton" xml:space="preserve"><value>Find ports</value></data>
+  <data name="FirmwareSsidLabel" xml:space="preserve"><value>Wi-Fi network (2.4 GHz)</value></data>
+  <data name="FirmwareSsidName" xml:space="preserve"><value>Wi-Fi network name</value></data>
+  <data name="FirmwarePasswordLabel" xml:space="preserve"><value>Wi-Fi password</value></data>
+  <data name="FirmwarePasswordName" xml:space="preserve"><value>Wi-Fi password</value></data>
+  <data name="FirmwareHintWifi" xml:space="preserve"><value>Writes the chosen firmware, then stores the network and the stream token on the board. A release is checked against its SHA256SUMS. The password goes only to the board. The token is kept in {0}.</value></data>
+  <data name="FirmwareHintUvc" xml:space="preserve"><value>Writes the chosen firmware. A release is checked against its SHA256SUMS. Afterwards the board is a webcam and its serial port disappears: to write again, hold BOOT, press and release RESET, then release BOOT.</value></data>
+  <data name="FirmwareWriteButton" xml:space="preserve"><value>Write to board</value></data>
+  <data name="FirmwareCancelButton" xml:space="preserve"><value>Cancel</value></data>
+  <data name="FirmwareProgressName" xml:space="preserve"><value>Firmware writing progress</value></data>
+  <data name="FirmwareIdle" xml:space="preserve"><value>Connect the board with USB and choose its port.</value></data>
+  <data name="FirmwareNoPorts" xml:space="preserve"><value>No serial port found. Connect the board with USB and click Find ports. If it still does not appear, hold BOOT, press and release RESET, then release BOOT.</value></data>
+  <data name="FirmwareSsidInvalid" xml:space="preserve"><value>The network name must be 1–32 bytes of text.</value></data>
+  <data name="FirmwarePasswordInvalid" xml:space="preserve"><value>The Wi-Fi password must be 8–63 bytes of text.</value></data>
+  <data name="FirmwareTokenInvalid" xml:space="preserve"><value>The stream token file {0} cannot be used: {1}</value></data>
+  <data name="FirmwareConnecting" xml:space="preserve"><value>Connecting to the board…</value></data>
+  <data name="FirmwareWriting" xml:space="preserve"><value>Writing {0} ({1:P0})…</value></data>
+  <data name="FirmwareRestarting" xml:space="preserve"><value>Restarting the board…</value></data>
+  <data name="FirmwareWaitingCamera" xml:space="preserve"><value>Waiting for the camera to join {0} (up to a minute)…</value></data>
+  <data name="FirmwareDoneWifi" xml:space="preserve"><value>Firmware {0} is on the board. The camera is at {1}, and the Wi-Fi input is set up: press Start.</value></data>
+  <data name="FirmwareDoneWifiFailed" xml:space="preserve"><value>Firmware {0} is on the board, but the board reported: {1}</value></data>
+  <data name="FirmwareDoneWifiNotSeen" xml:space="preserve"><value>Firmware {0} is on the board, and the token file is set. {1} Enter the stream URL under Input.</value></data>
+  <data name="FirmwareDoneUvc" xml:space="preserve"><value>Firmware {0} is on the board, and Windows lists it as the webcam {1}, now chosen as the input. Choose a mode under Input.</value></data>
+  <data name="FirmwareDoneNoRestart" xml:space="preserve"><value>Firmware {0} is on the board. Press RESET on the board to start it.</value></data>
+  <data name="FirmwareCancelled" xml:space="preserve"><value>Writing was cancelled. If it stopped partway, write again before using the board.</value></data>
+  <data name="FirmwareReleaseUnavailable" xml:space="preserve"><value>The firmware cannot be loaded: {0}</value></data>
+  <data name="FirmwareReleaseInvalid" xml:space="preserve"><value>The firmware cannot be used: {0}</value></data>
+  <data name="FirmwarePortUnavailable" xml:space="preserve"><value>The port cannot be opened: {0} Close other programs that use it, such as a serial monitor.</value></data>
+  <data name="FirmwareNotResponding" xml:space="preserve"><value>The board did not answer. Hold BOOT, press and release RESET, release BOOT, then write again.</value></data>
+  <data name="FirmwareWrongChip" xml:space="preserve"><value>This board cannot take the firmware: {0}</value></data>
+  <data name="FirmwareLost" xml:space="preserve"><value>Writing failed: {0} Write again before using the board.</value></data>
+  <data name="FirmwareSourceLabel" xml:space="preserve"><value>Version</value></data>
+  <data name="FirmwareSourceName" xml:space="preserve"><value>Firmware version to write</value></data>
+  <data name="FirmwareReleasesButton" xml:space="preserve"><value>Find releases</value></data>
+  <data name="FirmwareFileButton" xml:space="preserve"><value>Zip file…</value></data>
+  <data name="FirmwareLatest" xml:space="preserve"><value>Latest published release</value></data>
+  <data name="FirmwareRelease" xml:space="preserve"><value>Release {0}</value></data>
+  <data name="FirmwarePrerelease" xml:space="preserve"><value>Release {0} (pre-release)</value></data>
+  <data name="FirmwareFileChoice" xml:space="preserve"><value>File: {0}</value></data>
+  <data name="FirmwareFileDialogTitle" xml:space="preserve"><value>Choose a firmware zip file</value></data>
+  <data name="FirmwareFileDialogFilter" xml:space="preserve"><value>Firmware zip files (*.zip)|*.zip</value></data>
+  <data name="FirmwareFindingReleases" xml:space="preserve"><value>Finding the published releases on GitHub…</value></data>
+  <data name="FirmwareNoReleases" xml:space="preserve"><value>No release has been published yet. Choose a zip file instead.</value></data>
+  <data name="FirmwareReleasesFound" xml:space="preserve"><value>Found {0} published releases; choose one under Version.</value></data>
+  <data name="FirmwareLoading" xml:space="preserve"><value>Loading the firmware…</value></data>
+  <data name="FirmwareConfirming" xml:space="preserve"><value>Check the board shown, then confirm or cancel…</value></data>
+  <data name="FirmwareConfirmTitle" xml:space="preserve"><value>Write to this board?</value></data>
+  <data name="FirmwareConfirmText" xml:space="preserve"><value>The board on {0} reports:
+
+Chip: {1}
+Flash: {2}
+PSRAM in the chip: {3}
+MAC address: {4}
+
+Mouthtrap cannot tell a XIAO ESP32S3 Sense from other boards with the same chip and memory, so check that this is your XIAO. Writing replaces everything on the board with {5} ({6}).</value></data>
+  <data name="FirmwareConfirmWifi" xml:space="preserve"><value> The Wi-Fi network and the stream token are stored on it too.</value></data>
+  <data name="FirmwareMegabytes" xml:space="preserve"><value>{0:0.#} MB</value></data>
+  <data name="FirmwareNone" xml:space="preserve"><value>none</value></data>
+  <data name="FirmwareNotConfirmed" xml:space="preserve"><value>Nothing was written to the board.</value></data>
+  <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>Firmware {0} is on the board as the webcam {1}, but it is not in the camera list yet. Click Refresh and choose it under Input.</value></data>
+  <data name="AvatarTestButton" xml:space="preserve"><value>Test avatar</value></data>
+  <data name="AvatarTestStop" xml:space="preserve"><value>Stop test</value></data>
+  <data name="AvatarTestTip" xml:space="preserve"><value>Opens and closes the avatar's mouth (JawOpen) for 10 seconds without a camera or a model, to check the OSC address and the avatar.</value></data>
+  <data name="AvatarTestRunning" xml:space="preserve"><value>Sending JawOpen to {0} for {1:0} seconds…</value></data>
+  <data name="AvatarTestDone" xml:space="preserve"><value>Sent {0} packets to {1}. If the avatar's mouth did not move, check that OSC is on in VRChat and that the avatar has JawOpen.</value></data>
+  <data name="FirmwareCheckButton" xml:space="preserve"><value>Check board</value></data>
+  <data name="FirmwareCheckTip" xml:space="preserve"><value>Reads the board's chip, flash, PSRAM and MAC address without writing anything.</value></data>
+  <data name="FirmwareBoard" xml:space="preserve"><value>{0}: {1}, flash {2}, PSRAM {3}, MAC {4}.</value></data>
+  <data name="FirmwareBoardWritable" xml:space="preserve"><value>The firmware can be written to it.</value></data>
+  <data name="FirmwareBoardUnsuitable" xml:space="preserve"><value>The firmware cannot be written to it: {0}</value></data>
 </root>

@@ -16,6 +16,13 @@ It is built around a Seeed Studio XIAO ESP32S3 Sense (OV3660) streaming over Wi-
 1. Download `mouthtrap-<version>-win-x64.zip` from the [releases](https://github.com/SingUp009/Mouthtrap/releases), extract it and start `Mouthtrap.App.exe`. It includes .NET, so nothing else needs to be installed.
 2. Get `faceModel.onnx` from [Baballonia](https://github.com/Project-Babble/Baballonia) (commit `3f85119`).
 3. Copy `examples/models/babble45.json` from the zip (or [`software/examples/models/babble45.json`](software/examples/models/babble45.json)) next to the model.
+4. For a XIAO, write its firmware from the GUI. Connect the board with USB, and under **Board firmware** choose:
+   - the firmware;
+   - its version: the latest published release, a release listed with **Find releases**, or a zip file;
+   - the board's serial port;
+   - for the Wi-Fi camera, your 2.4 GHz network and password.
+
+   Then press **Write to board**. The GUI downloads the release you chose and checks it against the release's `SHA256SUMS`. It then shows the board's chip, flash, PSRAM and MAC address, and writes only after you confirm. For the Wi-Fi camera, it also stores the network and a stream token on the board, and sets up the Wi-Fi input with the URL the board reports. See the [Wi-Fi firmware](firmware/xiao-wifi/README.md) and [USB webcam firmware](firmware/xiao-uvc/README.md) guides for the command-line way.
 
 Each release lists SHA-256 checksums and a build provenance attestation; check a download with `gh attestation verify <file> --repo SingUp009/Mouthtrap`.
 
@@ -40,15 +47,21 @@ Settings are restored on the next start. The GUI is in English or Japanese; chan
 
 ## Command line
 
-The same processing without a window:
+The CLI does what the GUI does, without a window, for scripts and AI agents. It never asks a question: it writes JSON and returns an exit code.
 
 ```powershell
 $cli = 'software/src/Mouthtrap.Cli/bin/Release/net11.0-windows/Mouthtrap.Cli.exe'
 & $cli run --saved-settings --seconds 0             # run with the GUI's settings until Ctrl+C
 & $cli osc-test --osc 127.0.0.1:9000 --key JawOpen  # move the avatar's jaw without a camera
+& $cli ports                                         # serial ports a board can be written on
+& $cli releases                                      # published releases
+& $cli board --port COM3                             # chip, flash, PSRAM and MAC address; writes nothing
+$env:WIFI_PASSWORD = '...'
+& $cli flash --firmware XiaoWifi --port COM3 --board 98:3d:ae:12:34:56 `
+    --ssid MyNetwork --password-env WIFI_PASSWORD --saved-settings
 ```
 
-Run `& $cli run --help` for all options.
+`flash` writes only the board whose MAC address `--board` names, as `board` reports it, in place of the GUI's confirmation. Without `--version` or `--zip` it writes the latest release. The Wi-Fi password is read from the environment variable that `--password-env` names, so it stays off the command line. Run `& $cli <command> --help` for all options.
 
 ## Limitations
 

@@ -41,13 +41,6 @@ public static class OscOptions
         }
         return new Ok<UnifiedExpression[]>([.. parsed]);
     }
-
-    // A triangle wave from 0 up to 1 and back to 0 over each period, starting at 0.
-    public static float Triangle(double seconds, double period)
-    {
-        var phase = seconds / period % 1;
-        return (float)(1 - Math.Abs(2 * phase - 1));
-    }
 }
 
 public sealed partial class Commands
@@ -70,30 +63,14 @@ public sealed partial class Commands
         if (parsedKeys is Err<string>(var keyError)) return Usage(keyError);
         var expressions = parsedKeys.UnwrapOr([]);
         if (!double.IsFinite(seconds) || seconds < 0 || seconds > 86400) return Usage("seconds must be between 0 and 86400.");
-        if (!double.IsFinite(rate) || rate is < 1 or > 120) return Usage("rate must be between 1 and 120.");
-        if (!double.IsFinite(period) || period is < .2 or > 60) return Usage("period must be between 0.2 and 60.");
+        if (!double.IsFinite(rate) || rate is < AvatarTest.MinimumRate or > AvatarTest.MaximumRate) return Usage("rate must be between 1 and 120.");
+        if (!double.IsFinite(period) || period is < AvatarTest.MinimumPeriod or > AvatarTest.MaximumPeriod) return Usage("period must be between 0.2 and 60.");
 
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (seconds > 0) stop.CancelAfter(TimeSpan.FromSeconds(seconds));
         var sent = new OscPacketCount();
-        var program = Scope<TrackingError, TrackingEnvironment>.Gen(async scope =>
-        {
-            var output = await scope.Acquire(VrchatOscSession.Output(OscTransport(target), sent)
-                .MapErr<TrackingError>(error => new TrackingOutputFailed(error)));
-            var clock = scope.Env.Resolve<TimeProvider>();
-            var startedAt = clock.GetTimestamp();
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1 / rate), clock);
-            do
-            {
-                var value = OscOptions.Triangle(clock.GetElapsedTime(startedAt).TotalSeconds, period);
-                // The keys were parsed once each and the wave stays within 0..1, as ExpressionFrame.Create requires.
-                var frame = ExpressionFrame.Create(expressions.Select(item => new KeyValuePair<UnifiedExpression, float>(item, value)));
-                if (output.Send(frame) is Err<OutputFailed>(var failure))
-                    throw scope.Fail(new TrackingOutputFailed(failure));
-            }
-            while (await timer.WaitForNextTickAsync(scope.CancellationToken).ConfigureAwait(false));
-            return Unit.Value;
-        });
+        var program = AvatarTest.Run(OscTransport(target), expressions, rate, period, sent)
+            .MapErr<TrackingError>(error => new TrackingOutputFailed(error));
         var exit = await program.RunExitAsync(new(TimeProvider.System), stop.Token);
         var code = exit switch
         {

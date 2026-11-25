@@ -14,6 +14,25 @@ Streams the camera of a Seeed Studio XIAO ESP32S3 Sense (OV3660) over Wi-Fi as M
 
 The firmware contains no Wi-Fi settings. You flash the same firmware on any network, then store your network and a stream token on the board with `provision.py`. Flashing a new firmware keeps the stored settings.
 
+## From the Mouthtrap GUI
+
+The GUI does steps 1 and 2 in one go, without Python:
+
+1. Connect the board with USB.
+2. Under **Board firmware**, choose:
+   - **XIAO Wi-Fi camera**;
+   - the version: the latest published release, one listed with **Find releases**, or a zip file such as this folder's release zip;
+   - the board's serial port.
+
+   Then enter your 2.4 GHz network and password.
+3. Press **Write to board**.
+
+The GUI downloads the chosen release and checks it against the release's `SHA256SUMS`. It refuses a zip whose `manifest.json` names another board or firmware.
+
+Before writing, it connects to the board and shows what it reports: chip, flash size, PSRAM in the chip, and MAC address. It refuses a board with less flash than the firmware needs, or without the 8 MB of PSRAM that the XIAO's ESP32-S3R8 has. Software cannot tell a XIAO from another board with the same chip and memory, so you confirm that it is the right board. It then writes the firmware and the settings, and restarts the board. Then it waits up to a minute for the board to report its URL, and sets up the Wi-Fi input with that URL and the token file. The token file is the one already chosen for the Wi-Fi input, or `stream-token.txt` next to the GUI's settings. If the board does not answer, put it in download mode (below) and try again.
+
+The steps below do the same from the command line.
+
 ## 1. Flash the firmware
 
 Download `mouthtrap-firmware-xiao-wifi-<version>.zip` from the [releases](https://github.com/SingUp009/Mouthtrap/releases), extract it and run this in the extracted folder, replacing `COM3` with your port:

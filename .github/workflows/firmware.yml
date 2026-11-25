@@ -1,18 +1,23 @@
 name: Firmware
 
-# Builds every firmware variant, checks that it fits its partition and runs the firmware tests. Pull requests run it only
-# when they change the firmware or what packs it.
+# Builds every firmware variant, checks that it fits its partition and runs the firmware tests, including the GUI's
+# flasher against the firmware in QEMU. Pull requests run it only when they change the firmware, what packs it or the
+# flasher.
 on:
   push:
     branches: [main]
     paths:
       - firmware/**
       - tools/release/pack.py
+      - software/src/Mouthtrap.Devices.Esp32/**
+      - software/tests/Mouthtrap.Devices.Esp32.Tests/**
       - .github/workflows/firmware.yml
   pull_request:
     paths:
       - firmware/**
       - tools/release/pack.py
+      - software/src/Mouthtrap.Devices.Esp32/**
+      - software/tests/Mouthtrap.Devices.Esp32.Tests/**
       - .github/workflows/firmware.yml
   workflow_dispatch:
 
@@ -75,7 +80,7 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 30
     container: espressif/idf:v5.5.4@sha256:b9f2d6ea1c19e0c9f7959bdb74a9e3c775642f9d0f3b841937c5fa3363db892b
     defaults:
       run:
@@ -107,3 +112,19 @@ jobs:
         run: |
           . "$IDF_PATH/export.sh" > /dev/null
           python -m unittest discover -s firmware/xiao-wifi/test -v
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          global-json-file: global.json
+
+      # Mouthtrap.Devices.Esp32 writes the QEMU build and its Wi-Fi settings through the ROM loader, then boots it.
+      - name: Flasher tests
+        env:
+          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "1"
+        run: |
+          . "$IDF_PATH/export.sh" > /dev/null
+          # The workspace path inside the container, which github.workspace does not give in a container job.
+          export MOUTHTRAP_QEMU_BUILD="$GITHUB_WORKSPACE/build-qemu"
+          dotnet restore software/tests/Mouthtrap.Devices.Esp32.Tests --locked-mode
+          dotnet test --project software/tests/Mouthtrap.Devices.Esp32.Tests -c Release --no-restore

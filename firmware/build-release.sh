@@ -40,6 +40,9 @@ package() {
   cp "$build/bootloader/bootloader.bin" "$stage/bootloader/"
   cp "$build/partition_table/partition-table.bin" "$stage/partition_table/"
   cp "$build/$app.bin" "$build/flash_args" "$root/firmware/requirements.txt" "$root/LICENSE" "$stage/"
+  # What the package is for, so that a flasher refuses it for another board or variant whatever the zip is called.
+  printf '{\n  "format": 1,\n  "board": "seeed-xiao-esp32s3-sense",\n  "firmware": "%s",\n  "version": "%s"\n}\n' \
+    "$2" "$version" > "$stage/manifest.json"
   if [ "$project" = xiao-uvc ]; then
     cp "$root/firmware/xiao-uvc/LICENSE" "$stage/LICENSE-Apache-2.0"
   fi

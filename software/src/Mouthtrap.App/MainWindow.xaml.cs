@@ -68,11 +68,17 @@ public partial class MainWindow : Window
         renderTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(33), DispatcherPriority.Background, RenderFrame, Dispatcher);
         renderTimer.Stop();
         LoadSettings();
+        ShowFirmwareHint();
+        ShowFirmwareChoices();
         shownLanguage = settings.Language;
         restoring = 0;
     }
 
-    private async void Window_Loaded(object sender, RoutedEventArgs e) => await RefreshAsync();
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        RefreshFirmwarePorts();
+        await RefreshAsync();
+    }
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshAsync();
 
     private async Task RefreshAsync()
@@ -177,6 +183,7 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         tokenFilePath = dialog.FileName;
         TokenFileText.Text = dialog.FileName;
+        ShowFirmwareHint();
         SaveSettings();
         UpdateControls();
     }
@@ -442,7 +449,7 @@ public partial class MainWindow : Window
     private void UpdateControls()
     {
         if (StartButton is null) return;
-        var idle = !closing && !refreshing && sessionCancellation is null;
+        var idle = !closing && !refreshing && sessionCancellation is null && firmwareCancellation is null && avatarTestCancellation is null;
         var (state, brush) = closing ? ("StateClosing", "StoppingBrush")
             : sessionCancellation is { IsCancellationRequested: true } ? ("StateStopping", "StoppingBrush")
             : sessionCancellation is not null ? ("StateRunning", "RunningBrush")
@@ -469,6 +476,10 @@ public partial class MainWindow : Window
             && session is { UsesModel: true } && AdaptiveCalibration.IsChecked == true;
         StartButton.IsEnabled = idle && SelectedSource() is not null && (EnableTracking.IsChecked != true || modelDefinitionPath is not null);
         StopButton.IsEnabled = !closing && sessionCancellation is { IsCancellationRequested: false };
+        // The avatar test needs no model, so it is offered whenever nothing else runs, and stops itself when it runs.
+        AvatarTestButton.Content = Strings.Get(avatarTestCancellation is null ? "AvatarTestButton" : "AvatarTestStop");
+        AvatarTestButton.IsEnabled = avatarTestCancellation is { IsCancellationRequested: false } || idle;
+        UpdateFirmwareControls();
     }
 
     private static string InputErrorText(FrameSourceError error) => error switch
@@ -750,6 +761,10 @@ public partial class MainWindow : Window
         UpdateControls();
         lifetime.Cancel();
         await StopAsync();
+        firmwareCancellation?.Cancel();
+        if (firmwareTask is not null) await firmwareTask;
+        avatarTestCancellation?.Cancel();
+        if (avatarTestTask is not null) await avatarTestTask;
         if (enumerationTask is not null) await enumerationTask;
         lifetime.Dispose();
         // Completed cleanup can resume inline while WPF is still raising Closing.

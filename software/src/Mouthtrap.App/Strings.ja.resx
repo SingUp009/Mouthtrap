@@ -165,4 +165,82 @@
   <data name="SettingsStartingWithDefaults" xml:space="preserve"><value>既定値で開始します。</value></data>
   <data name="SettingsNotSaved" xml:space="preserve"><value>保存していません。</value></data>
   <data name="Defect" xml:space="preserve"><value>エラー: {0}（診断情報をTraceへ出力しました）</value></data>
+  <data name="FirmwareTitle" xml:space="preserve"><value>ボードのファームウェア</value></data>
+  <data name="FirmwareKindLabel" xml:space="preserve"><value>ファームウェア</value></data>
+  <data name="FirmwareKindName" xml:space="preserve"><value>書き込むファームウェア</value></data>
+  <data name="FirmwareWifi" xml:space="preserve"><value>XIAO Wi-Fiカメラ</value></data>
+  <data name="FirmwareUvc" xml:space="preserve"><value>XIAO USBウェブカメラ (320×240)</value></data>
+  <data name="FirmwareUvcMultimode" xml:space="preserve"><value>XIAO USBウェブカメラ (複数モード)</value></data>
+  <data name="FirmwarePortLabel" xml:space="preserve"><value>シリアルポート</value></data>
+  <data name="FirmwarePortName" xml:space="preserve"><value>ボードのシリアルポート</value></data>
+  <data name="FirmwarePortsButton" xml:space="preserve"><value>ポートを検出</value></data>
+  <data name="FirmwareSsidLabel" xml:space="preserve"><value>Wi-Fiネットワーク (2.4 GHz)</value></data>
+  <data name="FirmwareSsidName" xml:space="preserve"><value>Wi-Fiネットワーク名</value></data>
+  <data name="FirmwarePasswordLabel" xml:space="preserve"><value>Wi-Fiパスワード</value></data>
+  <data name="FirmwarePasswordName" xml:space="preserve"><value>Wi-Fiパスワード</value></data>
+  <data name="FirmwareHintWifi" xml:space="preserve"><value>選んだファームウェアを書き込み、ネットワークとストリームトークンをボードに保存します。リリースはSHA256SUMSで確認します。パスワードはボードにだけ送ります。トークンは {0} に保存します。</value></data>
+  <data name="FirmwareHintUvc" xml:space="preserve"><value>選んだファームウェアを書き込みます。リリースはSHA256SUMSで確認します。書き込み後のボードはウェブカメラになり、シリアルポートは消えます。もう一度書き込むときは、BOOTを押したままRESETを押して離し、BOOTを離してください。</value></data>
+  <data name="FirmwareWriteButton" xml:space="preserve"><value>ボードに書き込む</value></data>
+  <data name="FirmwareCancelButton" xml:space="preserve"><value>中止</value></data>
+  <data name="FirmwareProgressName" xml:space="preserve"><value>ファームウェアの書き込みの進み具合</value></data>
+  <data name="FirmwareIdle" xml:space="preserve"><value>ボードをUSBでつなぎ、ポートを選んでください。</value></data>
+  <data name="FirmwareNoPorts" xml:space="preserve"><value>シリアルポートが見つかりません。ボードをUSBでつないで「ポートを検出」を押してください。それでも出ないときは、BOOTを押したままRESETを押して離し、BOOTを離してください。</value></data>
+  <data name="FirmwareSsidInvalid" xml:space="preserve"><value>ネットワーク名は1～32バイトの文字にしてください。</value></data>
+  <data name="FirmwarePasswordInvalid" xml:space="preserve"><value>Wi-Fiパスワードは8～63バイトの文字にしてください。</value></data>
+  <data name="FirmwareTokenInvalid" xml:space="preserve"><value>ストリームトークンのファイル {0} を使えません: {1}</value></data>
+  <data name="FirmwareConnecting" xml:space="preserve"><value>ボードに接続しています…</value></data>
+  <data name="FirmwareWriting" xml:space="preserve"><value>{0} を書き込んでいます ({1:P0})…</value></data>
+  <data name="FirmwareRestarting" xml:space="preserve"><value>ボードを再起動しています…</value></data>
+  <data name="FirmwareWaitingCamera" xml:space="preserve"><value>カメラが {0} に接続するのを待っています (最大1分)…</value></data>
+  <data name="FirmwareDoneWifi" xml:space="preserve"><value>ファームウェア {0} を書き込みました。カメラは {1} です。Wi-Fi入力を設定したので「開始」を押してください。</value></data>
+  <data name="FirmwareDoneWifiFailed" xml:space="preserve"><value>ファームウェア {0} を書き込みましたが、ボードが次のエラーを報告しました: {1}</value></data>
+  <data name="FirmwareDoneWifiNotSeen" xml:space="preserve"><value>ファームウェア {0} を書き込み、トークンファイルを設定しました。{1} 入力のストリームURLを入力してください。</value></data>
+  <data name="FirmwareDoneUvc" xml:space="preserve"><value>ファームウェア {0} を書き込みました。Windowsがウェブカメラ {1} として認識したので、入力に選びました。入力でモードを選んでください。</value></data>
+  <data name="FirmwareDoneNoRestart" xml:space="preserve"><value>ファームウェア {0} を書き込みました。ボードのRESETを押して起動してください。</value></data>
+  <data name="FirmwareCancelled" xml:space="preserve"><value>書き込みを中止しました。途中で止まった場合は、ボードを使う前にもう一度書き込んでください。</value></data>
+  <data name="FirmwareReleaseUnavailable" xml:space="preserve"><value>ファームウェアを読み込めません: {0}</value></data>
+  <data name="FirmwareReleaseInvalid" xml:space="preserve"><value>このファームウェアは使えません: {0}</value></data>
+  <data name="FirmwarePortUnavailable" xml:space="preserve"><value>ポートを開けません: {0} シリアルモニターなど、ポートを使っているほかのプログラムを閉じてください。</value></data>
+  <data name="FirmwareNotResponding" xml:space="preserve"><value>ボードが応答しません。BOOTを押したままRESETを押して離し、BOOTを離してから、もう一度書き込んでください。</value></data>
+  <data name="FirmwareWrongChip" xml:space="preserve"><value>このボードにはこのファームウェアを書き込めません: {0}</value></data>
+  <data name="FirmwareLost" xml:space="preserve"><value>書き込みに失敗しました: {0} ボードを使う前にもう一度書き込んでください。</value></data>
+  <data name="FirmwareSourceLabel" xml:space="preserve"><value>バージョン</value></data>
+  <data name="FirmwareSourceName" xml:space="preserve"><value>書き込むファームウェアのバージョン</value></data>
+  <data name="FirmwareReleasesButton" xml:space="preserve"><value>リリースを検索</value></data>
+  <data name="FirmwareFileButton" xml:space="preserve"><value>zipファイル…</value></data>
+  <data name="FirmwareLatest" xml:space="preserve"><value>最新の公開リリース</value></data>
+  <data name="FirmwareRelease" xml:space="preserve"><value>リリース {0}</value></data>
+  <data name="FirmwarePrerelease" xml:space="preserve"><value>リリース {0} (プレリリース)</value></data>
+  <data name="FirmwareFileChoice" xml:space="preserve"><value>ファイル: {0}</value></data>
+  <data name="FirmwareFileDialogTitle" xml:space="preserve"><value>ファームウェアのzipファイルを選択</value></data>
+  <data name="FirmwareFileDialogFilter" xml:space="preserve"><value>ファームウェアのzipファイル (*.zip)|*.zip</value></data>
+  <data name="FirmwareFindingReleases" xml:space="preserve"><value>GitHubで公開されているリリースを探しています…</value></data>
+  <data name="FirmwareNoReleases" xml:space="preserve"><value>公開されたリリースはまだありません。代わりにzipファイルを選んでください。</value></data>
+  <data name="FirmwareReleasesFound" xml:space="preserve"><value>公開リリースが {0} 件見つかりました。「バージョン」で選んでください。</value></data>
+  <data name="FirmwareLoading" xml:space="preserve"><value>ファームウェアを読み込んでいます…</value></data>
+  <data name="FirmwareConfirming" xml:space="preserve"><value>表示したボードを確認し、書き込むか中止するかを選んでください…</value></data>
+  <data name="FirmwareConfirmTitle" xml:space="preserve"><value>このボードに書き込みますか？</value></data>
+  <data name="FirmwareConfirmText" xml:space="preserve"><value>{0} のボードの情報:
+
+チップ: {1}
+フラッシュ: {2}
+チップ内蔵のPSRAM: {3}
+MACアドレス: {4}
+
+Mouthtrapは、XIAO ESP32S3 Senseと、同じチップとメモリを持つほかのボードを区別できません。お使いのXIAOであることを確認してください。書き込むと、ボードの内容はすべて {5} ({6}) に置き換わります。</value></data>
+  <data name="FirmwareConfirmWifi" xml:space="preserve"><value> Wi-Fiネットワークとストリームトークンもボードに保存します。</value></data>
+  <data name="FirmwareMegabytes" xml:space="preserve"><value>{0:0.#} MB</value></data>
+  <data name="FirmwareNone" xml:space="preserve"><value>なし</value></data>
+  <data name="FirmwareNotConfirmed" xml:space="preserve"><value>ボードには何も書き込んでいません。</value></data>
+  <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>ファームウェア {0} を書き込み、ボードはウェブカメラ {1} になりましたが、まだカメラの一覧にありません。「再検出」を押して入力で選んでください。</value></data>
+  <data name="AvatarTestButton" xml:space="preserve"><value>アバターをテスト</value></data>
+  <data name="AvatarTestStop" xml:space="preserve"><value>テストを止める</value></data>
+  <data name="AvatarTestTip" xml:space="preserve"><value>カメラやモデルなしで、アバターの口（JawOpen）を10秒間開け閉めし、OSCの送信先とアバターを確認します。</value></data>
+  <data name="AvatarTestRunning" xml:space="preserve"><value>{0} にJawOpenを{1:0}秒間送っています…</value></data>
+  <data name="AvatarTestDone" xml:space="preserve"><value>{1} に{0}個のパケットを送りました。アバターの口が動かなければ、VRChatでOSCが有効か、アバターにJawOpenがあるかを確認してください。</value></data>
+  <data name="FirmwareCheckButton" xml:space="preserve"><value>ボードを確認</value></data>
+  <data name="FirmwareCheckTip" xml:space="preserve"><value>何も書き込まずに、ボードのチップ、フラッシュ、PSRAM、MACアドレスを読み取ります。</value></data>
+  <data name="FirmwareBoard" xml:space="preserve"><value>{0}: {1}、フラッシュ {2}、PSRAM {3}、MAC {4}。</value></data>
+  <data name="FirmwareBoardWritable" xml:space="preserve"><value>ファームウェアを書き込めます。</value></data>
+  <data name="FirmwareBoardUnsuitable" xml:space="preserve"><value>ファームウェアを書き込めません: {0}</value></data>
 </root>
