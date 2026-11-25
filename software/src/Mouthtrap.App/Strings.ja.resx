@@ -195,7 +195,7 @@
   <data name="FirmwareDoneWifi" xml:space="preserve"><value>ファームウェア {0} を書き込みました。カメラは {1} です。Wi-Fi入力を設定したので「開始」を押してください。</value></data>
   <data name="FirmwareDoneWifiFailed" xml:space="preserve"><value>ファームウェア {0} を書き込みましたが、ボードが次のエラーを報告しました: {1}</value></data>
   <data name="FirmwareDoneWifiNotSeen" xml:space="preserve"><value>ファームウェア {0} を書き込み、トークンファイルを設定しました。{1} 入力のストリームURLを入力してください。</value></data>
-  <data name="FirmwareDoneUvc" xml:space="preserve"><value>ファームウェア {0} を書き込みました。ボードはウェブカメラ {1} として再起動します。入力で選び、「再検出」を押してください。</value></data>
+  <data name="FirmwareDoneUvc" xml:space="preserve"><value>ファームウェア {0} を書き込みました。Windowsがウェブカメラ {1} として認識したので、入力に選びました。入力でモードを選んでください。</value></data>
   <data name="FirmwareDoneNoRestart" xml:space="preserve"><value>ファームウェア {0} を書き込みました。ボードのRESETを押して起動してください。</value></data>
   <data name="FirmwareCancelled" xml:space="preserve"><value>書き込みを中止しました。途中で止まった場合は、ボードを使う前にもう一度書き込んでください。</value></data>
   <data name="FirmwareReleaseUnavailable" xml:space="preserve"><value>ファームウェアを読み込めません: {0}</value></data>
@@ -218,4 +218,19 @@
   <data name="FirmwareNoReleases" xml:space="preserve"><value>公開されたリリースはまだありません。代わりにzipファイルを選んでください。</value></data>
   <data name="FirmwareReleasesFound" xml:space="preserve"><value>公開リリースが {0} 件見つかりました。「バージョン」で選んでください。</value></data>
   <data name="FirmwareLoading" xml:space="preserve"><value>ファームウェアを読み込んでいます…</value></data>
+  <data name="FirmwareConfirming" xml:space="preserve"><value>表示したボードを確認し、書き込むか中止するかを選んでください…</value></data>
+  <data name="FirmwareConfirmTitle" xml:space="preserve"><value>このボードに書き込みますか？</value></data>
+  <data name="FirmwareConfirmText" xml:space="preserve"><value>{0} のボードの情報:
+
+チップ: {1}
+フラッシュ: {2}
+チップ内蔵のPSRAM: {3}
+MACアドレス: {4}
+
+Mouthtrapは、XIAO ESP32S3 Senseと、同じチップとメモリを持つほかのボードを区別できません。お使いのXIAOであることを確認してください。書き込むと、ボードの内容はすべて {5} ({6}) に置き換わります。</value></data>
+  <data name="FirmwareConfirmWifi" xml:space="preserve"><value> Wi-Fiネットワークとストリームトークンもボードに保存します。</value></data>
+  <data name="FirmwareMegabytes" xml:space="preserve"><value>{0:0.#} MB</value></data>
+  <data name="FirmwareNone" xml:space="preserve"><value>なし</value></data>
+  <data name="FirmwareNotConfirmed" xml:space="preserve"><value>ボードには何も書き込んでいません。</value></data>
+  <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>ファームウェア {0} を書き込み、ボードはウェブカメラ {1} になりましたが、まだカメラの一覧にありません。「再検出」を押して入力で選んでください。</value></data>
 </root>

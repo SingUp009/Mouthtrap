@@ -79,8 +79,61 @@ public sealed class BoardInstallerTests
         // When
         Ok(await Run(rom, new FakeTimeProvider(), TestContext.Current.CancellationToken));
 
+        // Then the only RTC register written is the forced download boot, cleared on restart
+        Assert.Equal([(0x6000812Cu, 0u, 1u)], rom.RegisterWrites.Where(write => write.Address is >= 0x60008000 and < 0x60009000));
+    }
+
+    [Fact]
+    public async Task Install_Check_GetsWhatTheRomReportsAndRestoresTheSpiRegisters()
+    {
+        // Given
+        var rom = new FakeRom();
+        Esp32S3Board? seen = null;
+
+        // When
+        Ok(await BoardInstaller.Install(Link(rom), Plan, (board, _) =>
+            {
+                seen = board;
+                return ValueTask.FromResult<Result<Unit, FlashError>>(new Ok<Unit>(Unit.Value));
+            })
+            .RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()), TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken));
+
         // Then
-        Assert.Equal([(0x6000812Cu, 0u, 1u)], rom.RegisterWrites);
+        Assert.Equal(new Esp32S3Board("ESP32-S3 (QFN56) (revision v0.2)", "34:85:18:aa:bb:cc", 0x1740c8, 8 * 1024 * 1024, 8 * 1024 * 1024, null), seen);
+        // The fake's SPI registers read 0x1234 before the ID command, and are written back so after it.
+        Assert.Equal(0x1234u, rom.RegisterWrites.Last(write => write.Address == FakeRom.SpiUser).Value);
+        Assert.Equal(0x1234u, rom.RegisterWrites.Last(write => write.Address == FakeRom.SpiUser2).Value);
+    }
+
+    [Fact]
+    public async Task Install_CheckRefuses_FailsWithItsErrorWithoutErasing()
+    {
+        // Given
+        var rom = new FakeRom();
+
+        // When
+        var exit = await BoardInstaller.Install(Link(rom), Plan, (_, _) =>
+                ValueTask.FromResult<Result<Unit, FlashError>>(new Err<FlashError>(new NotConfirmed("No."))))
+            .RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()), TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
+
+        // Then
+        Assert.True(exit is Err<FlashError>(NotConfirmed), $"Got {exit}.");
+        Assert.DoesNotContain(FakeRom.FlashBegin, rom.Commands);
+        Assert.True(rom.Disposed);
+    }
+
+    [Fact]
+    public async Task Install_FlashSmallerThanThePlan_FailsWithBoardUnsuitableWithoutErasing()
+    {
+        // Given a 4 MB flash and no check
+        var rom = new FakeRom { FlashId = 0x1640ef };
+
+        // When
+        var exit = await Run(rom, new FakeTimeProvider(), TestContext.Current.CancellationToken);
+
+        // Then
+        Assert.True(exit is Err<FlashError>(BoardUnsuitable), $"Got {exit}.");
+        Assert.DoesNotContain(FakeRom.FlashBegin, rom.Commands);
     }
 
     [Fact]
@@ -209,7 +262,7 @@ public sealed class BoardInstallerTests
 
         // When
         var exit = await BoardInstaller.Install(board, Plan).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()),
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
 
         // Then
         Assert.True(exit is Err<FlashError>(PortUnavailable), $"Got {exit}.");
@@ -312,16 +365,18 @@ public sealed class BoardInstallerTests
         Assert.Null(BoardInstaller.ReadLine(line));
     }
 
-    private static Task<Exit<InstallReport, FlashError>> Run(FakeRom rom, TimeProvider clock, CancellationToken cancellationToken,
-        bool watchCamera = false, List<FlashProgress>? progress = null)
-    {
-        var board = Resource.Make(Effect<ProvisioningEnvironment>.Succeed<IBoardLink>(rom), (link, _) => Effect<ProvisioningEnvironment>.Sync(() =>
+    private static Resource<IBoardLink, FlashError, ProvisioningEnvironment> Link(FakeRom rom) =>
+        Resource.Make(Effect<ProvisioningEnvironment>.Succeed<IBoardLink>(rom), (link, _) => Effect<ProvisioningEnvironment>.Sync(() =>
         {
             link.Dispose();
             return Unit.Value;
         }));
-        return BoardInstaller.Install(board, Plan, watchCamera, progress is null ? null : new Collect(progress))
-            .RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken).AsTask();
+
+    private static Task<Exit<InstallReport, FlashError>> Run(FakeRom rom, TimeProvider clock, CancellationToken cancellationToken,
+        bool watchCamera = false, List<FlashProgress>? progress = null)
+    {
+        return BoardInstaller.Install(Link(rom), Plan, watchCamera: watchCamera, progress: progress is null ? null : new Collect(progress))
+            .RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
     }
 
     private static InstallReport Ok(Exit<InstallReport, FlashError> exit) =>

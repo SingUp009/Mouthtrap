@@ -9,6 +9,10 @@ public sealed record PortUnavailable(string Message);
 public sealed record BoardNotResponding(string Message);
 // The board is not the chip the firmware is built for.
 public sealed record WrongChip(string Message);
+// The board is an ESP32-S3 the firmware cannot run on, such as one with too little flash or PSRAM.
+public sealed record BoardUnsuitable(string Message);
+// The board was not confirmed before writing; nothing was written.
+public sealed record NotConfirmed(string Message);
 // The ROM loader refused a command. Status and Reason are the bytes it returned.
 public sealed record BoardRejected(string Message, byte Status, byte Reason);
 // The board answered at first and then stopped (unplugged, reset, or a broken cable).
@@ -17,4 +21,5 @@ public sealed record ConnectionLost(string Message);
 public sealed record VerificationFailed(string Message);
 
 [Error]
-public partial union FlashError(PortUnavailable, BoardNotResponding, WrongChip, BoardRejected, ConnectionLost, VerificationFailed);
+public partial union FlashError(PortUnavailable, BoardNotResponding, WrongChip, BoardUnsuitable, NotConfirmed, BoardRejected, ConnectionLost,
+    VerificationFailed);

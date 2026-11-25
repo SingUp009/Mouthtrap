@@ -11,6 +11,7 @@ namespace Mouthtrap.Devices.Tests;
 
 public sealed class FirmwareReleaseTests
 {
+    private static readonly TimeSpan Bound = TimeSpan.FromSeconds(10);
     private const string ZipName = "mouthtrap-firmware-xiao-wifi-1.2.0.zip";
     private static readonly byte[] Zip = Packages.Zip();
     private static readonly Uri Tag = new($"{FirmwareRelease.Repository}/tags/v1.2.0");
@@ -190,7 +191,7 @@ public sealed class FirmwareReleaseTests
 
         // When
         var exit = await FirmwareRelease.Releases(github).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()),
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
 
         // Then
         if (exit is not Ok<IReadOnlyList<ReleaseVersion>>(var releases)) throw new Xunit.Sdk.XunitException($"Expected Ok, got {exit}.");
@@ -206,14 +207,14 @@ public sealed class FirmwareReleaseTests
 
         // When
         var exit = await FirmwareRelease.Releases(github).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()),
-            TestContext.Current.CancellationToken);
+            TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
 
         // Then
         Assert.True(exit is Err<ProvisioningError>(FirmwareInvalid), $"Got {exit}.");
     }
 
     private static async Task<Exit<LoadedFirmware, ProvisioningError>> Load(FirmwareRelease release, FirmwareVariant variant) =>
-        await release.Load(variant).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()), TestContext.Current.CancellationToken);
+        await release.Load(variant).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()), TestContext.Current.CancellationToken).AsTask().WaitAsync(Bound, TestContext.Current.CancellationToken);
 
     private static LoadedFirmware Ok(Exit<LoadedFirmware, ProvisioningError> exit) =>
         exit is Ok<LoadedFirmware>(var firmware) ? firmware : throw new Xunit.Sdk.XunitException($"Expected Ok, got {exit}.");

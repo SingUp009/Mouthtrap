@@ -44,6 +44,18 @@ internal sealed class RomLoader(IBoardLink link, TimeProvider clock)
     private const uint RtcSwdAutoFeed = 1u << 31;
     private const uint RtcOption1 = 0x6000812C;
     private const uint ForceDownloadBoot = 0x1;
+    private const uint EfuseBlock1 = 0x60007044;
+    private const uint EfuseBlock2 = 0x6000705C;
+    private const uint SpiBase = 0x60002000;
+    private const uint SpiCommand = SpiBase;
+    private const uint SpiUser = SpiBase + 0x18;
+    private const uint SpiUser2 = SpiBase + 0x20;
+    private const uint SpiMisoLength = SpiBase + 0x28;
+    private const uint SpiW0 = SpiBase + 0x58;
+    private const uint SpiCommandUser = 1u << 18;
+    private const uint SpiUserCommand = 1u << 31;
+    private const uint SpiUserMiso = 1u << 28;
+    private const byte ReadFlashId = 0x9f;
 
     private readonly SlipReader reader = new(link);
     private bool connected;
@@ -83,9 +95,9 @@ internal sealed class RomLoader(IBoardLink link, TimeProvider clock)
         }
     }
 
-    // Checks that the board is an ESP32-S3 and stops the watchdogs that would reset it during a long write over its
-    // built-in USB port; then attaches the SPI flash and gives the ROM its size.
-    public async ValueTask<Result<Unit, FlashError>> PrepareAsync(uint flashSize, CancellationToken cancellationToken)
+    // Checks that the board is an ESP32-S3, stops the watchdogs that would reset it during a long write over its
+    // built-in USB port, attaches the SPI flash, and reads what the user is shown before anything is written.
+    public async ValueTask<Result<Esp32S3Board, FlashError>> IdentifyAsync(CancellationToken cancellationToken)
     {
         var info = await CheckCommand("read the chip type", GetSecurityInfo, [], 0, 20, DefaultTimeout, cancellationToken).ConfigureAwait(false);
         if (!info.TryGetOk(out var security)) return Fail(info);
@@ -97,12 +109,30 @@ internal sealed class RomLoader(IBoardLink link, TimeProvider clock)
         if ((number & 0xff) == UsbJtagSerialDevice)
         {
             var watchdogs = await DisableWatchdogsAsync(cancellationToken).ConfigureAwait(false);
-            if (watchdogs is not Ok<Unit>) return watchdogs;
+            if (watchdogs is not Ok<Unit>) return Fail(watchdogs);
         }
 
         var attach = new byte[8]; // pins 0 (the default flash pins), then a zero "legacy" argument
         var attached = await CheckCommand("attach the SPI flash", SpiAttach, attach, 0, 0, DefaultTimeout, cancellationToken).ConfigureAwait(false);
         if (!attached.TryGetOk(out _)) return Fail(attached);
+
+        // eFuse words of BLOCK1 (the MAC and system data) and BLOCK2, as esptool reads them.
+        var words = new Dictionary<uint, uint>();
+        foreach (var address in (uint[])[EfuseBlock1, EfuseBlock1 + 4, EfuseBlock1 + 12, EfuseBlock1 + 16, EfuseBlock1 + 20, EfuseBlock2 + 16])
+        {
+            var read = await ReadRegisterAsync(address, cancellationToken).ConfigureAwait(false);
+            if (!read.TryGetOk(out var value)) return Fail(read);
+            words[address] = value;
+        }
+        var flashId = await FlashIdAsync(cancellationToken).ConfigureAwait(false);
+        if (!flashId.TryGetOk(out var id)) return Fail(flashId);
+        return new Ok<Esp32S3Board>(Esp32S3Board.FromEfuse(words[EfuseBlock1], words[EfuseBlock1 + 4], words[EfuseBlock1 + 12],
+            words[EfuseBlock1 + 16], words[EfuseBlock1 + 20], words[EfuseBlock2 + 16], id));
+    }
+
+    // Gives the ROM the size of the flash it writes to.
+    public async ValueTask<Result<Unit, FlashError>> SetFlashSizeAsync(uint flashSize, CancellationToken cancellationToken)
+    {
         var parameters = new byte[24];
         BinaryPrimitives.WriteUInt32LittleEndian(parameters.AsSpan(4), flashSize);
         BinaryPrimitives.WriteUInt32LittleEndian(parameters.AsSpan(8), 64 * 1024); // block
@@ -111,6 +141,42 @@ internal sealed class RomLoader(IBoardLink link, TimeProvider clock)
         BinaryPrimitives.WriteUInt32LittleEndian(parameters.AsSpan(20), 0xffff); // status mask
         var set = await CheckCommand("set the flash parameters", SpiSetParameters, parameters, 0, 0, DefaultTimeout, cancellationToken).ConfigureAwait(false);
         return set.TryGetOk(out _) ? new Ok<Unit>(Unit.Value) : Fail(set);
+    }
+
+    // The JEDEC ID of the SPI flash (RDID, 0x9F), sent through the SPI controller's user command as esptool's
+    // run_spiflash_command does: 24 bits read back, no address and no data out. The registers are restored afterwards.
+    private async ValueTask<Result<uint, FlashError>> FlashIdAsync(CancellationToken cancellationToken)
+    {
+        var user = await ReadRegisterAsync(SpiUser, cancellationToken).ConfigureAwait(false);
+        if (!user.TryGetOk(out var oldUser)) return user;
+        var user2 = await ReadRegisterAsync(SpiUser2, cancellationToken).ConfigureAwait(false);
+        if (!user2.TryGetOk(out var oldUser2)) return user2;
+        (uint Address, uint Value)[] setup =
+        [
+            (SpiMisoLength, 24 - 1), (SpiUser, SpiUserCommand | SpiUserMiso), (SpiUser2, (7u << 28) | ReadFlashId), (SpiW0, 0),
+            (SpiCommand, SpiCommandUser),
+        ];
+        foreach (var (address, value) in setup)
+        {
+            var written = await WriteRegisterAsync(address, value, 0xffffffff, cancellationToken).ConfigureAwait(false);
+            if (written is not Ok<Unit>) return Fail(written);
+        }
+        var done = false;
+        for (var poll = 0; poll < 10 && !done; poll++)
+        {
+            var command = await ReadRegisterAsync(SpiCommand, cancellationToken).ConfigureAwait(false);
+            if (!command.TryGetOk(out var value)) return command;
+            done = (value & SpiCommandUser) == 0;
+        }
+        if (!done) return new Err<FlashError>(new ConnectionLost("The flash did not answer its ID command."));
+        var status = await ReadRegisterAsync(SpiW0, cancellationToken).ConfigureAwait(false);
+        if (!status.TryGetOk(out var id)) return status;
+        foreach (var (address, value) in ((uint, uint)[])[(SpiUser, oldUser), (SpiUser2, oldUser2)])
+        {
+            var restored = await WriteRegisterAsync(address, value, 0xffffffff, cancellationToken).ConfigureAwait(false);
+            if (restored is not Ok<Unit>) return Fail(restored);
+        }
+        return new Ok<uint>(id & 0xffffff);
     }
 
     // Erases the part's region, writes it block by block, and compares the flash's MD5 with the data's.

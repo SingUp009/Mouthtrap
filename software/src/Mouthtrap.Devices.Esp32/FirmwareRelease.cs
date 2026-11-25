@@ -39,8 +39,10 @@ public sealed partial record FirmwareRelease(string? Version = null, HttpMessage
             var zip = await scope.Run(Get(client, zipAddress, MaxZipBytes, "application/octet-stream"));
             if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(zip), expected))
                 throw scope.Fail(new FirmwareInvalid($"{asset} does not match the checksum in SHA256SUMS."));
-            var firmware = scope.Get(FirmwareFile.Read(zip, variant, release.Version));
-            return firmware with { Version = release.Version };
+            var firmware = scope.Get(FirmwareFile.Read(zip, variant));
+            if (firmware.Version != release.Version)
+                throw scope.Fail(new FirmwareInvalid($"{asset} says it is version {firmware.Version}, not {release.Version}."));
+            return firmware;
         }).OnThreadPool();
 
     // The published releases, newest first, as GitHub lists them (its first 30).

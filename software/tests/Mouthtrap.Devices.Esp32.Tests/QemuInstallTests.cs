@@ -32,22 +32,29 @@ public sealed class QemuInstallTests : IDisposable
         await File.WriteAllBytesAsync(flash, Enumerable.Repeat((byte)0xff, 8 * 1024 * 1024).ToArray(), TestContext.Current.CancellationToken);
         var port = FreePort();
         var progress = new List<ProvisioningProgress>();
+        // QEMU's eFuses are blank, so its chip reports no PSRAM; the PSRAM requirement is the one check left out.
         var provisioner = new XiaoProvisioner(FirmwareVariant.XiaoWifi, new Folder(Build!), $"socket://127.0.0.1:{port}",
-            new WifiSetup(settings, Path.Combine(directory, "stream-token.txt")));
+            new WifiSetup(settings, Path.Combine(directory, "stream-token.txt")))
+        { RequiredPsramBytes = null };
+        var confirmation = new Confirmation();
 
         // When
         Exit<ProvisionedDevice, ProvisioningError> exit;
         using (var qemu = Qemu(flash, $"-global driver=esp32s3.gpio,property=strap_mode,value=0x07 -serial tcp:127.0.0.1:{port},server=on,wait=off"))
         {
             await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-            exit = await provisioner.Provision(new Collect(progress))
+            exit = await provisioner.Provision(confirmation, new Collect(progress))
                 .RunExitAsync(new ProvisioningEnvironment(TimeProvider.System), TestContext.Current.CancellationToken);
             qemu.Kill();
             await qemu.WaitForExitAsync(TestContext.Current.CancellationToken);
         }
 
         // Then every part is in the flash, and the firmware reads the settings when it starts
-        // QEMU has no reset line, so the board has to be restarted by hand.
+        // The board as esptool's flash_id reads QEMU's: a GD 8 MB flash (ID 0x1740c8) and blank eFuses. QEMU has no
+        // reset line, so the board has to be restarted by hand.
+        var report = Assert.Single(confirmation.Asked);
+        Assert.Equal(("00:00:00:00:00:00", "ESP32-S3 (QFN56) (revision v0.0)", (long?)(8 * 1024 * 1024), (long?)null),
+            (report.Identity, report.Chip, report.FlashBytes, report.MemoryBytes));
         if (exit is not Ok<ProvisionedDevice>(var device)) throw new Xunit.Sdk.XunitException($"Expected Ok, got {exit}.");
         Assert.True(device.Input is InputNotConfirmed { Reason: InputNotConfirmedReason.RestartByHand }, $"Got {device.Input}.");
         Assert.Equal(1, progress.Last(report => report.Stage == ProvisioningStage.Writing).Fraction);
@@ -87,6 +94,17 @@ public sealed class QemuInstallTests : IDisposable
                 FirmwarePackage.FromDirectory(path).TryGetOk(out var plan)
                     ? new Ok<LoadedFirmware>(new("qemu", plan!))
                     : new Err<ProvisioningError>(new FirmwareInvalid("The build folder cannot be read."))));
+    }
+
+    private sealed class Confirmation : IDeviceConfirmation
+    {
+        public List<DeviceReport> Asked { get; } = [];
+
+        public ValueTask<bool> ConfirmAsync(DeviceReport report, CancellationToken cancellationToken)
+        {
+            Asked.Add(report);
+            return ValueTask.FromResult(true);
+        }
     }
 
     // Progress<T> posts to the thread pool; this records each report in order as it is made.

@@ -195,7 +195,7 @@ Preprocessing (excluding decoding): {6:F2} ms</value></data>
   <data name="FirmwareDoneWifi" xml:space="preserve"><value>Firmware {0} is on the board. The camera is at {1}, and the Wi-Fi input is set up: press Start.</value></data>
   <data name="FirmwareDoneWifiFailed" xml:space="preserve"><value>Firmware {0} is on the board, but the board reported: {1}</value></data>
   <data name="FirmwareDoneWifiNotSeen" xml:space="preserve"><value>Firmware {0} is on the board, and the token file is set. {1} Enter the stream URL under Input.</value></data>
-  <data name="FirmwareDoneUvc" xml:space="preserve"><value>Firmware {0} is on the board. It restarts as the webcam {1}: choose it under Input and click Refresh.</value></data>
+  <data name="FirmwareDoneUvc" xml:space="preserve"><value>Firmware {0} is on the board, and Windows lists it as the webcam {1}, now chosen as the input. Choose a mode under Input.</value></data>
   <data name="FirmwareDoneNoRestart" xml:space="preserve"><value>Firmware {0} is on the board. Press RESET on the board to start it.</value></data>
   <data name="FirmwareCancelled" xml:space="preserve"><value>Writing was cancelled. If it stopped partway, write again before using the board.</value></data>
   <data name="FirmwareReleaseUnavailable" xml:space="preserve"><value>The firmware cannot be loaded: {0}</value></data>
@@ -218,4 +218,19 @@ Preprocessing (excluding decoding): {6:F2} ms</value></data>
   <data name="FirmwareNoReleases" xml:space="preserve"><value>No release has been published yet. Choose a zip file instead.</value></data>
   <data name="FirmwareReleasesFound" xml:space="preserve"><value>Found {0} published releases; choose one under Version.</value></data>
   <data name="FirmwareLoading" xml:space="preserve"><value>Loading the firmware…</value></data>
+  <data name="FirmwareConfirming" xml:space="preserve"><value>Check the board shown, then confirm or cancel…</value></data>
+  <data name="FirmwareConfirmTitle" xml:space="preserve"><value>Write to this board?</value></data>
+  <data name="FirmwareConfirmText" xml:space="preserve"><value>The board on {0} reports:
+
+Chip: {1}
+Flash: {2}
+PSRAM in the chip: {3}
+MAC address: {4}
+
+Mouthtrap cannot tell a XIAO ESP32S3 Sense from other boards with the same chip and memory, so check that this is your XIAO. Writing replaces everything on the board with {5} ({6}).</value></data>
+  <data name="FirmwareConfirmWifi" xml:space="preserve"><value> The Wi-Fi network and the stream token are stored on it too.</value></data>
+  <data name="FirmwareMegabytes" xml:space="preserve"><value>{0:0.#} MB</value></data>
+  <data name="FirmwareNone" xml:space="preserve"><value>none</value></data>
+  <data name="FirmwareNotConfirmed" xml:space="preserve"><value>Nothing was written to the board.</value></data>
+  <data name="FirmwareDoneUvcNotListed" xml:space="preserve"><value>Firmware {0} is on the board as the webcam {1}, but it is not in the camera list yet. Click Refresh and choose it under Input.</value></data>
 </root>

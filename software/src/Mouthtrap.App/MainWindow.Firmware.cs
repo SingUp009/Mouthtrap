@@ -6,6 +6,7 @@ using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
 using Mouthtrap.Devices;
+using Mouthtrap.Inputs;
 
 namespace Mouthtrap.App;
 
@@ -169,17 +170,42 @@ public partial class MainWindow
         }
         firmwareCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetime.Token);
         UpdateControls();
-        firmwareTask = ProvisionAsync(new XiaoProvisioner(variant, choice.Source, port, wifi), wifi?.Settings.Ssid, firmwareCancellation.Token);
+        var provisioner = new XiaoProvisioner(variant, choice.Source, port, wifi)
+        {
+            Cameras = variant == FirmwareVariant.XiaoWifi ? null : new UsbCameraLocator(),
+        };
+        var firmware = (string)((ComboBoxItem)FirmwareKind.SelectedItem).Content;
+        firmwareTask = ProvisionAsync(provisioner, new BoardConfirmation(this, port, firmware, choice.Label, wifi is not null), wifi?.Settings.Ssid,
+            firmwareCancellation.Token);
         await firmwareTask;
     }
 
-    private async Task ProvisionAsync(IDeviceProvisioner provisioner, string? network, CancellationToken cancellationToken)
+    // Shows what the board reported and asks before anything is written. The provisioner keeps the board connected
+    // meanwhile; the question is asked on the window's thread.
+    private sealed class BoardConfirmation(MainWindow window, string port, string firmware, string version, bool wifi) : IDeviceConfirmation
+    {
+        public async ValueTask<bool> ConfirmAsync(DeviceReport report, CancellationToken cancellationToken) =>
+            await window.Dispatcher.InvokeAsync(() => MessageBox.Show(window,
+                Strings.Format("FirmwareConfirmText", port, report.Chip, Size(report.FlashBytes), Size(report.MemoryBytes), report.Identity, firmware,
+                    version) + (wifi ? Strings.Get("FirmwareConfirmWifi") : ""),
+                Strings.Get("FirmwareConfirmTitle"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes,
+                System.Windows.Threading.DispatcherPriority.Normal, cancellationToken);
+
+        private static string Size(long? bytes) => bytes is { } value
+            ? Strings.Format("FirmwareMegabytes", value / 1024.0 / 1024)
+            : Strings.Get("FirmwareNone");
+    }
+
+    private async Task ProvisionAsync(IDeviceProvisioner provisioner, IDeviceConfirmation confirmation, string? network,
+        CancellationToken cancellationToken)
     {
         try
         {
             FirmwareProgress.Value = 0;
             var progress = new Progress<ProvisioningProgress>(report => ShowProvisioningProgress(report, network));
-            var exit = await provisioner.Provision(progress).RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken);
+            var exit = await provisioner.Provision(confirmation, progress).RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken);
+            // The webcam is now a camera Windows lists: list the cameras again so that it can be selected as the input.
+            if (exit is Ok<ProvisionedDevice>({ Input: UsbCameraReady }) && !closing) await RefreshAsync();
             FirmwareStatusText.Text = exit switch
             {
                 Ok<ProvisionedDevice>(var device) => UseProvisionedInput(device),
@@ -204,6 +230,7 @@ public partial class MainWindow
         {
             ProvisioningStage.LoadingFirmware => Strings.Get("FirmwareLoading"),
             ProvisioningStage.Connecting => Strings.Get("FirmwareConnecting"),
+            ProvisioningStage.Confirming => Strings.Get("FirmwareConfirming"),
             ProvisioningStage.Writing => Strings.Format("FirmwareWriting", report.Detail, report.Fraction),
             ProvisioningStage.Restarting => Strings.Get("FirmwareRestarting"),
             ProvisioningStage.WaitingForInput => Strings.Format("FirmwareWaitingCamera", network),
@@ -222,7 +249,9 @@ public partial class MainWindow
                 UseStreamInput(tokenFile, address);
                 return Strings.Format("FirmwareDoneWifi", version, address);
             case UsbCameraReady(var name):
-                return Strings.Format("FirmwareDoneUvc", version, name);
+                return UseCameraInput(name)
+                    ? Strings.Format("FirmwareDoneUvc", version, name)
+                    : Strings.Format("FirmwareDoneUvcNotListed", version, name);
             case InputNotConfirmed(var reason, var message, var tokenFile):
                 if (tokenFile is not null) UseStreamInput(tokenFile, null);
                 return reason switch
@@ -235,6 +264,17 @@ public partial class MainWindow
             default:
                 throw new InvalidOperationException($"No input is set up for {device.Input.GetType().Name}.");
         }
+    }
+
+    // Selects the camera named name as the input, once the camera list holds it.
+    private bool UseCameraInput(string name)
+    {
+        if (Cameras.ItemsSource is not IEnumerable<FlashCap.CaptureDeviceDescriptor> devices ||
+            devices.FirstOrDefault(device => device.Name == name) is not { } camera) return false;
+        InputKind.SelectedIndex = 0;
+        Cameras.SelectedItem = camera;
+        SaveSettings();
+        return true;
     }
 
     private void UseStreamInput(string tokenFile, StreamUrl? address)
@@ -254,6 +294,7 @@ public partial class MainWindow
         DeviceUnavailable(var message) => Strings.Format("FirmwarePortUnavailable", message),
         DeviceNotResponding => Strings.Get("FirmwareNotResponding"),
         DeviceIncompatible(var message) => Strings.Format("FirmwareWrongChip", message),
+        DeviceNotConfirmed => Strings.Get("FirmwareNotConfirmed"),
         DeviceWriteFailed(var message) => Strings.Format("FirmwareLost", message),
     };
 }

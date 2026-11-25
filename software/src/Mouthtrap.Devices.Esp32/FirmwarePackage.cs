@@ -8,8 +8,15 @@ namespace Mouthtrap.Devices;
 // The firmware variants a release ships, named as in the zip files that firmware/build-release.sh writes.
 public enum FirmwareVariant { XiaoWifi, XiaoUvc, XiaoUvcMultimode }
 
-// A release zip: Folder is its top-level folder, such as mouthtrap-firmware-xiao-wifi-1.2.0.
-public sealed record FirmwareArchive(string Folder, FlashPlan Plan);
+// What manifest.json in a release zip says the package is for, as firmware/build-release.sh writes it.
+public sealed record FirmwareManifest(string Board, string Firmware, string Version)
+{
+    public const int Format = 1;
+    public const string XiaoEsp32S3Sense = "seeed-xiao-esp32s3-sense";
+}
+
+// A release zip: its manifest and what it writes.
+public sealed record FirmwareArchive(FirmwareManifest Manifest, FlashPlan Plan);
 
 // A firmware build as ESP-IDF describes it in flash_args: the flash options on the first line, then one
 // "<offset> <file>" line per image, with paths relative to flash_args. Read from a release zip, whose files sit in one
@@ -45,9 +52,13 @@ public static class FirmwarePackage
                 entry.FullName.Count(value => value == '/') <= 1).ToArray();
             if (flashArgs.Length != 1) return Invalid("The zip file must hold one flash_args file in its top-level folder.");
             var root = flashArgs[0].FullName[..^"flash_args".Length];
-            var plan = Parse(path => archive.GetEntry(root + path) is { } entry ? ReadLimited(entry.Open(), entry.Length) : null);
+            byte[]? Read(string path) => archive.GetEntry(root + path) is { } entry ? ReadLimited(entry.Open(), entry.Length) : null;
+            if (Read("manifest.json") is not { } json) return Invalid("The zip has no manifest.json, so what it is for cannot be checked.");
+            var manifest = ReadManifest(json);
+            if (!manifest.TryGetOk(out var parsed)) return new Err<InvalidValue>(manifest.TryGetErr(out var manifestError) ? manifestError! : null!);
+            var plan = Parse(Read);
             if (!plan.TryGetOk(out var value)) return new Err<InvalidValue>(plan.TryGetErr(out var error) ? error! : null!);
-            return new Ok<FirmwareArchive>(new(root.TrimEnd('/'), value!));
+            return new Ok<FirmwareArchive>(new(parsed!, value!));
         }
         // Reading the archive: not a zip file, damaged entries, or a stream that fails.
         catch (Exception exception) when (exception is InvalidDataException or IOException)
@@ -69,6 +80,28 @@ public static class FirmwarePackage
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             return Invalid($"The build folder cannot be read: {exception.Message}");
+        }
+    }
+
+    private static Result<FirmwareManifest, InvalidValue> ReadManifest(byte[] json)
+    {
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+            var root = document.RootElement;
+            if (root.GetProperty("format").GetInt32() != FirmwareManifest.Format)
+                return Invalid($"manifest.json has format {root.GetProperty("format")}; this Mouthtrap reads format {FirmwareManifest.Format}.");
+            var board = root.GetProperty("board").GetString();
+            var firmware = root.GetProperty("firmware").GetString();
+            var version = root.GetProperty("version").GetString();
+            return string.IsNullOrEmpty(board) || string.IsNullOrEmpty(firmware) || string.IsNullOrEmpty(version)
+                ? Invalid("manifest.json must give the board, the firmware and the version.")
+                : new Ok<FirmwareManifest>(new(board, firmware, version));
+        }
+        // A manifest that is not the JSON object build-release.sh writes.
+        catch (Exception exception) when (exception is System.Text.Json.JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
+        {
+            return Invalid($"manifest.json cannot be read: {exception.Message}");
         }
     }
 

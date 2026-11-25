@@ -38,6 +38,16 @@ internal sealed class FakeRom : IBoardLink
     public bool Silent { get; init; }
     public uint ChipId { get; init; } = 9;
     public uint ConsoleDevice { get; init; }
+    // What the SPI flash answers to RDID (GD, 8 MB by default), and the eFuse words esptool decodes. The default is a
+    // XIAO-like ESP32-S3R8: 8 MB of PSRAM in the chip, revision v0.2, MAC 34:85:18:aa:bb:cc.
+    public uint FlashId { get; init; } = 0x1740c8;
+    public Dictionary<uint, uint> Efuse { get; init; } = new()
+    {
+        [0x60007044] = 0x18aabbcc,
+        [0x60007048] = 0x3485,
+        [0x60007050] = 2 << 18,
+        [0x60007054] = 1 << 3,
+    };
     public (byte Command, byte Reason, int Times)? Reject { get; init; }
     public bool CorruptFlash { get; init; }
     // After this many FLASH_DATA packets, the board answers nothing more (Silence) or closes the link (Close).
@@ -49,6 +59,12 @@ internal sealed class FakeRom : IBoardLink
     public Channel<int> SilentReads { get; } = Channel.CreateUnbounded<int>();
     public TaskCompletionSource Restarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    public const uint SpiCommand = 0x60002000;
+    public const uint SpiUser = 0x60002018;
+    public const uint SpiUser2 = 0x60002020;
+    public const uint SpiW0 = 0x60002058;
+
+    private readonly Dictionary<uint, uint> registers = [];
     private int blocks;
     private bool silenced;
 
@@ -132,11 +148,22 @@ internal sealed class FakeRom : IBoardLink
                 break;
             case ReadRegister:
                 var address = BinaryPrimitives.ReadUInt32LittleEndian(data);
-                Answer(command, address == 0x3FCEF14C ? ConsoleDevice : 0x1234, []);
+                Answer(command, address == 0x3FCEF14C ? ConsoleDevice
+                    : Efuse.TryGetValue(address, out var efuse) ? efuse
+                    : address is >= 0x60007000 and < 0x60007200 ? 0
+                    : registers.TryGetValue(address, out var register) ? register : 0x1234, []);
                 break;
             case WriteRegister:
-                RegisterWrites.Add((BinaryPrimitives.ReadUInt32LittleEndian(data), BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(4)),
-                    BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(8))));
+                var target = BinaryPrimitives.ReadUInt32LittleEndian(data);
+                var written = BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(4));
+                RegisterWrites.Add((target, written, BinaryPrimitives.ReadUInt32LittleEndian(data.AsSpan(8))));
+                registers[target] = written;
+                // The SPI controller runs a user command at once: RDID leaves the flash ID in W0 and clears the start bit.
+                if (target == SpiCommand && (written & 1u << 18) != 0)
+                {
+                    registers[SpiW0] = registers.GetValueOrDefault(SpiUser2) == (7u << 28 | 0x9f) ? FlashId : 0;
+                    registers[SpiCommand] = 0;
+                }
                 Answer(command, 0, []);
                 break;
             case SetParameters:

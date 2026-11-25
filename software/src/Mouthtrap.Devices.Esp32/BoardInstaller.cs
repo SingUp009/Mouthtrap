@@ -6,7 +6,7 @@ using Mouthtrap.Core;
 
 namespace Mouthtrap.Devices;
 
-public enum FlashStage { Connecting, Preparing, Writing, Restarting, WaitingForCamera }
+public enum FlashStage { Connecting, Preparing, Confirming, Writing, Restarting, WaitingForCamera }
 
 // How far an installation is. Written and Total count the bytes of all parts.
 public sealed record FlashProgress(FlashStage Stage, long Written, long Total, string? Part = null);
@@ -27,10 +27,13 @@ public static partial class BoardInstaller
 {
     public static readonly TimeSpan CameraTimeout = TimeSpan.FromSeconds(60);
 
-    // Writes plan to the board, verifies every part and restarts the board. With watchCamera, it then reads the Wi-Fi
-    // firmware's log until the camera URL appears. The board link is owned by this run and released however it ends.
+    // Reads the board, lets check refuse it while the link stays open, then writes plan, verifies every part and
+    // restarts the board. Without check, only a flash smaller than the plan is refused. With watchCamera, it then reads
+    // the Wi-Fi firmware's log until the camera URL appears. The board link is owned by this run and released however
+    // it ends.
     public static Effect<InstallReport, FlashError, ProvisioningEnvironment> Install(Resource<IBoardLink, FlashError, ProvisioningEnvironment> board,
-        FlashPlan plan, bool watchCamera = false, IProgress<FlashProgress>? progress = null)
+        FlashPlan plan, Func<Esp32S3Board, CancellationToken, ValueTask<Result<Unit, FlashError>>>? check = null, bool watchCamera = false,
+        IProgress<FlashProgress>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
         return Scope<FlashError, ProvisioningEnvironment>.Gen(async scope =>
@@ -42,7 +45,15 @@ public static partial class BoardInstaller
             var loader = new RomLoader(link, clock);
             scope.Get(await loader.ConnectAsync(scope.CancellationToken));
             progress?.Report(new(FlashStage.Preparing, 0, total));
-            scope.Get(await loader.PrepareAsync(plan.FlashSize, scope.CancellationToken));
+            var identified = scope.Get(await loader.IdentifyAsync(scope.CancellationToken));
+            if (check is not null)
+            {
+                progress?.Report(new(FlashStage.Confirming, 0, total));
+                scope.Get(await check(identified, scope.CancellationToken));
+            }
+            if (identified.FlashBytes is not { } flash || flash < plan.FlashSize)
+                throw scope.Fail(new BoardUnsuitable($"The firmware needs {plan.FlashSize / 1024 / 1024} MB of flash; the board reports {Size(identified.FlashBytes)}."));
+            scope.Get(await loader.SetFlashSizeAsync(plan.FlashSize, scope.CancellationToken));
             long done = 0;
             foreach (var part in plan.Parts)
             {
@@ -107,6 +118,8 @@ public static partial class BoardInstaller
         if (ErrorLine().Match(line) is { Success: true } error) return new Err<StartupError>(new FirmwareFailed(error.Groups[1].Value));
         return null;
     }
+
+    internal static string Size(long? bytes) => bytes is { } value ? $"{value / 1024.0 / 1024:0.#} MB" : "an unknown size";
 
     private static int IndexOfNewLine(StringBuilder text)
     {

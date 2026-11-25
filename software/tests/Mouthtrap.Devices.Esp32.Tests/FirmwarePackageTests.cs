@@ -22,7 +22,7 @@ public sealed class FirmwarePackageTests : IDisposable
 
         // Then
         var plan = archive.Plan;
-        Assert.Equal("mouthtrap-firmware-xiao-wifi-1.2.0", archive.Folder);
+        Assert.Equal(new FirmwareManifest(FirmwareManifest.XiaoEsp32S3Sense, "xiao-wifi", "1.2.0"), archive.Manifest);
         Assert.Equal((uint)(8 * 1024 * 1024), plan.FlashSize);
         Assert.Equal([0x0u, 0x8000u, 0x10000u], plan.Parts.Select(part => part.Offset));
         Assert.Equal(Packages.App, plan.Parts[2].Data.ToArray());

@@ -13,19 +13,31 @@ internal static class Packages
     public const string FlashArgs = "--flash_mode dio --flash_freq 80m --flash_size 8MB\n0x0 bootloader/bootloader.bin\n" +
         "0x10000 mouthtrap_xiao_wifi.bin\n0x8000 partition_table/partition-table.bin\n";
 
+    public static string Manifest(string firmware = "xiao-wifi", string version = "1.2.0", string board = "seeed-xiao-esp32s3-sense") =>
+        $$"""{"format": 1, "board": "{{board}}", "firmware": "{{firmware}}", "version": "{{version}}"}""";
+
+    // manifest null leaves manifest.json out.
     public static byte[] Zip(string folder = "mouthtrap-firmware-xiao-wifi-1.2.0", string flashArgs = FlashArgs,
-        IEnumerable<(string Name, byte[] Data)>? files = null)
+        IEnumerable<(string Name, byte[] Data)>? files = null, string? manifest = "default")
     {
         using var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
         {
             Add(archive, $"{folder}/flash_args", Encoding.UTF8.GetBytes(flashArgs));
+            if (manifest is not null) Add(archive, $"{folder}/manifest.json", Encoding.UTF8.GetBytes(manifest == "default" ? Manifest() : manifest));
             foreach (var (name, data) in files ?? [("bootloader/bootloader.bin", Bootloader), ("mouthtrap_xiao_wifi.bin", App),
                 ("partition_table/partition-table.bin", PartitionTable), ("LICENSE", "MIT"u8.ToArray())])
                 Add(archive, $"{folder}/{name}", data);
         }
         return stream.ToArray();
     }
+
+    // The USB webcam firmware of a variant, laid out as its release zip.
+    public static byte[] Webcam(string firmware = "xiao-uvc", string version = "1.2.0") =>
+        Zip(folder: $"mouthtrap-firmware-{firmware}-{version}",
+            flashArgs: FlashArgs.Replace("mouthtrap_xiao_wifi.bin", "mouthtrap_xiao_uvc.bin", StringComparison.Ordinal),
+            files: [("bootloader/bootloader.bin", Bootloader), ("mouthtrap_xiao_uvc.bin", App), ("partition_table/partition-table.bin", PartitionTable)],
+            manifest: Manifest(firmware, version));
 
     public static byte[] Image(int length, ushort chip = 9)
     {
