@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Mouthtrap.Core/Mouthtrap.Core.csproj" />
+    <PackageReference Include="System.IO.Ports" Version="[11.0.0]" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Mouthtrap.Firmware.Tests" />
+  </ItemGroup>
+</Project>
