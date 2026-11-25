@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using Moderato.Results;
 using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // The bearer token that protects the Wi-Fi stream. The board stores it and Mouthtrap sends it, so it lives in a
 // small text file that both sides use; reusing the file keeps the stream working when only the network changes.

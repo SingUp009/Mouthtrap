@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using Moderato.Results;
 using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // One file to write at Offset. Name says what it is, for progress and errors.
 public sealed record FlashPart(uint Offset, ReadOnlyMemory<byte> Data, string Name);

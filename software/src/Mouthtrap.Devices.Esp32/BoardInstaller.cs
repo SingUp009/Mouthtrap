@@ -4,7 +4,7 @@ using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 public enum FlashStage { Connecting, Preparing, Writing, Restarting, WaitingForCamera }
 
@@ -29,11 +29,11 @@ public static partial class BoardInstaller
 
     // Writes plan to the board, verifies every part and restarts the board. With watchCamera, it then reads the Wi-Fi
     // firmware's log until the camera URL appears. The board link is owned by this run and released however it ends.
-    public static Effect<InstallReport, FlashError, FirmwareEnvironment> Install(Resource<IBoardLink, FlashError, FirmwareEnvironment> board,
+    public static Effect<InstallReport, FlashError, ProvisioningEnvironment> Install(Resource<IBoardLink, FlashError, ProvisioningEnvironment> board,
         FlashPlan plan, bool watchCamera = false, IProgress<FlashProgress>? progress = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        return Scope<FlashError, FirmwareEnvironment>.Gen(async scope =>
+        return Scope<FlashError, ProvisioningEnvironment>.Gen(async scope =>
         {
             var clock = scope.Env.Resolve<TimeProvider>();
             var total = plan.TotalBytes;

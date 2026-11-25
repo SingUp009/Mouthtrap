@@ -1,4 +1,4 @@
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // SLIP framing as the ESP ROM loader uses it: each packet is wrapped in 0xC0, and 0xC0 and 0xDB inside it are
 // escaped as 0xDB 0xDC and 0xDB 0xDD.

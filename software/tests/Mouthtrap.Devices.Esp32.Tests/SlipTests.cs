@@ -1,6 +1,6 @@
-using Mouthtrap.Firmware;
+using Mouthtrap.Devices;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 public sealed class SlipTests
 {

@@ -2,7 +2,7 @@ using System.Text;
 using Moderato.Results;
 using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // What the Wi-Fi firmware reads from its nvs partition when it starts, checked with the firmware's own rules
 // (settings_validate in firmware/xiao-wifi/components/mouthtrap_stream), so the board never receives settings it

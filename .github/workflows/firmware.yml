@@ -9,15 +9,15 @@ on:
     paths:
       - firmware/**
       - tools/release/pack.py
-      - software/src/Mouthtrap.Firmware/**
-      - software/tests/Mouthtrap.Firmware.Tests/**
+      - software/src/Mouthtrap.Devices.Esp32/**
+      - software/tests/Mouthtrap.Devices.Esp32.Tests/**
       - .github/workflows/firmware.yml
   pull_request:
     paths:
       - firmware/**
       - tools/release/pack.py
-      - software/src/Mouthtrap.Firmware/**
-      - software/tests/Mouthtrap.Firmware.Tests/**
+      - software/src/Mouthtrap.Devices.Esp32/**
+      - software/tests/Mouthtrap.Devices.Esp32.Tests/**
       - .github/workflows/firmware.yml
   workflow_dispatch:
 
@@ -118,7 +118,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      # Mouthtrap.Firmware writes the QEMU build and its Wi-Fi settings through the ROM loader, then boots it.
+      # Mouthtrap.Devices.Esp32 writes the QEMU build and its Wi-Fi settings through the ROM loader, then boots it.
       - name: Flasher tests
         env:
           DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "1"
@@ -126,5 +126,5 @@ jobs:
           . "$IDF_PATH/export.sh" > /dev/null
           # The workspace path inside the container, which github.workspace does not give in a container job.
           export MOUTHTRAP_QEMU_BUILD="$GITHUB_WORKSPACE/build-qemu"
-          dotnet restore software/tests/Mouthtrap.Firmware.Tests --locked-mode
-          dotnet test --project software/tests/Mouthtrap.Firmware.Tests -c Release --no-restore
+          dotnet restore software/tests/Mouthtrap.Devices.Esp32.Tests --locked-mode
+          dotnet test --project software/tests/Mouthtrap.Devices.Esp32.Tests -c Release --no-restore

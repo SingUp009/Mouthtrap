@@ -1,7 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 // Release zip files laid out as firmware/build-release.sh writes them.
 internal static class Packages

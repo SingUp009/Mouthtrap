@@ -304,7 +304,7 @@
         "type": "Project",
         "dependencies": {
           "Mouthtrap.Core": "[1.0.0, )",
-          "Mouthtrap.Firmware": "[1.0.0, )",
+          "Mouthtrap.Devices.Esp32": "[1.0.0, )",
           "Mouthtrap.Inputs.Camera": "[1.0.0, )",
           "Mouthtrap.Inputs.Network": "[1.0.0, )",
           "Mouthtrap.Inputs.Windows": "[1.0.0, )",
@@ -318,7 +318,7 @@
           "Moderato.Effects": "[0.1.0-preview.6, 0.1.0-preview.6]"
         }
       },
-      "mouthtrap.firmware": {
+      "mouthtrap.devices.esp32": {
         "type": "Project",
         "dependencies": {
           "Mouthtrap.Core": "[1.0.0, )",

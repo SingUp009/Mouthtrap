@@ -2,9 +2,9 @@ using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
-using Mouthtrap.Firmware;
+using Mouthtrap.Devices;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 // An ESP32-S3 ROM loader behind an IBoardLink: it decodes the SLIP packets written to it, keeps an 8 MB flash, and
 // answers as the ROM does, with four status bytes. Each switch makes it misbehave in one way.

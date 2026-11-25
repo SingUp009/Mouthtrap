@@ -2,8 +2,9 @@ using System.IO.Ports;
 using System.Net.Sockets;
 using Moderato.Effects;
 using Moderato.Results;
+using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // A byte connection to a board, and the boot and reset lines when it has them. Every transport failure surfaces as
 // an IOException, and reads end with cancellation, whatever the transport does on its own.
@@ -26,13 +27,13 @@ public static class BoardLink
 
     // A board on a serial port such as COM3, or on socket://host:port, as Espressif's QEMU serves it. The link is owned
     // by whoever runs the resource and closed however the run ends.
-    public static Resource<IBoardLink, FlashError, FirmwareEnvironment> Open(string port)
+    public static Resource<IBoardLink, FlashError, ProvisioningEnvironment> Open(string port)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(port);
         var open = port.StartsWith(SocketPrefix, StringComparison.OrdinalIgnoreCase)
-            ? Effect<FirmwareEnvironment>.FromResultAsync<IBoardLink, FlashError>(cancellationToken => OpenSocket(port, cancellationToken))
-            : Effect<FirmwareEnvironment>.FromResultAsync<IBoardLink, FlashError>(_ => ValueTask.FromResult(OpenSerial(port)));
-        return Resource.Make(open, (link, _) => Effect<FirmwareEnvironment>.Sync(() =>
+            ? Effect<ProvisioningEnvironment>.FromResultAsync<IBoardLink, FlashError>(cancellationToken => OpenSocket(port, cancellationToken))
+            : Effect<ProvisioningEnvironment>.FromResultAsync<IBoardLink, FlashError>(_ => ValueTask.FromResult(OpenSerial(port)));
+        return Resource.Make(open, (link, _) => Effect<ProvisioningEnvironment>.Sync(() =>
         {
             link.Dispose();
             return Unit.Value;

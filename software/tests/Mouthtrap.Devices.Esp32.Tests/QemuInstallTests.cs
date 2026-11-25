@@ -3,13 +3,14 @@ using System.Net;
 using System.Net.Sockets;
 using Moderato.Effects;
 using Moderato.Results;
-using Mouthtrap.Firmware;
+using Mouthtrap.Core;
+using Mouthtrap.Devices;
 using Mouthtrap.Tests;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
-// Writes the Wi-Fi firmware and its settings to Espressif's QEMU through the ROM loader, then boots it and reads its
-// log. QEMU's ROM answers like a board in download mode, but has no boot or reset lines, and its serial port is slow:
+// Sets up the Wi-Fi firmware and its settings in Espressif's QEMU with XiaoProvisioner, through the ROM loader, then
+// boots it and reads its log. QEMU's ROM answers like a board in download mode, but has no boot or reset lines, and its serial port is slow:
 // a run takes a few minutes. Set MOUTHTRAP_QEMU_BUILD to a build of firmware/xiao-wifi with test/sdkconfig.qemu and
 // put qemu-system-xtensa on PATH, as firmware/xiao-wifi/test/test_firmware_qemu.py expects.
 public sealed class QemuInstallTests : IDisposable
@@ -20,33 +21,36 @@ public sealed class QemuInstallTests : IDisposable
     public void Dispose() => Directory.Delete(directory, recursive: true);
 
     [Fact]
-    public async Task Install_WifiFirmwareAndSettings_BootsWithTheSettings()
+    public async Task Provision_WifiFirmwareAndSettings_BootsWithTheSettings()
     {
         Assert.SkipWhen(Build is null, "Set MOUTHTRAP_QEMU_BUILD to run the QEMU tests.");
         // Given an erased 8 MB flash in QEMU's download mode, and the firmware with settings for it
         var settings = ResultAssert.Ok(WifiSettings.Create("Mouthtrap test", "password123", StreamToken.Generate()));
         var firmware = ResultAssert.Ok(FirmwarePackage.FromDirectory(Build!));
-        var plan = ResultAssert.Ok(firmware.With(new(NvsImage.Offset, NvsImage.Create(settings), "settings")));
+        var plan = ResultAssert.Ok(firmware.With(new(NvsImage.Offset, NvsImage.Create(settings), "Wi-Fi settings")));
         var flash = Path.Combine(directory, "flash.bin");
         await File.WriteAllBytesAsync(flash, Enumerable.Repeat((byte)0xff, 8 * 1024 * 1024).ToArray(), TestContext.Current.CancellationToken);
         var port = FreePort();
-        var progress = new List<FlashProgress>();
+        var progress = new List<ProvisioningProgress>();
+        var provisioner = new XiaoProvisioner(FirmwareVariant.XiaoWifi, new Folder(Build!), $"socket://127.0.0.1:{port}",
+            new WifiSetup(settings, Path.Combine(directory, "stream-token.txt")));
 
         // When
-        Exit<InstallReport, FlashError> exit;
+        Exit<ProvisionedDevice, ProvisioningError> exit;
         using (var qemu = Qemu(flash, $"-global driver=esp32s3.gpio,property=strap_mode,value=0x07 -serial tcp:127.0.0.1:{port},server=on,wait=off"))
         {
             await Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken);
-            exit = await BoardInstaller.Install(BoardLink.Open($"socket://127.0.0.1:{port}"), plan, progress: new Collect(progress))
-                .RunExitAsync(new FirmwareEnvironment(TimeProvider.System), TestContext.Current.CancellationToken);
+            exit = await provisioner.Provision(new Collect(progress))
+                .RunExitAsync(new ProvisioningEnvironment(TimeProvider.System), TestContext.Current.CancellationToken);
             qemu.Kill();
             await qemu.WaitForExitAsync(TestContext.Current.CancellationToken);
         }
 
         // Then every part is in the flash, and the firmware reads the settings when it starts
-        if (exit is not Ok<InstallReport>(var report)) throw new Xunit.Sdk.XunitException($"Expected Ok, got {exit}.");
-        Assert.False(report.Restarted);
-        Assert.Equal(plan.TotalBytes, progress[^1].Written);
+        // QEMU has no reset line, so the board has to be restarted by hand.
+        if (exit is not Ok<ProvisionedDevice>(var device)) throw new Xunit.Sdk.XunitException($"Expected Ok, got {exit}.");
+        Assert.True(device.Input is InputNotConfirmed { Reason: InputNotConfirmedReason.RestartByHand }, $"Got {device.Input}.");
+        Assert.Equal(1, progress.Last(report => report.Stage == ProvisioningStage.Writing).Fraction);
         var written = await File.ReadAllBytesAsync(flash, TestContext.Current.CancellationToken);
         foreach (var part in plan.Parts) Assert.True(written.AsSpan((int)part.Offset, part.Data.Length).SequenceEqual(part.Data.Span), part.Name);
         var log = Path.Combine(directory, "serial.log");
@@ -75,10 +79,20 @@ public sealed class QemuInstallTests : IDisposable
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
-    // Progress<T> posts to the thread pool; this records each report in order as it is made.
-    private sealed class Collect(List<FlashProgress> reports) : IProgress<FlashProgress>
+    // An ESP-IDF build folder, read through its flash_args.
+    private sealed class Folder(string path) : IFirmwareSource
     {
-        public void Report(FlashProgress value)
+        public Effect<LoadedFirmware, ProvisioningError, ProvisioningEnvironment> Load(FirmwareVariant variant) =>
+            Effect<ProvisioningEnvironment>.FromResultAsync<LoadedFirmware, ProvisioningError>(_ => ValueTask.FromResult<Result<LoadedFirmware, ProvisioningError>>(
+                FirmwarePackage.FromDirectory(path).TryGetOk(out var plan)
+                    ? new Ok<LoadedFirmware>(new("qemu", plan!))
+                    : new Err<ProvisioningError>(new FirmwareInvalid("The build folder cannot be read."))));
+    }
+
+    // Progress<T> posts to the thread pool; this records each report in order as it is made.
+    private sealed class Collect(List<ProvisioningProgress> reports) : IProgress<ProvisioningProgress>
+    {
+        public void Report(ProvisioningProgress value)
         {
             lock (reports) reports.Add(value);
         }

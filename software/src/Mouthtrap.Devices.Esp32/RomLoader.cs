@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using Moderato.Effects;
 using Moderato.Results;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // The ESP32-S3 ROM loader's serial protocol, as esptool 4.14 speaks it without its RAM stub: SLIP packets of a
 // direction byte, a command, a length and a checksum, answered by the same command with a value, data and status

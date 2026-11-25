@@ -3,10 +3,13 @@ using System.IO.Compression;
 using Moderato.Results;
 using Mouthtrap.Core;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // The firmware variants a release ships, named as in the zip files that firmware/build-release.sh writes.
 public enum FirmwareVariant { XiaoWifi, XiaoUvc, XiaoUvcMultimode }
+
+// A release zip: Folder is its top-level folder, such as mouthtrap-firmware-xiao-wifi-1.2.0.
+public sealed record FirmwareArchive(string Folder, FlashPlan Plan);
 
 // A firmware build as ESP-IDF describes it in flash_args: the flash options on the first line, then one
 // "<offset> <file>" line per image, with paths relative to flash_args. Read from a release zip, whose files sit in one
@@ -24,7 +27,15 @@ public static class FirmwarePackage
         _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null),
     };
 
-    public static Result<FlashPlan, InvalidValue> FromZip(Stream zip)
+    // The application image of a variant, as flash_args names it.
+    public static string AppImage(FirmwareVariant variant) => variant switch
+    {
+        FirmwareVariant.XiaoWifi => "mouthtrap_xiao_wifi.bin",
+        FirmwareVariant.XiaoUvc or FirmwareVariant.XiaoUvcMultimode => "mouthtrap_xiao_uvc.bin",
+        _ => throw new ArgumentOutOfRangeException(nameof(variant), variant, null),
+    };
+
+    public static Result<FirmwareArchive, InvalidValue> FromZip(Stream zip)
     {
         ArgumentNullException.ThrowIfNull(zip);
         try
@@ -34,7 +45,9 @@ public static class FirmwarePackage
                 entry.FullName.Count(value => value == '/') <= 1).ToArray();
             if (flashArgs.Length != 1) return Invalid("The zip file must hold one flash_args file in its top-level folder.");
             var root = flashArgs[0].FullName[..^"flash_args".Length];
-            return Parse(path => archive.GetEntry(root + path) is { } entry ? ReadLimited(entry.Open(), entry.Length) : null);
+            var plan = Parse(path => archive.GetEntry(root + path) is { } entry ? ReadLimited(entry.Open(), entry.Length) : null);
+            if (!plan.TryGetOk(out var value)) return new Err<InvalidValue>(plan.TryGetErr(out var error) ? error! : null!);
+            return new Ok<FirmwareArchive>(new(root.TrimEnd('/'), value!));
         }
         // Reading the archive: not a zip file, damaged entries, or a stream that fails.
         catch (Exception exception) when (exception is InvalidDataException or IOException)

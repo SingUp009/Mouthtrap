@@ -578,6 +578,12 @@
                                       SelectionChanged="FirmwareKind_SelectionChanged">
                                 <ComboBoxItem Content="{app:Text FirmwareWifi}" /><ComboBoxItem Content="{app:Text FirmwareUvc}" /><ComboBoxItem Content="{app:Text FirmwareUvcMultimode}" />
                             </ComboBox>
+                            <Label Content="{app:Text FirmwareSourceLabel}" Target="{Binding ElementName=FirmwareSource}" Margin="0,8,0,0" />
+                            <ComboBox x:Name="FirmwareSource" AutomationProperties.Name="{app:Text FirmwareSourceName}" SelectionChanged="FirmwareSource_SelectionChanged" />
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button x:Name="FirmwareReleasesButton" Content="{app:Text FirmwareReleasesButton}" Click="FirmwareReleases_Click" />
+                                <Button x:Name="FirmwareFileButton" Content="{app:Text FirmwareFileButton}" Click="FirmwareFile_Click" Margin="0" />
+                            </StackPanel>
                             <Label Content="{app:Text FirmwarePortLabel}" Target="{Binding ElementName=FirmwarePort}" Margin="0,8,0,0" />
                             <DockPanel>
                                 <Button x:Name="FirmwarePortsButton" Content="{app:Text FirmwarePortsButton}" Click="FirmwarePorts_Click" DockPanel.Dock="Right" Margin="8,0,0,0" />

@@ -55,6 +55,18 @@ public sealed class FirmwareCardTests : IDisposable
     }
 
     [Fact]
+    public async Task Open_AnySettings_OffersTheLatestPublishedReleaseFirst()
+    {
+        // When / Then
+        await WindowDriver.Run(SettingsFile, "en", ui =>
+        {
+            Assert.Equal(Strings.Get("FirmwareLatest"), ui.Window.FirmwareSource.SelectedItem?.ToString());
+            Assert.Single(ui.Window.FirmwareSource.Items);
+            return Task.CompletedTask;
+        });
+    }
+
+    [Fact]
     public async Task Open_SavedTokenFile_IsTheOneTheHintNames()
     {
         // Given

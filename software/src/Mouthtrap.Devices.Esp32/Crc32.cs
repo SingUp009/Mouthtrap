@@ -1,4 +1,4 @@
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // CRC-32 as zlib.crc32(data, previous) computes it. ESP-IDF's NVS format passes 0xFFFFFFFF as the previous value,
 // which is not the usual CRC-32 of the data, so System.IO.Hashing.Crc32 cannot be used.

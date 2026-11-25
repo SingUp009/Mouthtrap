@@ -5,6 +5,6 @@
     <PackageReference Include="System.IO.Ports" Version="[11.0.0]" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="Mouthtrap.Firmware.Tests" />
+    <InternalsVisibleTo Include="Mouthtrap.Devices.Esp32.Tests" />
   </ItemGroup>
 </Project>

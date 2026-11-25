@@ -1,6 +1,6 @@
 using Moderato.Effects;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // Writing to a board fails in ways that are classified by what the user can do about them.
 // The serial port cannot be opened: it is missing, busy in another program, or access is denied.
@@ -18,7 +18,3 @@ public sealed record VerificationFailed(string Message);
 
 [Error]
 public partial union FlashError(PortUnavailable, BoardNotResponding, WrongChip, BoardRejected, ConnectionLost, VerificationFailed);
-
-// What writing firmware runs with: the clock for timeouts and the waits of the reset sequences.
-[Moderato.Effects.Environment]
-public sealed partial record FirmwareEnvironment(TimeProvider Clock);

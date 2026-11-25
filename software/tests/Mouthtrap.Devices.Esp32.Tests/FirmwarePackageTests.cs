@@ -1,9 +1,9 @@
 using Moderato.Results;
 using Mouthtrap.Core;
-using Mouthtrap.Firmware;
+using Mouthtrap.Devices;
 using Mouthtrap.Tests;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 public sealed class FirmwarePackageTests : IDisposable
 {
@@ -18,9 +18,11 @@ public sealed class FirmwarePackageTests : IDisposable
         using var zip = new MemoryStream(Packages.Zip());
 
         // When
-        var plan = ResultAssert.Ok(FirmwarePackage.FromZip(zip));
+        var archive = ResultAssert.Ok(FirmwarePackage.FromZip(zip));
 
         // Then
+        var plan = archive.Plan;
+        Assert.Equal("mouthtrap-firmware-xiao-wifi-1.2.0", archive.Folder);
         Assert.Equal((uint)(8 * 1024 * 1024), plan.FlashSize);
         Assert.Equal([0x0u, 0x8000u, 0x10000u], plan.Parts.Select(part => part.Offset));
         Assert.Equal(Packages.App, plan.Parts[2].Data.ToArray());
@@ -102,6 +104,16 @@ public sealed class FirmwarePackageTests : IDisposable
     {
         // When / Then
         Assert.Equal(slug, FirmwarePackage.Slug(variant));
+    }
+
+    [Theory]
+    [InlineData(FirmwareVariant.XiaoWifi, "mouthtrap_xiao_wifi.bin")]
+    [InlineData(FirmwareVariant.XiaoUvc, "mouthtrap_xiao_uvc.bin")]
+    [InlineData(FirmwareVariant.XiaoUvcMultimode, "mouthtrap_xiao_uvc.bin")]
+    public void AppImage_Variant_IsTheFileFlashArgsNames(FirmwareVariant variant, string file)
+    {
+        // When / Then
+        Assert.Equal(file, FirmwarePackage.AppImage(variant));
     }
 
     [Fact]

@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace Mouthtrap.Firmware;
+namespace Mouthtrap.Devices;
 
 // The settings partition the Wi-Fi firmware reads: one "mouthtrap" namespace with the strings ssid, password and
 // token, laid out as ESP-IDF's nvs_partition_gen (format version 2) writes them, so that it matches what

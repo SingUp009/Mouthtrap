@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../src/Mouthtrap.Firmware/Mouthtrap.Firmware.csproj" />
+    <ProjectReference Include="../../src/Mouthtrap.Devices.Esp32/Mouthtrap.Devices.Esp32.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.11.0" />

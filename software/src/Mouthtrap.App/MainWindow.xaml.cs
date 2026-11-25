@@ -69,6 +69,7 @@ public partial class MainWindow : Window
         renderTimer.Stop();
         LoadSettings();
         ShowFirmwareHint();
+        ShowFirmwareChoices();
         shownLanguage = settings.Language;
         restoring = 0;
     }

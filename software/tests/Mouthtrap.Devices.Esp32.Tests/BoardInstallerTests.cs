@@ -2,10 +2,10 @@ using Microsoft.Extensions.Time.Testing;
 using Moderato.Effects;
 using Moderato.Results;
 using Mouthtrap.Core;
-using Mouthtrap.Firmware;
+using Mouthtrap.Devices;
 using Mouthtrap.Tests;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 public sealed class BoardInstallerTests
 {
@@ -208,7 +208,7 @@ public sealed class BoardInstallerTests
         var board = BoardLink.Open("socket://127.0.0.1:1");
 
         // When
-        var exit = await BoardInstaller.Install(board, Plan).RunExitAsync(new FirmwareEnvironment(new FakeTimeProvider()),
+        var exit = await BoardInstaller.Install(board, Plan).RunExitAsync(new ProvisioningEnvironment(new FakeTimeProvider()),
             TestContext.Current.CancellationToken);
 
         // Then
@@ -315,13 +315,13 @@ public sealed class BoardInstallerTests
     private static Task<Exit<InstallReport, FlashError>> Run(FakeRom rom, TimeProvider clock, CancellationToken cancellationToken,
         bool watchCamera = false, List<FlashProgress>? progress = null)
     {
-        var board = Resource.Make(Effect<FirmwareEnvironment>.Succeed<IBoardLink>(rom), (link, _) => Effect<FirmwareEnvironment>.Sync(() =>
+        var board = Resource.Make(Effect<ProvisioningEnvironment>.Succeed<IBoardLink>(rom), (link, _) => Effect<ProvisioningEnvironment>.Sync(() =>
         {
             link.Dispose();
             return Unit.Value;
         }));
         return BoardInstaller.Install(board, Plan, watchCamera, progress is null ? null : new Collect(progress))
-            .RunExitAsync(new FirmwareEnvironment(clock), cancellationToken).AsTask();
+            .RunExitAsync(new ProvisioningEnvironment(clock), cancellationToken).AsTask();
     }
 
     private static InstallReport Ok(Exit<InstallReport, FlashError> exit) =>

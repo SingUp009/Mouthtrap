@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
-using Mouthtrap.Firmware;
+using Mouthtrap.Devices;
 using Mouthtrap.Tests;
 
-namespace Mouthtrap.Firmware.Tests;
+namespace Mouthtrap.Devices.Tests;
 
 public sealed class NvsImageTests
 {
