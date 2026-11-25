@@ -47,15 +47,21 @@ Settings are restored on the next start. The GUI is in English or Japanese; chan
 
 ## Command line
 
-The same processing without a window:
+The CLI does what the GUI does, without a window, for scripts and AI agents. It never asks a question: it writes JSON and returns an exit code.
 
 ```powershell
 $cli = 'software/src/Mouthtrap.Cli/bin/Release/net11.0-windows/Mouthtrap.Cli.exe'
 & $cli run --saved-settings --seconds 0             # run with the GUI's settings until Ctrl+C
 & $cli osc-test --osc 127.0.0.1:9000 --key JawOpen  # move the avatar's jaw without a camera
+& $cli ports                                         # serial ports a board can be written on
+& $cli releases                                      # published releases
+& $cli board --port COM3                             # chip, flash, PSRAM and MAC address; writes nothing
+$env:WIFI_PASSWORD = '...'
+& $cli flash --firmware XiaoWifi --port COM3 --board 98:3d:ae:12:34:56 `
+    --ssid MyNetwork --password-env WIFI_PASSWORD --saved-settings
 ```
 
-Run `& $cli run --help` for all options.
+`flash` writes only the board whose MAC address `--board` names, as `board` reports it, in place of the GUI's confirmation. Without `--version` or `--zip` it writes the latest release. The Wi-Fi password is read from the environment variable that `--password-env` names, so it stays off the command line. Run `& $cli <command> --help` for all options.
 
 ## Limitations
 
