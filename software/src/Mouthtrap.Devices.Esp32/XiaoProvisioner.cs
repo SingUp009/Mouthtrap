@@ -16,15 +16,13 @@ public sealed record XiaoProvisioner(FirmwareVariant Variant, IFirmwareSource Fi
     // The name the USB webcam firmware gives the camera (CONFIG_UVC_CAM1 in firmware/xiao-uvc).
     public const string UsbCameraName = "UVC CAM1";
     public static readonly TimeSpan UsbCameraTimeout = TimeSpan.FromSeconds(30);
-    // The XIAO's ESP32-S3R8 has 8 MB of octal PSRAM in the chip, which the firmware's camera buffers need.
-    public const long XiaoPsramBytes = 8 * 1024 * 1024;
 
     public IUsbCameraLocator? Cameras { get; init; }
 
     // The connection to the board, and the PSRAM the board must report (null accepts any, as for Espressif's QEMU,
     // whose eFuses are blank); tests replace them.
     internal Func<string, Resource<IBoardLink, FlashError, ProvisioningEnvironment>> OpenBoard { get; init; } = BoardLink.Open;
-    internal long? RequiredPsramBytes { get; init; } = XiaoPsramBytes;
+    internal long? RequiredPsramBytes { get; init; } = XiaoBoard.PsramBytes;
 
     public Effect<ProvisionedDevice, ProvisioningError, ProvisioningEnvironment> Provision(IDeviceConfirmation confirmation,
         IProgress<ProvisioningProgress>? progress = null)
@@ -50,7 +48,7 @@ public sealed record XiaoProvisioner(FirmwareVariant Variant, IFirmwareSource Fi
             }
             var report = await scope.Run(BoardInstaller.Install(OpenBoard(Port), plan, (board, token) => Check(board, plan, confirmation, token),
                     watchCamera: Wifi is not null, progress is null ? null : new Progress(progress))
-                .MapErr<ProvisioningError>(Classify));
+                .MapErr<ProvisioningError>(XiaoBoard.Classify));
             var input = Input(report);
             if (input is UsbCameraReady(var name))
             {
@@ -64,26 +62,10 @@ public sealed record XiaoProvisioner(FirmwareVariant Variant, IFirmwareSource Fi
         });
     }
 
-    // What the user is shown, with what keeps the firmware from running on the board. A board with problems is refused
-    // without asking; otherwise the user decides while the link stays open.
-    internal DeviceReport Describe(Esp32S3Board board, FlashPlan plan)
-    {
-        List<DeviceProblem> problems = [];
-        if (board.FlashBytes is not { } flash)
-            problems.Add(new(DeviceProblemKind.FlashUnknown, $"The flash reports ID 0x{board.FlashId:x6}, whose size is not known."));
-        else if (flash < plan.FlashSize)
-            problems.Add(new(DeviceProblemKind.FlashTooSmall,
-                $"The firmware needs {BoardInstaller.Size(plan.FlashSize)} of flash; the board has {BoardInstaller.Size(flash)}."));
-        if (RequiredPsramBytes is { } psram && board.EmbeddedPsramBytes != psram)
-            problems.Add(new(DeviceProblemKind.MemoryMissing,
-                $"The firmware needs {BoardInstaller.Size(psram)} of PSRAM in the chip, as on the XIAO's ESP32-S3R8; the board has {(board.EmbeddedPsramBytes is null ? "none" : BoardInstaller.Size(board.EmbeddedPsramBytes))}."));
-        return new(board.Mac, board.Chip, board.FlashBytes, board.EmbeddedPsramBytes, problems);
-    }
-
     private async ValueTask<Result<Unit, FlashError>> Check(Esp32S3Board board, FlashPlan plan, IDeviceConfirmation confirmation,
         CancellationToken cancellationToken)
     {
-        var report = Describe(board, plan);
+        var report = XiaoBoard.Describe(board, plan.FlashSize, RequiredPsramBytes);
         if (!report.CanBeWritten)
             return new Err<FlashError>(new BoardUnsuitable(string.Join(" ", report.Problems.Select(problem => problem.Message))));
         return await confirmation.ConfirmAsync(report, cancellationToken).ConfigureAwait(false)
@@ -105,19 +87,6 @@ public sealed record XiaoProvisioner(FirmwareVariant Variant, IFirmwareSource Fi
             _ => throw new InvalidOperationException("The Wi-Fi camera's start was not watched."),
         };
     }
-
-    // ESP32-S3 flashing errors in the terms every device shares.
-    private static ProvisioningError Classify(FlashError error) => error switch
-    {
-        PortUnavailable(var message) => new DeviceUnavailable(message),
-        BoardNotResponding(var message) => new DeviceNotResponding(message),
-        WrongChip(var message) => new DeviceIncompatible(message),
-        BoardUnsuitable(var message) => new DeviceIncompatible(message),
-        NotConfirmed(var message) => new DeviceNotConfirmed(message),
-        BoardRejected(var message, _, _) => new DeviceWriteFailed(message),
-        ConnectionLost(var message) => new DeviceWriteFailed(message),
-        VerificationFailed(var message) => new DeviceWriteFailed(message),
-    };
 
     // Flashing progress as setup progress, reported synchronously so that the order is kept.
     private sealed class Progress(IProgress<ProvisioningProgress> target) : IProgress<FlashProgress>

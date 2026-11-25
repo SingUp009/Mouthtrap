@@ -90,9 +90,9 @@ public sealed class XiaoProvisionerTests
         Assert.True(exit is Err<ProvisioningError>(DeviceIncompatible), $"Got {exit}.");
         Assert.Empty(confirmation.Asked);
         Assert.DoesNotContain(FakeRom.FlashBegin, rom.Commands);
-        var report = provisioner.Describe(Esp32S3Board.FromEfuse(rom.Efuse.GetValueOrDefault(0x60007044u), rom.Efuse.GetValueOrDefault(0x60007048u),
+        var report = XiaoBoard.Describe(Esp32S3Board.FromEfuse(rom.Efuse.GetValueOrDefault(0x60007044u), rom.Efuse.GetValueOrDefault(0x60007048u),
             rom.Efuse.GetValueOrDefault(0x60007050u), rom.Efuse.GetValueOrDefault(0x60007054u), rom.Efuse.GetValueOrDefault(0x60007058u), 0, rom.FlashId),
-            ResultAssert.Ok(FlashPlan.Create([new(0, Packages.Bootloader, "bootloader")], 8 * Megabyte)));
+            8 * Megabyte, XiaoBoard.PsramBytes);
         Assert.Equal([problem], report.Problems.Select(item => item.Kind));
     }
 

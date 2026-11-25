@@ -119,6 +119,17 @@ public static partial class BoardInstaller
         return null;
     }
 
+    // Connects to the board and reads it, without writing anything or restarting it, so that a board in download mode
+    // stays there for the next write. The link is released however the run ends.
+    public static Effect<Esp32S3Board, FlashError, ProvisioningEnvironment> Identify(Resource<IBoardLink, FlashError, ProvisioningEnvironment> board) =>
+        Scope<FlashError, ProvisioningEnvironment>.Gen(async scope =>
+        {
+            var link = await scope.Acquire(board);
+            var loader = new RomLoader(link, scope.Env.Resolve<TimeProvider>());
+            scope.Get(await loader.ConnectAsync(scope.CancellationToken));
+            return scope.Get(await loader.IdentifyAsync(scope.CancellationToken));
+        }).OnThreadPool();
+
     internal static string Size(long? bytes) => bytes is { } value ? $"{value / 1024.0 / 1024:0.#} MB" : "an unknown size";
 
     private static int IndexOfNewLine(StringBuilder text)
